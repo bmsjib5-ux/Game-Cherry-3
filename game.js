@@ -397,7 +397,7 @@ const awkBonus = (n) => {
     return b;
 };
 const awkPerkTxt = (i) => { const k = AWK_PERK[i]; return k ? `${k.emoji} ${k.name} +${k.val}${k.unit}` : ""; };
-const MENU_FLAGS = ["legoShopOpen", "tailorOpen", "minerOpen", "shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
+const MENU_FLAGS = ["techShopOpen", "legoShopOpen", "tailorOpen", "minerOpen", "shopOpen", "invOpen", "panelOpen", "questOpen", "skillPanel", "homeOpen", "warpAsk", "forgeOpen", "treeOpen", "constOpen", "masteryOpen", "collectionOpen", "equipScreen", "socialOpen", "pvpOpen", "heroGalleryOpen", "wbPanel", "profileOpen", "goldMarketOpen", "accOpen", "ranchOpen", "qingOpen", "awakenOpen"];
 const ST = (px) => `calc(var(--sa-t, 0px) + ${px}px)`;
 // 🦸 ท่าฟาดของ "ชุดฮีโร่" ในโลกกว้าง — แต่ละชุดมีท่าประจำตัว + เอฟเฟคประจำตัว
 //    style: claw ตะปบไขว้ · smash ทุบสองมือ · cast ผลักฝ่ามือ · breath พ่นลมหายใจ · dance ร่ายรำ · throw ขว้าง
@@ -458,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v722"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v723"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -734,6 +734,10 @@ const LOOT = [
     { id: "lego_suit", slot: "outfit", name: "ชุดตัวต่อเลโก้", emoji: "🧱", rarity: "epic", hp: 36, def: 5, spd: 4, sew: true, lego: true, price: 25000 },
     { id: "lego_sword", slot: "weapon", name: "ดาบอิฐตัวต่อ", emoji: "🗡️", rarity: "epic", atk: 13, crit: 5, sew: true, lego: true, price: 30000 },
     { id: "lego_hammer", slot: "weapon", name: "ค้อนอิฐยักษ์", emoji: "🔨", rarity: "epic", atk: 14, def: 2, sew: true, lego: true, price: 30000 },
+    // 🤖 ของไฮเทคจากร้านไฮเทค (เมืองยุค AI) — tech: ขายเฉพาะร้านไฮเทค
+    { id: "tech_saber", slot: "weapon", name: "ดาบเลเซอร์ควอนตัม", emoji: "⚡", rarity: "epic", atk: 15, crit: 6, sew: true, tech: true, price: 35000 },
+    { id: "tech_spear", slot: "weapon", name: "หอกพลังงานพลาสม่า", emoji: "🔱", rarity: "epic", atk: 16, spd: 4, sew: true, tech: true, price: 35000 },
+    { id: "tech_suit", slot: "outfit", name: "ชุดเกราะนาโนสูท", emoji: "🦾", rarity: "epic", hp: 40, def: 6, eva: 3, sew: true, tech: true, price: 30000 },
     { id: "sw_boots", slot: "shoes", name: "บูทหนังนุ่มเย็บมือ", emoji: "👢", rarity: "epic", def: 4, spd: 10, eva: 4, sew: true },
     // 👑 เทวศาสตราปฐมกาล — อาวุธขั้น "เทวศาสตรา" ชิ้นเดียวในเกม ทุกอาชีพใช้ได้ ดรอปจากบอสบุกแมพ 1% เท่านั้น (ไม่ดรอป/ไม่สุ่ม/ไม่ขายที่อื่น)
     { id: "god_wpn", slot: "weapon", name: "เทวศาสตราปฐมกาล", emoji: "🌌", rarity: "god", atk: 99999, def: 99999, crit: 99999, elem: "light", mapBoss: true },
@@ -9954,6 +9958,60 @@ function CherryAdventure() {
             hm.userData.bladeScale = 2.1;
             weaponModels.lego_hammer = hm;
         }
+        { // ⚡ tech_saber / tech_spear — อาวุธไฮเทค: ด้ามโลหะ + ใบพลังงานเรืองแสง + แสงฟุ้ง
+            const metal = new THREE.MeshStandardMaterial({ color: 0xc8d0dc, metalness: 0.85, roughness: 0.25 }), dark = new THREE.MeshStandardMaterial({ color: 0x1a1e28, metalness: 0.7, roughness: 0.35 });
+            const core = new THREE.MeshBasicMaterial({ color: 0xe8fcff }), glowM = new THREE.MeshBasicMaterial({ color: 0x40e0ff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+            const sb = new THREE.Group();
+            const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.5, 12), metal);
+            hd.position.y = -0.3;
+            sb.add(hd);
+            for (let k = 0; k < 4; k++) {
+                const r = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.064, 0.03, 12), dark);
+                r.position.y = -0.48 + k * 0.1;
+                sb.add(r);
+            }
+            const em = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.12, 12), dark);
+            em.position.y = 0.0;
+            sb.add(em);
+            const bl = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 1.25, 10), core);
+            bl.position.y = 0.68;
+            sb.add(bl);
+            const gl = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 1.32, 12), glowM);
+            gl.position.y = 0.68;
+            sb.add(gl);
+            const tip = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), core);
+            tip.position.y = 1.31;
+            sb.add(tip);
+            sb.userData.bladeScale = 1.9;
+            sb.userData.glow = gl;
+            weaponModels.tech_saber = sb;
+            const sp = new THREE.Group(), glow2 = new THREE.MeshBasicMaterial({ color: 0xff40c8, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }), core2 = new THREE.MeshBasicMaterial({ color: 0xffe0f6 });
+            const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 1.9, 10), metal);
+            sh.position.y = 0.1;
+            sp.add(sh);
+            for (const y of [-0.5, 0.2, 0.8]) {
+                const r = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.06, 10), dark);
+                r.position.y = y;
+                sp.add(r);
+            }
+            const hd2 = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), core2);
+            hd2.scale.set(0.7, 2.6, 0.35);
+            hd2.position.y = 1.32;
+            sp.add(hd2);
+            const hg = new THREE.Mesh(new THREE.OctahedronGeometry(0.18, 0), glow2);
+            hg.scale.set(0.8, 2.6, 0.5);
+            hg.position.y = 1.32;
+            sp.add(hg);
+            for (const s of [-1, 1]) {
+                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.04), metal);
+                fin.position.set(s * 0.1, 1.04, 0);
+                fin.rotation.z = s * 0.5;
+                sp.add(fin);
+            }
+            sp.userData.bladeScale = 1.6;
+            sp.userData.glow = hg;
+            weaponModels.tech_spear = sp;
+        }
         { // 🗡️ kenKatana — Shirohikari (silver blade, gold edge, sakura tsuba — Kentaro's right sword)
             const g = new THREE.Group();
             const kSt = new THREE.MeshStandardMaterial({ color: 0xdde3ee, roughness: 0.18, metalness: 0.92 });
@@ -17052,7 +17110,8 @@ function CherryAdventure() {
             // 👕 ชุดไอเทมบนโมเดล 3D — ① แบบชุด (cut: Peasant ผ้า/เสื้อคลุม · Ranger เกราะหนัง+ฮู้ด) ② ย้อมสีตามไอเทม (hue แบบเดียวกับที่แยกอาชีพ)
             //    ③ ของประดับเกาะกระดูกตามขั้น (heroOutfitDeco) · ไม่ระบุ cut = ใช้ชุดประจำอาชีพเดิม
             const HERO_OUTFIT = {
-                lego_suit: { hue: [4, 0.85, 1.05] }, // 🧱 ชุดตัวต่อ — เสื้อแดงสด (แล้วแปลงทั้งตัวเป็นอิฐ)
+                lego_suit: { hue: [4, 0.85, 1.05] },
+                tech_suit: { cut: "Ranger", hue: [200, 0.75, 0.55, 0.97, 1, 0.8], star: 1 }, // 🦾 นาโนสูท — เกราะกรมท่าเข้ม ประกายไฟฟ้า                          // 🧱 ชุดตัวต่อ — เสื้อแดงสด (แล้วแปลงทั้งตัวเป็นอิฐ)
                 o1: { scarf: 1 }, // 🧣 ผ้าพันคอนุ่มฟู — ชุดเดิม + ผ้าพันคอ
                 o2: { cut: "Peasant", hue: [112, 0.45, 0.95, 0.97, 1, 0.55], leaf: 1 }, // H[4]=1 ย้อมเสื้อตัวในสีเบจด้วย ไม่งั้นเปลี่ยนแค่แขน  // 🍀 ชุดใบไม้พราย — ผ้าเขียวใบไม้
                 o3: { cut: "Ranger", hue: [212, 0.60, 0.92] }, // 🌩️ เกราะเมฆานิล — น้ำเงินพายุ
@@ -38903,6 +38962,35 @@ function CherryAdventure() {
                     return [x, z];
             } return null; };
             const A = (g, geo, mat, x, y, z, rx, ry, rz) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, rz || 0); g.add(m); return m; };
+            { // 🏪 ร้านไฮเทค — อาคารกระจกนีออนติดลานกลางเมือง ป้ายโฮโลแกรมตัวโต · เดินไปหน้าประตูแล้วกด "เข้าร้านไฮเทค"
+                const x = 15, z = 15, w = 9, d = 7, h = 7, ry = Math.atan2(-x, -z), g = new THREE.Group();
+                A(g, wbox(w, h, d, 0), glassM[0], 0, h / 2, 0);
+                for (const sx of [-1, 1])
+                    for (const sz of [-1, 1])
+                        A(g, new THREE.BoxGeometry(0.16, h, 0.16), neonM[0], sx * (w / 2 + 0.02), h / 2, sz * (d / 2 + 0.02));
+                A(g, new THREE.BoxGeometry(w + 0.6, 0.4, d + 0.6), darkM, 0, h + 0.2, 0);
+                A(g, new THREE.BoxGeometry(w + 0.62, 0.1, d + 0.62), neonM[1], 0, h + 0.05, 0);
+                A(g, new THREE.BoxGeometry(2.4, 3.2, 0.12), new THREE.MeshStandardMaterial({ color: 0x0a1424, emissive: 0x1a5a80, emissiveIntensity: 0.8, roughness: 0.1, metalness: 0.5 }), 0, 1.6, d / 2 + 0.07); // ประตูกระจก
+                A(g, new THREE.BoxGeometry(2.6, 0.1, 0.14), neonM[0], 0, 3.25, d / 2 + 0.08);
+                mergeByMat(g);
+                const sm = new THREE.MeshBasicMaterial({ map: holoTex("HI-TECH SHOP", "rgb(64,224,255)"), transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                const sign = A(g, new THREE.PlaneGeometry(w * 0.95, w * 0.3), sm, 0, h + 1.9, d / 2 + 0.2);
+                aiAnim.holos.push({ m: sign, ph: 1.3, base: 0.95 });
+                const sm2 = new THREE.MeshBasicMaterial({ map: holoTex("ร้านไฮเทค", "rgb(255,64,200)"), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+                A(g, new THREE.PlaneGeometry(4.2, 1.3), sm2, 0, 4.4, d / 2 + 0.25);
+                g.position.set(x, 0, z);
+                g.rotation.y = ry;
+                aiDecor.add(g);
+                aiColliders.push({ x, z, r: 6.0 });
+                const dr = 6.7;
+                G.techShopDoor = { x: x + Math.sin(ry) * dr, z: z + Math.cos(ry) * dr };
+                const anc = new THREE.Object3D();
+                anc.position.set(G.techShopDoor.x - Math.sin(ry) * 0.9, 0, G.techShopDoor.z - Math.cos(ry) * 0.9);
+                anc.userData.headY = 3.4;
+                anc.userData.noHide = true;
+                aiDecor.add(anc);
+                G.techShopAnchor = anc;
+            }
             const HOLO_TXT = [["AI CITY", "rgb(64,224,255)"], ["NEURAL", "rgb(255,64,200)"], ["DATA∞", "rgb(64,255,160)"], ["ROBOT", "rgb(138,106,255)"], ["2099", "rgb(255,200,64)"], ["SMART", "rgb(64,224,255)"]];
             // 🏙️ ตึกระฟ้า
             for (let n = 0; n < 16; n++) {
@@ -39391,6 +39479,10 @@ function CherryAdventure() {
         }
         G.aiTick = (dt, t) => {
             if (!aiDecor.visible) {
+                if (G.techShopNear) {
+                    G.techShopNear = false;
+                    setUi((u) => ({ ...u, techShopNear: false, techShopOpen: false }));
+                }
                 if (G.robotNear != null) {
                     G.robotNear = null;
                     setUi((u) => ({ ...u, robotNear: null, legoTalk: u.legoTalk && u.legoTalk.kind === "robot" ? null : u.legoTalk }));
@@ -39399,6 +39491,13 @@ function CherryAdventure() {
             }
             if (aiAnim.botTalkTick)
                 aiAnim.botTalkTick(dt, t); // 💬 หุ่นยนต์คุยได้
+            if (G.techShopDoor) {
+                const sn = G.mode === "explore" && Math.hypot(char.position.x - G.techShopDoor.x, char.position.z - G.techShopDoor.z) < 3.2;
+                if (sn !== !!G.techShopNear) {
+                    G.techShopNear = sn;
+                    setUi((u) => ({ ...u, techShopNear: sn }));
+                }
+            }
             aiAnim.blinks.forEach((b) => (b.m.visible = Math.sin(t * 3 + b.ph) > 0.2));
             aiAnim.holos.forEach((h) => { h.m.material.opacity = h.base * (0.75 + Math.sin(t * 2 + h.ph) * 0.15) * (Math.sin(t * 23 + h.ph * 7) > 0.96 ? 0.3 : 1); h.m.position.x = Math.sin(t * 17 + h.ph) > 0.97 ? 0.15 : 0; });
             aiAnim.rings.forEach((r) => { const u = (t * 0.25 + r.ph) % 1; r.m.position.y = 0.5 + u * (r.h - 0.8); r.m.scale.setScalar(1 + Math.sin(u * Math.PI) * 0.15); });
@@ -40405,6 +40504,79 @@ function CherryAdventure() {
             G.legoCloseTalk = () => setUi((u) => ({ ...u, legoTalk: null }));
             // 🏪 ร้านตัวต่อ — น้ำยา/ใบวาร์ป (ราคาร้านปกติ) + กล่องสุ่มตัวต่อ (ทอง/น้ำยา/เพชร/อุปกรณ์หายาก)
             G.LEGO_BOX_PRICE = 5000;
+            // 🤖 ร้านไฮเทค (เมืองยุค AI) — น้ำยา/ใบวาร์ป + อาวุธ/ชุดไฮเทค + กล่องสุ่มควอนตัม (รางวัลสูงกว่ากล่องตัวต่อ)
+            G.TECH_BOX_PRICE = 8000;
+            G.techShop = (on) => setUi((u) => ({ ...u, techShopOpen: !!on, gold: G.gold, warpScrolls: G.warpScrolls || 0, inv: [...(G.inv || [])] }));
+            G.techBuyItem = (id) => {
+                const it = LOOT.find((x) => x.id === id && x.tech);
+                if (!it)
+                    return;
+                if ((G.gold || 0) < it.price) {
+                    toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`);
+                    return;
+                }
+                G.gold -= it.price;
+                G.gainItem(id);
+                if (G.sfx && G.sfx.coin)
+                    G.sfx.coin();
+                toast(`🤖 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
+                setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] }));
+                if (G.saveGame)
+                    G.saveGame();
+            };
+            G.techBox = () => {
+                const price = G.TECH_BOX_PRICE;
+                if ((G.gold || 0) < price) {
+                    toast(`ทองไม่พอ! ต้องมี ${price.toLocaleString()}💰`);
+                    return;
+                }
+                G.gold -= price;
+                const r = Math.random();
+                let msg = "";
+                if (r < 0.34) {
+                    const g = 4000 + Math.round(Math.random() * 21000);
+                    G.gold += g;
+                    msg = `💰 ทอง ${g.toLocaleString()}`;
+                }
+                else if (r < 0.56) {
+                    G.hpPots.l = (G.hpPots.l || 0) + 5;
+                    G.mpPots.l = (G.mpPots.l || 0) + 5;
+                    msg = "🧪 น้ำยาเลือดใหญ่ ×5 + 💧 น้ำยามานาใหญ่ ×5";
+                }
+                else if (r < 0.74) {
+                    const d = 2 + ((Math.random() * 7) | 0);
+                    if (G.gainDiamonds)
+                        G.gainDiamonds(d, "กล่องสุ่มควอนตัม");
+                    else
+                        G.diamonds = (G.diamonds || 0) + d;
+                    msg = `💎 เพชร ${d}`;
+                }
+                else if (r < 0.79) {
+                    G.warpScrolls = (G.warpScrolls || 0) + 2;
+                    msg = "📜 ใบวาร์ปข้ามแดน ×2";
+                }
+                else {
+                    const want = r < 0.93 ? ["rare", "epic"] : ["legend", "legendary"];
+                    const pool = LOOT.filter((x) => want.includes(x.rarity) && x.slot && !x.sew && !x.costume);
+                    const it = pool[(Math.random() * pool.length) | 0];
+                    if (it) {
+                        G.gainItem(it.id);
+                        msg = `${it.emoji} ${it.name}${r >= 0.93 ? " ✨ (หายากมาก!)" : ""}`;
+                    }
+                    else {
+                        G.gold += price;
+                        msg = "💰 คืนทอง";
+                    }
+                }
+                if (G.sfx && G.sfx.coin)
+                    G.sfx.coin();
+                toast(`🎁 เปิดกล่องสุ่มควอนตัม ได้ ${msg}!`);
+                setUi((u) => ({ ...u, gold: G.gold, techBoxLast: msg, warpScrolls: G.warpScrolls || 0, inv: [...(G.inv || [])] }));
+                if (G.syncPotions)
+                    G.syncPotions();
+                if (G.saveGame)
+                    G.saveGame();
+            };
             G.legoSkinOwned = () => (G.inv || []).includes("lego_suit");
             G.legoSkinToggle = (on) => {
                 if (!G.legoSkinOwned()) {
@@ -78399,7 +78571,8 @@ function CherryAdventure() {
                             : PR.who === "townNpc" ? (((G.townNpcs || []).find((N) => N.key === G.townNpcNear) || {}).grp || null)
                                 : PR.who === "lego" ? (G.legoFolkAt ? G.legoFolkAt(G.legoNear) : null)
                                     : PR.who === "legoShop" ? (G.legoShopAnchor || null)
-                                        : PR.who === "robot" ? (G.robotFolkAt ? G.robotFolkAt(G.robotNear) : null) : null;
+                                        : PR.who === "techShop" ? (G.techShopAnchor || null)
+                                            : PR.who === "robot" ? (G.robotFolkAt ? G.robotFolkAt(G.robotNear) : null) : null;
                         if (src) {
                             src.getWorldPosition(_promptV);
                             _promptV.y += (src.userData.headY || 2.62); // เหนือหัวขึ้นไปนิดหนึ่ง (โมเดลตัวสูงกว่าร่างเก่า)
@@ -97164,7 +97337,7 @@ function CherryAdventure() {
     const _hpCount = _hpBrew ? (_hpBrew.n || 1) : (ui.potions || 0);
     const _mpCount = _mpBrew ? (_mpBrew.n || 1) : (ui.mpPotions || 0);
     const _promptTop = ui.mining ? "mining" : ui.mineNear ? "mine" : (ui.fishing || ui.pondNear) ? "fish"
-        : ui.herbNear ? "herb" : ui.legoShopNear ? "legoShop" : ui.legoNear != null ? "lego" : ui.robotNear != null ? "robot" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot" // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
+        : ui.herbNear ? "herb" : ui.legoShopNear ? "legoShop" : ui.techShopNear ? "techShop" : ui.legoNear != null ? "lego" : ui.robotNear != null ? "robot" : ui.townNpcNear ? "townNpc" : ui.botNear ? "bot" // 🏘️ NPC เมืองมาก่อนผู้เล่นบอทที่เดินผ่าน
             : ui.masterNear ? "master" : ui.npcNear ? "npc" : ui.smithNear ? "smith" : ui.secretNear ? "secret" : ui.roadNear ? "road" : null;
     const isPrompt = (name) => _promptTop === name;
     // 🎯 เดินเข้าใกล้ สายแร่/บ่อน้ำ/กอสมุนไพร → ปุ่มโจมตีกลางจอสลับเป็น ขุด/ตกปลา/เก็บ
@@ -99740,6 +99913,44 @@ function CherryAdventure() {
         ui.mode === "explore" && isPrompt("legoShop") && !ui.legoShopOpen && (React.createElement("div", { ref: headPromptRef("legoShop"), style: HEAD_PROMPT },
             React.createElement("button", { onClick: () => G.legoShop(true), style: { padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#c91a09,#e8503a)", boxShadow: "0 5px 16px rgba(201,26,9,0.5)" } }, "\uD83D\uDED2 \u0E40\u0E02\u0E49\u0E32\u0E23\u0E49\u0E32\u0E19\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D"),
             React.createElement("div", { style: { width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #c91a09" } }))),
+        ui.mode === "explore" && isPrompt("techShop") && !ui.techShopOpen && (React.createElement("div", { ref: headPromptRef("techShop"), style: HEAD_PROMPT },
+            React.createElement("button", { onClick: () => G.techShop(true), style: { padding: "7px 13px", borderRadius: 999, border: "2px solid rgba(255,255,255,0.55)", cursor: "pointer", fontSize: 12.5, fontWeight: 900, fontFamily: font, color: "#fff", background: "linear-gradient(90deg,#1a60c0,#40d0ff)", boxShadow: "0 5px 16px rgba(40,180,255,0.55)" } }, "\uD83D\uDED2 \u0E40\u0E02\u0E49\u0E32\u0E23\u0E49\u0E32\u0E19\u0E44\u0E2E\u0E40\u0E17\u0E04"),
+            React.createElement("div", { style: { width: 0, height: 0, margin: "0 auto", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "7px solid #40d0ff" } }))),
+        ui.techShopOpen && (() => {
+            const HP = G.HP_POT || {}, MP = G.MP_POT || {}, wp = G.repPrice ? G.repPrice(G.WARP_SCROLL_PRICE || 0) : (G.WARP_SCROLL_PRICE || 0), g = ui.gold || 0;
+            const st = (it) => [it.atk ? "⚔️" + it.atk : "", it.def ? "🛡️" + it.def : "", it.hp ? "❤️" + it.hp : "", it.crit ? "💥" + it.crit + "%" : "", it.spd ? "💨" + it.spd : "", it.eva ? "🌀" + it.eva : ""].filter(Boolean).join(" ");
+            const rows = [
+                ["🧪", `น้ำยาเลือด${(HP.l || {}).name || "ใหญ่"} ×10`, `ฟื้น ${(HP.l || {}).heal || 0} HP ต่อขวด`, ((HP.l || {}).price || 0) * 10, () => G.buyHpPot("l", 10)],
+                ["💧", `น้ำยามานา${(MP.l || {}).name || "ใหญ่"} ×10`, `ฟื้น ${(MP.l || {}).rest || 0} มานาต่อขวด`, ((MP.l || {}).price || 0) * 10, () => G.buyMpPot("l", 10)],
+                ["📜", "ใบวาร์ปข้ามแดน ×3", "วาร์ปไปแดนที่ปลดล็อกแล้วได้ทันที", wp * 3, () => G.buyWarpScroll(3)],
+                ...LOOT.filter((x) => x.tech).map((it) => [it.emoji, it.name + ((ui.inv || []).includes(it.id) ? " ✓" : ""), (it.slot === "outfit" ? "👕 ชุด · " : "⚔️ อาวุธ (ทุกอาชีพ) · ") + st(it), it.price, () => G.techBuyItem(it.id)]),
+                ["🎁", "กล่องสุ่มควอนตัม", "สุ่มได้ ทองสูงสุด 25,000 · น้ำยาใหญ่ ×5 · เพชร 2-8 · ใบวาร์ป · อุปกรณ์หายาก (ลุ้นระดับตำนาน!)", G.TECH_BOX_PRICE || 8000, () => G.techBox()],
+            ];
+            return (React.createElement("div", { onClick: () => G.techShop(false), style: { position: "absolute", inset: 0, background: "rgba(5,10,25,0.6)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 68 } },
+                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 470, maxHeight: "84%", overflowY: "auto", background: "linear-gradient(180deg,#0e1830,#141c34)", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: "14px 16px 24px", borderTop: "4px solid #40d0ff", color: "#e8f4ff" } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", marginBottom: 4 } },
+                        React.createElement("div", { style: { fontSize: 17, fontWeight: 800, color: "#40d0ff", textShadow: "0 0 10px rgba(64,208,255,0.7)" } }, "\uD83E\uDD16 \u0E23\u0E49\u0E32\u0E19\u0E44\u0E2E\u0E40\u0E17\u0E04"),
+                        React.createElement("div", { style: { flex: 1 } }),
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#ffd060", marginRight: 10 } },
+                            g.toLocaleString(),
+                            " \uD83D\uDCB0"),
+                        React.createElement("button", { onClick: () => G.techShop(false), style: { width: 34, height: 34, borderRadius: "50%", border: "1px solid #40d0ff", cursor: "pointer", background: "#0a1428", color: "#40d0ff", fontWeight: 800 } }, "\u2715")),
+                    React.createElement("div", { style: { fontSize: 11.5, color: "#8ab4d8", marginBottom: 11 } }, "\u0E1A\u0E35\u0E4A\u0E1A! \u0E22\u0E34\u0E19\u0E14\u0E35\u0E15\u0E49\u0E2D\u0E19\u0E23\u0E31\u0E1A\u0E21\u0E19\u0E38\u0E29\u0E22\u0E4C \u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E17\u0E38\u0E01\u0E0A\u0E34\u0E49\u0E19\u0E1C\u0E48\u0E32\u0E19\u0E01\u0E32\u0E23\u0E15\u0E23\u0E27\u0E08\u0E2A\u0E2D\u0E1A\u0E42\u0E14\u0E22 AI \u0E41\u0E25\u0E49\u0E27 99.98% \uD83E\uDD16"),
+                    ui.techBoxLast && React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: "#7affc8", background: "rgba(64,255,180,0.1)", border: "1px solid rgba(64,255,180,0.4)", borderRadius: 10, padding: "7px 10px", marginBottom: 10 } },
+                        "\uD83C\uDF81 \u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E44\u0E14\u0E49: ",
+                        ui.techBoxLast),
+                    React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, rows.map(([em, name, desc, price, buy], i) => {
+                        const afford = g >= price;
+                        return (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(64,208,255,0.45)", borderRadius: 14, padding: "9px 11px", background: "rgba(20,40,80,0.55)", boxShadow: "inset 0 0 12px rgba(64,208,255,0.12)" } },
+                            React.createElement("span", { style: { fontSize: 26 } }, em),
+                            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                                React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: "#e8f4ff" } }, name),
+                                React.createElement("div", { style: { fontSize: 11, color: "#8ab4d8" } }, desc)),
+                            React.createElement("button", { onClick: () => { buy(); setUi((u) => ({ ...u, gold: G.gold })); }, disabled: !afford, style: { padding: "8px 12px", borderRadius: 10, border: "none", cursor: afford ? "pointer" : "not-allowed", fontSize: 12, fontWeight: 800, fontFamily: font, color: afford ? "#04121e" : "#5a6a80", background: afford ? "linear-gradient(90deg,#40d0ff,#7affe0)" : "#2a3448", whiteSpace: "nowrap" } },
+                                price.toLocaleString(),
+                                "\uD83D\uDCB0")));
+                    })))));
+        })(),
         ui.legoShopOpen && (() => {
             const HP = G.HP_POT || {}, MP = G.MP_POT || {}, wp = G.repPrice ? G.repPrice(G.WARP_SCROLL_PRICE || 0) : (G.WARP_SCROLL_PRICE || 0), g = ui.gold || 0;
             const rows = [
@@ -101408,7 +101619,7 @@ function CherryAdventure() {
                         " \uD83D\uDCB0"),
                     React.createElement("button", { onClick: () => setUi((u) => ({ ...u, tailorOpen: false })), style: { width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", background: "#f2dde8", fontWeight: 800 } }, "\u2715")),
                 React.createElement("div", { style: { fontSize: 11.5, color: "#a07090", marginBottom: 11 } }, "\u0E40\u0E22\u0E47\u0E1A\u0E21\u0E37\u0E2D\u0E17\u0E38\u0E01\u0E0A\u0E34\u0E49\u0E19 \u0E43\u0E2A\u0E48\u0E41\u0E25\u0E49\u0E27\u0E2A\u0E27\u0E21\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23 3D \u0E44\u0E14\u0E49\u0E40\u0E25\u0E22\u0E08\u0E49\u0E30 \u00B7 \u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E21\u0E35\u0E41\u0E25\u0E49\u0E27\u0E08\u0E30\u0E02\u0E36\u0E49\u0E19 \u2713"),
-                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 } }, LOOT.filter((x) => x.sew && !x.lego).map((it) => {
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 } }, LOOT.filter((x) => x.sew && !x.lego && !x.tech).map((it) => {
                     const price = (G.SEW_PRICE && G.SEW_PRICE[it.rarity]) || 9000;
                     const afford = (ui.gold || 0) >= price, owned = (ui.inv || []).includes(it.id);
                     const rc = it.rarity === "epic" ? "#a24ad0" : "#3a7ad0";
