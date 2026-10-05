@@ -458,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v725"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v726"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -5039,6 +5039,16 @@ function CherryAdventure() {
         camera.position.set(0, 8.5, 11);
         camera.lookAt(0, 0.8, 0);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
+        // 🛟 จอ 3D หลุด (มือถือหน่วยความจำกราฟิกเต็ม/สลับแอป) — เดิมจอดำค้าง · ตอนนี้เซฟไว้ก่อน แล้วโหลดหน้าใหม่เมื่อเครื่องคืนจอให้
+        renderer.domElement.addEventListener("webglcontextlost", (e) => { e.preventDefault(); try {
+            if (G.saveGame)
+                G.saveGame();
+        }
+        catch (_) { } }, false);
+        renderer.domElement.addEventListener("webglcontextrestored", () => { try {
+            window.location.reload();
+        }
+        catch (_) { } }, false);
         renderer.setSize(W, H);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3)); // คมชัดขึ้น
         renderer.shadowMap.enabled = true;
@@ -13560,7 +13570,12 @@ function CherryAdventure() {
             return n;
         };
         G.kkSkelRegister = (g) => {
-            (G._kkMons = G._kkMons || []).push(g);
+            {
+                const now = performance.now();
+                g.userData._regAt = now;
+                G._kkMons = (G._kkMons || []).filter((x) => x && (x.parent || now - (x.userData._regAt || 0) < 15000));
+            } // 🧹 เหมือน _qtMons
+            G._kkMons.push(g);
             if (!G.kkOn)
                 return;
             if (G.kkSkelReady)
@@ -14486,7 +14501,14 @@ function CherryAdventure() {
             return n;
         };
         G.qtRegister = (g) => {
-            (G._qtMons = G._qtMons || []).push(g);
+            // 🧹 ตัดมอนที่ถูกเอาออกจากฉากไปแล้วทิ้ง — เดิมรายชื่อนี้โตไม่หยุด (ทุกด่านที่เคยไป) ค้างหน่วยความจำจนมือถือเด้งออก
+            //    ตัวที่เพิ่งปั้น (ยังไม่ทันใส่ฉาก) เก็บไว้ 15 วิ
+            {
+                const now = performance.now();
+                g.userData._regAt = now;
+                G._qtMons = (G._qtMons || []).filter((x) => x && (x.parent || now - (x.userData._regAt || 0) < 15000));
+            }
+            G._qtMons.push(g);
             if (!G.kkOn)
                 return;
             if (!G.qtSwap(g))
@@ -41050,10 +41072,8 @@ function CherryAdventure() {
                 G.gainItem(id);
                 if (G.sfx && G.sfx.coin)
                     G.sfx.coin();
-                toast(`🤖 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
                 setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] }));
-                if (G.saveGame)
-                    G.saveGame();
+                G.techSkinToggle(id, true); // ซื้อแล้วสวมทับให้เลย (แบบชุดตัวต่อ)
             };
             G.techBox = () => {
                 const price = G.TECH_BOX_PRICE;
@@ -41109,6 +41129,23 @@ function CherryAdventure() {
                     G.saveGame();
             };
             G.legoSkinOwned = () => (G.inv || []).includes("lego_suit");
+            // 🤖 ชุด/อาวุธไฮเทค — สวมทับแบบเดียวกับชุดตัวต่อ: ไม่เข้าช่องเสื้อ/อาวุธ (ของที่สวมจริงและค่าสถานะไม่เปลี่ยน) แค่เปลี่ยนรูปลักษณ์
+            G.techSkinToggle = (id, on) => {
+                const it = LOOT.find((x) => x.id === id && x.tech);
+                if (!it || !(G.inv || []).includes(id))
+                    return;
+                G.costume = G.costume || {};
+                const wear = on == null ? G.costume[it.slot] !== id : !!on;
+                G.costume[it.slot] = wear ? id : null;
+                if (G.refreshLookSlot)
+                    G.refreshLookSlot(it.slot);
+                toast(wear ? `🤖 สวม ${it.emoji} ${it.name} ทับแล้ว! (ของที่สวมจริงและค่าสถานะไม่เปลี่ยน)` : `🤖 ถอด ${it.emoji} ${it.name} แล้ว`);
+                setUi((u) => ({ ...u, costume: { ...G.costume } }));
+                if (G.syncPlayer)
+                    G.syncPlayer();
+                if (G.saveGame)
+                    G.saveGame();
+            };
             G.legoSkinToggle = (on) => {
                 if (!G.legoSkinOwned()) {
                     toast("ยังไม่มีชุดตัวต่อ — ซื้อได้ที่ร้านตัวต่อ เมืองเลโก้ 🧱");
@@ -49896,6 +49933,7 @@ function CherryAdventure() {
                 } });
                 m.scale.setScalar(mdef.scale || 1.55); // 🐘 ตัวใหญ่กว่าตัวละคร
                 m.position.set(0, 0, 0.05);
+                m.userData.heroKeep = true; // 🐎 โมเดล 3D ซ่อนลูกของ char ทุกชิ้นที่ไม่ได้ติดป้ายนี้ — สัตว์ขี่เลยหายไปทั้งตัว
                 char.add(m);
                 G._mountMesh = m;
                 G._rideLift = mdef.lift || 1.0; // 🪑 ความสูงอานนั่ง
@@ -53969,6 +54007,10 @@ function CherryAdventure() {
         // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
         const disposeObj3D = (grp) => {
             grp.traverse((o) => {
+                if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) {
+                    o.skeleton.boneTexture.dispose();
+                    o.skeleton.boneTexture = null;
+                } // 🦴 เท็กซ์เจอร์กระดูกของโมเดลมีท่า — ไม่ล้าง = ค้างใน GPU ทุกตัวที่เคยเกิด
                 if (o.geometry && o.geometry.dispose && !(o.userData && o.userData._outlShell) && !(o.geometry.userData && o.geometry.userData._shared))
                     o.geometry.dispose(); // 🖤 เปลือกเส้นขอบยืม geometry ของชิ้นจริง — เจ้าของเป็นคน dispose อยู่แล้ว
                 const m = o.material;
@@ -55405,6 +55447,10 @@ function CherryAdventure() {
                 G.legoSkinToggle();
                 return;
             } // 🧱 ชุดตัวต่อสวมแยก — ไม่เข้าช่องชุด
+            if (G.techSkinToggle && LOOT.some((x) => x.id === id && x.tech)) {
+                G.techSkinToggle(id);
+                return;
+            } // 🤖 ของไฮเทคสวมทับ — ไม่เข้าช่องเสื้อ/อาวุธ
             const _r = G._equipItemRaw(id);
             {
                 const eq = G.equip || {};
@@ -55696,7 +55742,7 @@ function CherryAdventure() {
                 // unique item ids owned in this slot, sorted STRONGEST first
                 const owned = [...new Set(G.inv)].filter((id) => {
                     const it = LOOT.find((x) => x.id === id);
-                    return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]); // 🔐 ไม่แตะของที่ล็อกไว้
+                    return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]) && !it.sew && !Object.values(G.costume || {}).includes(id); // 🔐 ไม่แตะของที่ล็อกไว้ · 👗 ของร้านตัดชุด/ตัวต่อ/ไฮเทค + ของที่สวมทับอยู่ไม่ขาย
                 }).sort((a, b) => itemPower(b) - itemPower(a));
                 // keep #1 (the best); for the rest, keep 1 duplicate for enhancing, sell surplus
                 owned.forEach((id, rank) => {
@@ -56083,9 +56129,15 @@ function CherryAdventure() {
             else
                 applyGear();
         };
+        G.refreshLookSlot = refreshLook;
+        G.syncPlayer = () => syncPlayer();
         G.setCostume = (slot, id) => {
             if (id === "lego_suit" && G.legoSkinToggle) {
                 G.legoSkinToggle(true);
+                return;
+            }
+            if (id && G.techSkinToggle && LOOT.some((x) => x.id === id && x.tech)) {
+                G.techSkinToggle(id, true);
                 return;
             }
             G.costume = G.costume || {};
@@ -76549,6 +76601,20 @@ function CherryAdventure() {
             G.gems = d.gems || {};
             G.costume = d.costume || { weapon: null, outfit: null };
             G.legoSkinOn = !!d.legoSkin;
+            { // ♻️ เซฟเก่า (v723-725) สวมของไฮเทคเข้าช่องจริง → ย้ายเป็นสวมทับ แล้วใส่ของดีที่สุดชิ้นอื่นในกระเป๋าคืนช่องนั้น
+                const eq = G.equip || {}, sc = (x) => (x.atk || 0) * 3 + (x.def || 0) * 3 + (x.hp || 0) + (x.crit || 0) * 2 + (x.spd || 0) + (x.eva || 0);
+                ["outfit", "weapon"].forEach((sl) => {
+                    const cur = LOOT.find((x) => x.id === eq[sl] && x.tech);
+                    if (!cur)
+                        return;
+                    const alt = (G.inv || []).map((id) => LOOT.find((x) => x.id === id)).filter((x) => x && x.slot === sl && !x.tech && !x.lego && !x.costume && !(x.req && G.player && G.player.level < x.req) && !(x.cls && x.cls !== G.cls)).sort((a, b) => sc(b) - sc(a))[0];
+                    if (!alt)
+                        return;
+                    eq[sl] = alt.id;
+                    G.costume = G.costume || {};
+                    G.costume[sl] = cur.id;
+                });
+            }
             G.danceRec = d.danceRec && typeof d.danceRec === "object" ? d.danceRec : null; // 🪩 สถิติ/จำนวนรอบเต้นวันนี้   // 🧱 ชุดตัวต่อแบบสวมแยก (เปิด/ปิด) ไม่ทับชุด/อาวุธที่ใส่อยู่
             if (G.costume && G.costume.outfit === "lego_suit") {
                 G.costume.outfit = null;
@@ -97681,6 +97747,11 @@ function CherryAdventure() {
         };
         const onVisBg = () => {
             if (document.hidden) {
+                try {
+                    if (G.saveGame && G.mode && G.mode !== "create" && G.mode !== "title")
+                        G.saveGame();
+                }
+                catch (e) { } // 💾 สลับแอป/ปิดจอ = เซฟทันที (มือถืออาจปิดแท็บทิ้งตอนอยู่เบื้องหลัง)
                 bgLast = performance.now();
                 if (!bgTimer) {
                     bgTimer = setInterval(bgTick, 250);
@@ -104820,8 +104891,17 @@ function CherryAdventure() {
                                     (ui.inv || []).includes("lego_suit") && (React.createElement("button", { onClick: () => G.legoSkinToggle(), style: { width: "100%", marginBottom: 8, padding: "7px 0", borderRadius: 10, border: "2px solid #f2cd37", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: ui.legoSkinOn ? "#fff" : "#a06a00", background: ui.legoSkinOn ? "linear-gradient(90deg,#c91a09,#e8503a)" : "#fffbea" } },
                                         "\uD83E\uDDF1 \u0E0A\u0E38\u0E14\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D (\u0E2A\u0E27\u0E21\u0E41\u0E22\u0E01): ",
                                         ui.legoSkinOn ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม")),
+                                    LOOT.filter((x) => x.tech && (ui.inv || []).includes(x.id)).map((it) => {
+                                        const on = (ui.costume || {})[it.slot] === it.id;
+                                        return (React.createElement("button", { key: it.id, onClick: () => G.techSkinToggle(it.id), style: { width: "100%", marginBottom: 8, padding: "7px 0", borderRadius: 10, border: "2px solid #40d0ff", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: on ? "#fff" : "#1a6090", background: on ? "linear-gradient(90deg,#1a60c0,#40d0ff)" : "#eefaff" } },
+                                            it.emoji,
+                                            " ",
+                                            it.name,
+                                            " (\u0E2A\u0E27\u0E21\u0E17\u0E31\u0E1A): ",
+                                            on ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม"));
+                                    }),
                                     SLOTS.map((slot) => {
-                                        const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot; });
+                                        const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot && !it.tech; });
                                         const cur = (ui.costume || {})[slot];
                                         return (React.createElement("div", { key: slot, style: { marginBottom: 8 } },
                                             React.createElement("div", { style: { fontSize: 11, fontWeight: 800, color: "#a04a80", marginBottom: 4 } },
