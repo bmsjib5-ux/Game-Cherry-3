@@ -401,7 +401,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v725";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v726";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -4244,6 +4244,9 @@ export default function CherryAdventure() {
     camera.lookAt(0, 0.8, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
+    // 🛟 จอ 3D หลุด (มือถือหน่วยความจำกราฟิกเต็ม/สลับแอป) — เดิมจอดำค้าง · ตอนนี้เซฟไว้ก่อน แล้วโหลดหน้าใหม่เมื่อเครื่องคืนจอให้
+    renderer.domElement.addEventListener("webglcontextlost", (e) => { e.preventDefault(); try { if (G.saveGame) G.saveGame(); } catch (_) {} }, false);
+    renderer.domElement.addEventListener("webglcontextrestored", () => { try { window.location.reload(); } catch (_) {} }, false);
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3)); // คมชัดขึ้น
     renderer.shadowMap.enabled = true;
@@ -9442,7 +9445,8 @@ export default function CherryAdventure() {
       return n;
     };
     G.kkSkelRegister = (g) => {                    // เรียกจาก buildMonster ทุกครั้งที่ปั้นมอนอันเดด
-      (G._kkMons = G._kkMons || []).push(g);
+      { const now = performance.now(); g.userData._regAt = now; G._kkMons = (G._kkMons || []).filter((x) => x && (x.parent || now - (x.userData._regAt || 0) < 15000)); }   // 🧹 เหมือน _qtMons
+      G._kkMons.push(g);
       if (!G.kkOn) return;
       if (G.kkSkelReady) G.kkSkelSwap(g); else G.kkSkelLoad();
     };
@@ -10040,7 +10044,10 @@ export default function CherryAdventure() {
       return n;
     };
     G.qtRegister = (g) => {                              // เรียกจาก buildMonster ทุกครั้งที่ปั้นสายพันธุ์ที่มีโมเดล
-      (G._qtMons = G._qtMons || []).push(g);
+      // 🧹 ตัดมอนที่ถูกเอาออกจากฉากไปแล้วทิ้ง — เดิมรายชื่อนี้โตไม่หยุด (ทุกด่านที่เคยไป) ค้างหน่วยความจำจนมือถือเด้งออก
+      //    ตัวที่เพิ่งปั้น (ยังไม่ทันใส่ฉาก) เก็บไว้ 15 วิ
+      { const now = performance.now(); g.userData._regAt = now; G._qtMons = (G._qtMons || []).filter((x) => x && (x.parent || now - (x.userData._regAt || 0) < 15000)); }
+      G._qtMons.push(g);
       if (!G.kkOn) return;
       if (!G.qtSwap(g)) G.qtLoad(g.userData.spId, g.userData.stage);
     };
@@ -24018,8 +24025,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const it = LOOT.find((x) => x.id === id && x.tech); if (!it) return;
         if ((G.gold || 0) < it.price) { toast(`ทองไม่พอ! ต้องมี ${it.price.toLocaleString()}💰`); return; }
         G.gold -= it.price; G.gainItem(id); if (G.sfx && G.sfx.coin) G.sfx.coin();
-        toast(`🤖 ซื้อ ${it.emoji} ${it.name} แล้ว! — สวมได้ที่หน้ากระเป๋า หรือใช้เป็นแฟชั่น 👗`);
-        setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] })); if (G.saveGame) G.saveGame();
+        setUi((u) => ({ ...u, gold: G.gold, inv: [...G.inv] }));
+        G.techSkinToggle(id, true);   // ซื้อแล้วสวมทับให้เลย (แบบชุดตัวต่อ)
       };
       G.techBox = () => {
         const price = G.TECH_BOX_PRICE;
@@ -24037,6 +24044,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (G.syncPotions) G.syncPotions(); if (G.saveGame) G.saveGame();
       };
       G.legoSkinOwned = () => (G.inv || []).includes("lego_suit");
+      // 🤖 ชุด/อาวุธไฮเทค — สวมทับแบบเดียวกับชุดตัวต่อ: ไม่เข้าช่องเสื้อ/อาวุธ (ของที่สวมจริงและค่าสถานะไม่เปลี่ยน) แค่เปลี่ยนรูปลักษณ์
+      G.techSkinToggle = (id, on) => {
+        const it = LOOT.find((x) => x.id === id && x.tech); if (!it || !(G.inv || []).includes(id)) return;
+        G.costume = G.costume || {};
+        const wear = on == null ? G.costume[it.slot] !== id : !!on;
+        G.costume[it.slot] = wear ? id : null;
+        if (G.refreshLookSlot) G.refreshLookSlot(it.slot);
+        toast(wear ? `🤖 สวม ${it.emoji} ${it.name} ทับแล้ว! (ของที่สวมจริงและค่าสถานะไม่เปลี่ยน)` : `🤖 ถอด ${it.emoji} ${it.name} แล้ว`);
+        setUi((u) => ({ ...u, costume: { ...G.costume } }));
+        if (G.syncPlayer) G.syncPlayer(); if (G.saveGame) G.saveGame();
+      };
       G.legoSkinToggle = (on) => {   // 🧱 สวม/ถอดชุดตัวต่อ — แยกจากช่องชุด: ชุด/อาวุธ/ค่าสถานะที่ใส่อยู่ยังเหมือนเดิม แค่ร่างกลายเป็นอิฐ
         if (!G.legoSkinOwned()) { toast("ยังไม่มีชุดตัวต่อ — ซื้อได้ที่ร้านตัวต่อ เมืองเลโก้ 🧱"); return; }
         G.legoSkinOn = on == null ? !G.legoSkinOn : !!on;
@@ -29569,6 +29587,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         m.traverse((o) => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.setHex(mdef.color); } });
         m.scale.setScalar(mdef.scale || 1.55); // 🐘 ตัวใหญ่กว่าตัวละคร
         m.position.set(0, 0, 0.05);
+        m.userData.heroKeep = true;   // 🐎 โมเดล 3D ซ่อนลูกของ char ทุกชิ้นที่ไม่ได้ติดป้ายนี้ — สัตว์ขี่เลยหายไปทั้งตัว
         char.add(m);
         G._mountMesh = m;
         G._rideLift = mdef.lift || 1.0; // 🪑 ความสูงอานนั่ง
@@ -32234,6 +32253,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
     const disposeObj3D = (grp) => {
       grp.traverse((o) => {
+        if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) { o.skeleton.boneTexture.dispose(); o.skeleton.boneTexture = null; }   // 🦴 เท็กซ์เจอร์กระดูกของโมเดลมีท่า — ไม่ล้าง = ค้างใน GPU ทุกตัวที่เคยเกิด
         if (o.geometry && o.geometry.dispose && !(o.userData && o.userData._outlShell) && !(o.geometry.userData && o.geometry.userData._shared)) o.geometry.dispose(); // 🖤 เปลือกเส้นขอบยืม geometry ของชิ้นจริง — เจ้าของเป็นคน dispose อยู่แล้ว
         const m = o.material;
         if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm) { if (mm.userData && mm.userData._shared) return; if (mm.map && mm.map.dispose && !(mm.map.userData && mm.map.userData._shared)) mm.map.dispose(); if (mm.dispose) mm.dispose(); } });
@@ -33271,6 +33291,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // equip an item (tap in the bag panel)
     G.equipItem = (id) => {
       if (id === "lego_suit" && G.legoSkinToggle) { G.legoSkinToggle(); return; }   // 🧱 ชุดตัวต่อสวมแยก — ไม่เข้าช่องชุด
+      if (G.techSkinToggle && LOOT.some((x) => x.id === id && x.tech)) { G.techSkinToggle(id); return; }   // 🤖 ของไฮเทคสวมทับ — ไม่เข้าช่องเสื้อ/อาวุธ
       const _r = G._equipItemRaw(id);
       { const eq = G.equip || {}; const n = Object.keys(eq).filter((k) => eq[k]).length; if (G.storyEvent) G.storyEvent("gear", n); }   // 🎓 บทสอนเล่น: นับของที่สวมอยู่
       return _r;
@@ -33475,7 +33496,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         // unique item ids owned in this slot, sorted STRONGEST first
         const owned = [...new Set(G.inv)].filter((id) => {
           const it = LOOT.find((x) => x.id === id);
-          return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]);   // 🔐 ไม่แตะของที่ล็อกไว้
+          return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]) && !it.sew && !Object.values(G.costume || {}).includes(id);   // 🔐 ไม่แตะของที่ล็อกไว้ · 👗 ของร้านตัดชุด/ตัวต่อ/ไฮเทค + ของที่สวมทับอยู่ไม่ขาย
         }).sort((a, b) => itemPower(b) - itemPower(a));
         // keep #1 (the best); for the rest, keep 1 duplicate for enhancing, sell surplus
         owned.forEach((id, rank) => {
@@ -33781,8 +33802,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       else if (slot === "outfit") G.setOutfitVisual(G.equip.outfit);
       else applyGear();
     };
+    G.refreshLookSlot = refreshLook; G.syncPlayer = () => syncPlayer();
     G.setCostume = (slot, id) => {
       if (id === "lego_suit" && G.legoSkinToggle) { G.legoSkinToggle(true); return; }
+      if (id && G.techSkinToggle && LOOT.some((x) => x.id === id && x.tech)) { G.techSkinToggle(id, true); return; }
       G.costume = G.costume || {};
       G.costume[slot] = id;
       refreshLook(slot);
@@ -47487,6 +47510,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.rolls = d.rolls || {}; G.sockets = d.sockets || {}; G.gems = d.gems || {};
       G.costume = d.costume || { weapon: null, outfit: null };
       G.legoSkinOn = !!d.legoSkin;
+      {   // ♻️ เซฟเก่า (v723-725) สวมของไฮเทคเข้าช่องจริง → ย้ายเป็นสวมทับ แล้วใส่ของดีที่สุดชิ้นอื่นในกระเป๋าคืนช่องนั้น
+        const eq = G.equip || {}, sc = (x) => (x.atk || 0) * 3 + (x.def || 0) * 3 + (x.hp || 0) + (x.crit || 0) * 2 + (x.spd || 0) + (x.eva || 0);
+        ["outfit", "weapon"].forEach((sl) => { const cur = LOOT.find((x) => x.id === eq[sl] && x.tech); if (!cur) return;
+          const alt = (G.inv || []).map((id) => LOOT.find((x) => x.id === id)).filter((x) => x && x.slot === sl && !x.tech && !x.lego && !x.costume && !(x.req && G.player && G.player.level < x.req) && !(x.cls && x.cls !== G.cls)).sort((a, b) => sc(b) - sc(a))[0];
+          if (!alt) return; eq[sl] = alt.id; G.costume = G.costume || {}; G.costume[sl] = cur.id; });
+      }
       G.danceRec = d.danceRec && typeof d.danceRec === "object" ? d.danceRec : null;   // 🪩 สถิติ/จำนวนรอบเต้นวันนี้   // 🧱 ชุดตัวต่อแบบสวมแยก (เปิด/ปิด) ไม่ทับชุด/อาวุธที่ใส่อยู่
       if (G.costume && G.costume.outfit === "lego_suit") { G.costume.outfit = null; G.legoSkinOn = true; }   // ♻️ เซฟเก่า (v712) ใส่ชุดตัวต่อเป็นแฟชั่น → ย้ายมาเป็นสวมแยก
       G.dye = d.dye || { outfit: null, weapon: null };
@@ -60954,6 +60983,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     };
     const onVisBg = () => {
       if (document.hidden) {
+        try { if (G.saveGame && G.mode && G.mode !== "create" && G.mode !== "title") G.saveGame(); } catch (e) {}   // 💾 สลับแอป/ปิดจอ = เซฟทันที (มือถืออาจปิดแท็บทิ้งตอนอยู่เบื้องหลัง)
         bgLast = performance.now();
         if (!bgTimer) { bgTimer = setInterval(bgTick, 250); G._bgFarm = true; }
       } else {
@@ -68937,8 +68967,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       🧱 ชุดตัวต่อ (สวมแยก): {ui.legoSkinOn ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม"}
                     </button>
                   )}
+                  {LOOT.filter((x) => x.tech && (ui.inv || []).includes(x.id)).map((it) => { const on = (ui.costume || {})[it.slot] === it.id; return (
+                    <button key={it.id} onClick={() => G.techSkinToggle(it.id)} style={{ width: "100%", marginBottom: 8, padding: "7px 0", borderRadius: 10, border: "2px solid #40d0ff", cursor: "pointer", fontSize: 11.5, fontWeight: 800, fontFamily: font, color: on ? "#fff" : "#1a6090", background: on ? "linear-gradient(90deg,#1a60c0,#40d0ff)" : "#eefaff" }}>
+                      {it.emoji} {it.name} (สวมทับ): {on ? "สวมอยู่ — กดเพื่อถอด" : "ถอดอยู่ — กดเพื่อสวม"}
+                    </button>); })}
                   {SLOTS.map((slot) => {
-                    const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot; });
+                    const owned = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && it.slot === slot && !it.tech; });
                     const cur = (ui.costume || {})[slot];
                     return (
                       <div key={slot} style={{ marginBottom: 8 }}>
