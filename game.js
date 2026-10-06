@@ -458,7 +458,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v728"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v729"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -17112,7 +17112,7 @@ function CherryAdventure() {
                     if (info && info.wing && G.buildRemoteWings) {
                         const wg = G.buildRemoteWings(info.wing);
                         if (wg) {
-                            wg.position.set(0, M.h * 0.64, -0.3 * M.h / 4.4);
+                            wg.position.set(0, M.h * 0.75, -0.3 * M.h / 4.4);
                             wg.scale.setScalar(M.h / 4.4 * 1.45);
                             g.add(wg);
                             (grp.userData.wingsObjs = grp.userData.wingsObjs || []).push(wg.userData.wingsObj);
@@ -77645,7 +77645,8 @@ function CherryAdventure() {
                 }
                 if (wingsGroup.visible) {
                     const hh = G._heroModel && G._heroH ? G._heroH : 0; // 🧍 โมเดล 3D สูงกว่าร่างชิบิ — ยกปีกขึ้นกลางหลังและขยายตาม
-                    const by = hh ? hh * 0.64 : 1.42, sc = hh ? hh / 4.4 * 1.45 : 0.95;
+                    const by = hh ? hh * 0.75 : 1.6, // ⬆️ ยกขึ้นไปช่วงสะบัก (เดิม 0.64 · ดูต่ำเกินไป)
+                    sc = hh ? hh / 4.4 * 1.45 : 0.95;
                     wingsGroup.position.set(0, by + Math.sin(t * 3.0) * 0.025, hh ? -0.3 * hh / 4.4 : -0.3);
                     wingsGroup.scale.setScalar(sc);
                     wingsTick(G._wingsObj, t, dt, 3.0);
