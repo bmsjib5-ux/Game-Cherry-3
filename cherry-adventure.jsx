@@ -401,7 +401,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v726";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v727";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -893,6 +893,93 @@ const DanceGame = ({ G, font, onClose }) => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+// 👗 แท็บแฟชั่นในหน้ากระเป๋า — รวมทุกอย่างที่เปลี่ยนรูปลักษณ์ไว้ที่เดียว (ไม่แตะค่าสถานะ): สวมทับ · ปีก · เซ็ตชุด · ฮีโร่ · รูปลักษณ์รายช่อง · ย้อมสี · ตู้เสื้อผ้า
+const FASHION_DYES = [null, 0xe8324a, 0xf5852e, 0xf5d24a, 0x4aa04a, 0x3a7ac0, 0x9a4ad0, 0xe86ab0, 0x2a2a32, 0xf4f4f8];
+const FashionTab = ({ G, ui, font, wide, onBack }) => {
+  const [sec, setSec] = useState("look");
+  const inv = [...new Set(ui.inv || G.inv || [])], cos = G.costume || {}, dye = G.dye || {};
+  const gold = "#f0cf7a", line = "rgba(232,128,158,0.20)";
+  const card = { background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.18))", border: `1px solid ${line}`, borderRadius: 14, padding: "9px 10px 10px", marginBottom: 9 };
+  const title = (t, sub) => (<div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 7 }}><div style={{ fontSize: 12, fontWeight: 900, color: "#ffe0ec" }}>{t}</div>{sub && <div style={{ fontSize: 9.5, color: "#c8b0c0" }}>{sub}</div>}</div>);
+  const tile = (key, on, emoji, label, onClick, col, locked, badge) => (
+    <button key={key} onClick={onClick} title={label} style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, minHeight: 62, padding: "6px 3px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+      background: on ? `radial-gradient(circle at 50% 30%, ${(col || gold)}55, rgba(0,0,0,0.45) 80%)` : "radial-gradient(circle at 50% 30%, rgba(255,255,255,0.07), rgba(0,0,0,0.35) 80%)",
+      border: `1.5px solid ${on ? gold : (col ? col + "88" : "rgba(232,128,158,0.28)")}`, boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.4), 0 0 12px rgba(240,207,122,0.45)" : "inset 0 1px 0 rgba(255,255,255,0.06)", opacity: locked ? 0.42 : 1 }}>
+      <span style={{ fontSize: 22, lineHeight: 1, filter: locked ? "grayscale(1)" : "none" }}>{emoji}</span>
+      <span style={{ fontSize: 8.5, fontWeight: 800, color: on ? gold : (col || "#d8c8d0"), lineHeight: 1.15, textAlign: "center", maxWidth: "100%", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{label}</span>
+      {on && <span style={{ position: "absolute", top: 2, right: 3, fontSize: 9, fontWeight: 900, color: "#2a2416", background: gold, borderRadius: 6, padding: "0 3px" }}>✓</span>}
+      {locked && <span style={{ position: "absolute", top: 2, right: 4, fontSize: 10 }}>🔒</span>}
+      {badge && !on && !locked && <span style={{ position: "absolute", top: 2, left: 3, fontSize: 8, fontWeight: 900, color: "#04121e", background: "#7affe0", borderRadius: 5, padding: "0 3px" }}>{badge}</span>}
+    </button>);
+  const grid = (kids) => <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${wide ? 64 : 60}px, 1fr))`, gap: 6 }}>{kids}</div>;
+  const SECS = [["look", "👕", "รูปลักษณ์"], ["over", "✨", "สวมทับ"], ["wing", "🪽", "ปีก"], ["set", "🎉", "เซ็ตชุด"], ["hero", "🦸", "ฮีโร่"], ["dye", "🎨", "ย้อมสี"], ["save", "💾", "ตู้เสื้อผ้า"]];
+  const overItems = LOOT.filter((x) => (x.tech || x.id === "lego_suit") && inv.includes(x.id));
+  const wingsOwned = G.wingsOwned || {}, activeWing = G.activeWing || "none";
+  const nowOn = [cos.outfit && LOOT.find((x) => x.id === cos.outfit), G.legoSkinOn && { emoji: "🧱", name: "ชุดตัวต่อ" }, activeWing !== "none" && WINGS.find((w) => w.id === activeWing), G.activeSet && OUTFIT_SETS.find((x) => x.id === G.activeSet), G.heroId && HERO_GALLERY.find((h) => h.id === G.heroId)].filter(Boolean);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, color: "#eee" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        {!wide && onBack && <button onClick={onBack} style={{ padding: "6px 10px", borderRadius: 10, border: `1px solid ${line}`, background: "rgba(26,34,28,0.7)", color: "#e8d8e0", fontFamily: font, fontWeight: 900, fontSize: 11.5, cursor: "pointer" }}>← กระเป๋า</button>}
+        <div style={{ fontSize: 15, fontWeight: 900, color: gold, textShadow: "0 0 10px rgba(240,207,122,0.35)" }}>👗 แฟชั่น</div>
+        <div style={{ flex: 1 }} />
+        <button onClick={() => G.setGearHidden && G.setGearHidden(!G._gearHidden)} style={{ padding: "5px 9px", borderRadius: 999, border: `1px solid ${G._gearHidden ? gold : line}`, background: G._gearHidden ? "rgba(240,207,122,0.18)" : "rgba(26,34,28,0.6)", color: G._gearHidden ? gold : "#c8b0c0", fontFamily: font, fontWeight: 800, fontSize: 10.5, cursor: "pointer" }}>🙈 {G._gearHidden ? "ซ่อนชุดอยู่" : "ซ่อนชุดที่สวม"}</button>
+      </div>
+      <div style={{ fontSize: 10, color: "#c8b0c0", marginBottom: 8 }}>เปลี่ยนเฉพาะ<b style={{ color: "#ffe0ec" }}>รูปลักษณ์</b> — ค่าสถานะยังมาจากของที่สวมจริงทั้งหมด ✨ เพื่อนเห็นลุคเดียวกัน</div>
+      {nowOn.length > 0 && <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>{nowOn.map((x, i) => <span key={i} style={{ fontSize: 10, fontWeight: 800, color: "#ffe0ec", background: "rgba(232,128,158,0.16)", border: `1px solid ${line}`, borderRadius: 999, padding: "2px 8px" }}>{x.emoji} {x.name}</span>)}</div>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 9 }}>
+        {SECS.map(([k, ic, n]) => (
+          <button key={k} onClick={() => setSec(k)} style={{ padding: "6px 9px", borderRadius: 999, cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 900, border: sec === k ? `1px solid ${gold}` : `1px solid ${line}`, background: sec === k ? "linear-gradient(135deg,rgba(224,187,98,0.92),rgba(183,141,56,0.92))" : "rgba(26,34,28,0.62)", color: sec === k ? "#2a2416" : "#c8d0c0" }}>{ic} {n}</button>
+        ))}
+      </div>
+      {sec === "look" && SLOTS.filter((sl) => sl !== "offhand").map((sl) => {
+        const owned = inv.map((id) => LOOT.find((x) => x.id === id)).filter((it) => it && it.slot === sl && !it.tech && it.id !== "lego_suit");
+        const cur = cos[sl] || null, real = (G.equip || {})[sl], realIt = real && LOOT.find((x) => x.id === real);
+        return (<div key={sl} style={card}>{title(`${SLOT_ICON[sl]} ${SLOT_NAMES[sl]}`, `${owned.length} ชิ้น`)}
+          {grid([tile("real", !cur, realIt ? realIt.emoji : "▫️", "ตามของที่สวม", () => G.setCostume(sl, null)),
+            ...owned.map((it) => tile(it.id, cur === it.id, it.emoji, it.name, () => G.setCostume(sl, cur === it.id ? null : it.id), (RARITY[it.rarity] || {}).color))])}
+        </div>);
+      })}
+      {sec === "over" && (<div style={card}>{title("✨ ชุด/อาวุธสวมทับ", "ไม่เข้าช่องจริง — ทับรูปลักษณ์อย่างเดียว")}
+        {overItems.length ? grid(overItems.map((it) => { const on = it.id === "lego_suit" ? !!G.legoSkinOn : cos[it.slot] === it.id;
+          return tile(it.id, on, it.emoji, it.name, () => (it.id === "lego_suit" ? G.legoSkinToggle() : G.techSkinToggle(it.id)), (RARITY[it.rarity] || {}).color); }))
+          : <div style={{ fontSize: 11, color: "#c8b0c0" }}>ยังไม่มี — ซื้อได้ที่ 🧱 ร้านตัวต่อ (เมืองเลโก้) และ 🤖 ร้านไฮเทค (เมืองยุค AI)</div>}
+      </div>)}
+      {sec === "wing" && (<div style={card}>{title("🪽 ปีก", `${Object.keys(wingsOwned).length} แบบ`)}
+        {grid(WINGS.map((w) => { const own = w.id === "none" || !!wingsOwned[w.id]; return tile(w.id, activeWing === w.id, w.emoji, w.name, () => (own ? G.setWings(w.id) : G.openDiamondShop && G.openDiamondShop()), null, !own); }))}
+        <div style={{ fontSize: 9.5, color: "#c8b0c0", marginTop: 6 }}>🔒 ปีกที่ยังไม่มี แตะเพื่อไปร้านเพชร 💎</div>
+      </div>)}
+      {sec === "set" && (<div style={card}>{title("🎉 เซ็ตชุด", "รวมชุดเทศกาล")}
+        {grid([tile("none", !G.activeSet, "🚫", "ไม่ใส่เซ็ต", () => G.activeSet && G.removeSet()),
+          ...OUTFIT_SETS.map((st) => { const ok = !G.collectUnlocked || G.collectUnlocked(st.unlock); return tile(st.id, G.activeSet === st.id, st.emoji, st.name, () => (G.activeSet === st.id ? G.removeSet() : G.equipSet(st.id)), null, !ok); })])}
+        <div style={{ fontSize: 9.5, color: "#c8b0c0", marginTop: 6 }}>เซ็ตชุดให้โบนัสเล็กน้อยตามที่ระบุ · 🔒 ดูวิธีปลดได้ที่สมุดสะสม</div>
+      </div>)}
+      {sec === "hero" && (<div style={card}>{title("🦸 ชุดฮีโร่ในตำนาน")}
+        {grid([tile("none", !G.heroId, "🙂", "ตัวละครปกติ", () => G.pickHero(null)),
+          ...HERO_GALLERY.map((h) => { const ok = G.heroUnlocked ? G.heroUnlocked(h.id) : false; return tile(h.id, G.heroId === h.id, h.emoji, h.name, () => (ok ? G.pickHero(h.id) : G.openDiamondShop && G.openDiamondShop()), h.c2, !ok); })])}
+      </div>)}
+      {sec === "dye" && ["weapon", "outfit", "pants", "shoes", "gloves"].map((sl) => (
+        <div key={sl} style={card}>{title(`🎨 ย้อมสี${SLOT_NAMES[sl]}`)}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+            {FASHION_DYES.map((hex, i) => { const on = (dye[sl] == null ? null : dye[sl]) === hex; return (
+              <button key={i} onClick={() => G.setDye(sl, hex)} style={{ width: 28, height: 28, borderRadius: "50%", cursor: "pointer", padding: 0, fontFamily: font, fontSize: 11, fontWeight: 900, color: "#c8b0c0", border: on ? `3px solid ${gold}` : "2px solid rgba(255,255,255,0.35)", background: hex == null ? "rgba(0,0,0,0.35)" : `#${hex.toString(16).padStart(6, "0")}` }}>{hex == null ? "✕" : ""}</button>); })}
+            <input type="color" title="เลือกสีอิสระ" value={dye[sl] != null ? `#${dye[sl].toString(16).padStart(6, "0")}` : "#ffffff"} onChange={(e) => G.setDye(sl, e.target.value)} style={{ width: 32, height: 30, border: "none", background: "none", cursor: "pointer", padding: 0 }} />
+          </div>
+        </div>))}
+      {sec === "save" && (<div style={card}>{title("💾 ตู้เสื้อผ้า", "บันทึกลุคไว้สลับใช้")}
+        <button onClick={() => G.saveWardrobe()} style={{ width: "100%", padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 900, color: "#2a2416", background: "linear-gradient(135deg,#f0cf7a,#c89a40)", marginBottom: 8 }}>💾 บันทึกลุคปัจจุบัน</button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {(G.wardrobePresets || []).map((p, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.25)", border: `1px solid ${line}`, borderRadius: 10, padding: "5px 6px 5px 10px" }}>
+              <div style={{ flex: 1, fontSize: 12, fontWeight: 800, color: "#ffe0ec" }}>👗 {p.name}</div>
+              <button onClick={() => G.applyWardrobe(i)} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: font, fontSize: 11, fontWeight: 900, color: "#2a2416", background: gold }}>สวม</button>
+              <button onClick={() => G.delWardrobe(i)} style={{ width: 26, height: 26, borderRadius: "50%", border: `1px solid ${line}`, cursor: "pointer", background: "rgba(0,0,0,0.3)", color: "#e88a9e", fontWeight: 900 }}>✕</button>
+            </div>))}
+          {!(G.wardrobePresets || []).length && <div style={{ fontSize: 10.5, color: "#c8b0c0" }}>ผสมลุคจากหมวดอื่นแล้วกด 💾 เพื่อเก็บไว้สลับใช้ทีหลัง</div>}
+        </div>
+      </div>)}
     </div>
   );
 };
@@ -68546,6 +68633,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         border: "1px solid rgba(232,128,158,0.18)", borderRadius: 16, padding: 8 }}>
                         {railBtn("char", "👤", "ตัวละคร")}
                         {railBtn("bag", "🎒", "กระเป๋า")}
+                        {railBtn("fashion", "👗", "แฟชั่น")}
                       </div>
                     )}
 
@@ -68716,9 +68804,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       );
                     })()}
 
+                    {/* 👗 แท็บแฟชั่น */}
+                    {eqTab === "fashion" && (
+                      <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box",
+                        ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
+                        <FashionTab G={G} ui={ui} font={font} wide={wide} onBack={() => setUi((u) => ({ ...u, eqTab: "bag" }))} />
+                      </div>
+                    )}
                     {/* กระเป๋า */}
-                    <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: wide && eqTab !== "bag" ? "none" : "flex", flexDirection: "column", gap: 7,
+                    <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: (wide && eqTab !== "bag") || (!wide && eqTab === "fashion") ? "none" : "flex", flexDirection: "column", gap: 7,
                       ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
+                      {!wide && (
+                        <button onClick={() => setUi((u) => ({ ...u, eqTab: "fashion" }))} style={{ width: "100%", padding: "8px 0", borderRadius: 12, border: "1px solid #f0cf7a", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 900, color: "#2a2416", background: "linear-gradient(135deg,rgba(224,187,98,0.95),rgba(183,141,56,0.95))" }}>👗 แฟชั่น — ปีก · เซ็ตชุด · ฮีโร่ · รูปลักษณ์ · ย้อมสี</button>
+                      )}
                       {/* 🗂️ แท็บประเภทของ (แบบตลาดออนไลน์) — อุปกรณ์ · ยา · อาหาร · สมุนไพร · แร่ · ปลา · ฟาร์ม */}
                       {(() => {
                         const BD = G.bagData ? G.bagData() : { pot: [], food: [], herb: [], mat: [], fish: [], farm: [] };
