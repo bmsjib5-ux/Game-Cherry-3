@@ -58,6 +58,8 @@ const BIOMES = [
     { id: "legotown", name: "เมืองเลโก้", emoji: "🧱", lvMin: 1400, lvMax: 1500, ground: 0x4b9f4a, sky: 0x7cc4f4, fog: 0xcfe6f8, pool: ["legoraptor", "legowolf", "legozombie", "legotroll", "legocrab"], tree: "none", boss: "legodragon", bossName: "มังกรตัวต่อจอมราชัน 🐉", hpMul: 1.25, atkMul: 1.25 },
     // 🤖🌃 ด่านเมืองยุค AI — Lv 1500-1600 · ตึกระฟ้ากระจกนีออน ป้ายโฮโลแกรม เสาเซิร์ฟเวอร์ สายข้อมูลไหล โดรนบินวน · มอนสเตอร์ AI/โฮโลแกรม
     { id: "aicity", name: "เมืองยุค AI", emoji: "🤖", lvMin: 1500, lvMax: 1600, ground: 0x141a2a, sky: 0x1a1240, fog: 0x2a2060, pool: ["aidrone", "aiandroid", "aiwolf", "aiglitch", "aisentinel"], tree: "none", boss: "aicore", bossName: "จิตกลาง AI โอเวอร์มายด์ 🧠", hpMul: 1.3, atkMul: 1.3, dim: true },
+    // 🏴‍☠️⚓ ด่านท่าเรือโจรสลัด — Lv 1600-1700 · เกาะทรายล้อมทะเลเปิด ท่าเรือไม้ยื่นลงทะเล เรือโจรสลัดจอดเทียบ ป้อมปืนใหญ่ หาดซากเรือ เรือผีลอยวน (Kenney Pirate Kit · CC0)
+    { id: "pirate", name: "ท่าเรือโจรสลัด", emoji: "🏴‍☠️", lvMin: 1600, lvMax: 1700, ground: 0xe2cc94, sky: 0x58b4ee, fog: 0xa8d8f2, pool: ["pirskel", "pirgunner", "pirparrot", "pircrab", "pirshark"], tree: "none", boss: "pirkraken", bossName: "คราเคนเรือผี 🐙", hpMul: 1.35, atkMul: 1.35 },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -214,6 +216,11 @@ const TERRAIN = {
     aicity: { lo: 0x10141e, hi: 0x2a3040, rock: 0x1a1e2a, hN: 4, rockK: 0.06, f: [
             { t: "wave", fx: 0.1, fz: 0.1, h: 0.02, p: 0.1, q: 0.1 }
         ], rim: { r0: 40, w: 12, h: 10, jag: 0.4, k: 6 } },
+    pirate: { lo: 0xd8c08a, hi: 0xf2e2b2, rock: 0xa8987a, hN: 5, rockK: 0.35, f: [
+            { t: "hill", x: 7, z: 21, r: 6, h: 1.8 },
+            { t: "hill", x: -21, z: -9, r: 6, h: 2.0 },
+            { t: "wave", fx: 0.11, fz: 0.09, h: 0.26, p: 0.5, q: 1.3 }
+        ], rim: { r0: 34.6, w: 3, h: -3.2, jag: 0, k: 1 } },
     ghosttown: { lo: 0x2a2a24, hi: 0x6a6656, rock: 0x3e3c38, hN: 5, rockK: 0.5, f: [
             { t: "hill", x: -22, z: 18, r: 9, h: 2.6 },
             { t: "hill", x: 21, z: -19, r: 8, h: 2.2 },
@@ -252,6 +259,7 @@ const AMBIENT = {
     antisle: { n: 52, kind: "mote", c: [0xe8d8a8, 0xc8b888], size: 0.24, fall: 0.18, sway: 1.4 }, // 🏝️ ฝุ่นทรายปลิว
     legotown: { n: 56, kind: "mote", c: [0xf2cd37, 0xc91a09, 0x0055bf, 0x4b9f4a, 0xf4f4f4], size: 0.22, fall: 0.22, sway: 1.2 }, // 🧱 เศษปุ่มตัวต่อหลากสีปลิว
     aicity: { n: 70, kind: "mote", c: [0x40e0ff, 0xff40c8, 0x8a6aff], size: 0.18, fall: -0.3, sway: 0.6, glow: 1 }, // 🤖 จุดข้อมูลเรืองแสงลอยขึ้น
+    pirate: { n: 50, kind: "mote", c: [0xffffff, 0xdff4ff, 0xfff0c8], size: 0.24, fall: 0.12, sway: 2.0 }, // 🏴‍☠️ ละอองน้ำทะเลปลิว
     ghosttown: { n: 58, kind: "mote", c: [0x9affc8, 0xb8c0d0], size: 0.26, fall: -0.08, sway: 1.1, glow: 1 }, // 🏚️ ดวงไฟวิญญาณเขียวซีด + ขี้เถ้าลอย  // 🤖 ประกายไฟเชื่อมโลหะลอย
     titan: { n: 46, kind: "mote", c: [0xcfc8a8, 0xaaa68a], size: 0.24, fall: 0.12, sway: 1.2 }, // 🗿 ฝุ่นลานประลอง
     amazon: { n: 66, kind: "mote", c: [0x9ae06a, 0xfff2a0], size: 0.28, fall: -0.16, sway: 0.7, glow: 1 }, // 🌴 เกสร/หิ่งห้อยป่า
@@ -273,6 +281,7 @@ const DETAIL = {
     antisle: { g: 1000, gc: [0x8a8a4a, 0xa09a5a, 0x7a7a42, 0xb8a86a], gs: 0.95, r: 380, rc: 0x8a8678 },
     legotown: { g: 0, gc: [0x4b9f4a], gs: 0.7, r: 0, rc: 0xa0a5a9 }, // 🧱 พื้นพลาสติกเรียบ — ไม่มีหญ้า/กรวดธรรมชาติ
     aicity: { g: 0, gc: [0x2a3040], gs: 0.7, r: 0, rc: 0x2a3040 }, // 🤖 พื้นเมืองล้วน
+    pirate: { g: 420, gc: [0x9ab86a, 0x86a858, 0xb0c070], gs: 0.85, r: 260, rc: 0xb0a084 }, // 🏴‍☠️ หญ้าริมหาด + กรวด
     ghosttown: { g: 900, gc: [0x5a5838, 0x6a6444, 0x4a4a34, 0x7a6e4a], gs: 0.9, r: 420, rc: 0x5a5852 }, // 🏚️ หญ้าแห้งตายซาก + เศษหิน   // 🤖 พื้นเหล็ก — ไม่มีหญ้า มีแต่น็อต/เศษเหล็ก
     titan: { g: 1300, gc: [0x5c7a38, 0x74924a, 0x8ba85c], gs: 0.95, r: 380, rc: 0x6e6e5e },
     amazon: { g: 1900, gc: [0x2e5c2e, 0x3f7a3a, 0x58974a, 0x76b055], gs: 1.15, r: 260, rc: 0x3a4230 },
@@ -458,7 +467,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v729"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v730"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -1356,6 +1365,7 @@ const WEATHER_POOL = {
     antisle: ["clear", "clear", "fog", "rain", "clear"],
     legotown: ["clear", "clear", "clear", "rain", "clear"],
     aicity: ["clear", "rain", "clear", "fog", "rain"],
+    pirate: ["clear", "clear", "rain", "storm", "fog"], // 🏴‍☠️ พายุกลางทะเล · หมอกเรือผี
     amazon: ["rain", "rain", "storm", "fog", "clear"],
 };
 // ============ 📖 สมุดภารกิจ — รายวัน · รายสัปดาห์ · แทร็กรางวัลฤดูกาล ============
@@ -1546,6 +1556,20 @@ Object.assign(WEAK, { aidrone: "water", aiandroid: "water", aiwolf: "water", aig
 Object.assign(PET_ELEM, { aidrone: "wind", aiandroid: "arcane", aiwolf: "earth", aiglitch: "arcane", aisentinel: "fire", aicore: "arcane" });
 Object.assign(PET_SKILL, { aidrone: "สแกนเลเซอร์", aiandroid: "เรียนรู้ท่าศัตรู", aiwolf: "เขี้ยวไซเบอร์", aiglitch: "บั๊กระบบ", aisentinel: "โล่พลังงาน", aicore: "ประมวลผลขั้นสุด" });
 Object.assign(MON_SHAPE_EXTRA, { aidrone: "wisp", aiandroid: "titan", aiwolf: "beast", aiglitch: "slime", aisentinel: "titan", aicore: "titan" });
+// 🏴‍☠️ ท่าเรือโจรสลัด (Lv 1600-1700) — ลูกเรือ/พลปืนโครงกระดูก (ร่าง KayKit + ผ้าโพกหัว/หมวกสามมุม) · นกแก้ว · ปู · ฉลาม · บอสคราเคนเรือผี
+Object.assign(SPECIES, {
+    pirskel: { name: "ลูกเรือโครงกระดูก", emoji: "💀", color: 0xe8e0c8, hp: 1000, atk: 102, catch: 0.016, tier: 8, desc: "ลูกเรือโจรสลัดที่ตายกลางทะเล ผ้าโพกหัวแดงยังไม่ยอมหลุด ลุกขึ้นมาขนสมบัติทุกคืน", weak: "light" },
+    pirgunner: { name: "พลปืนโครงกระดูก", emoji: "🏴‍☠️", color: 0x2a2a30, hp: 1180, atk: 110, catch: 0.012, tier: 8, desc: "หัวหน้าพลปืนใหญ่สวมหมวกสามมุม สั่งยิงใส่ทุกคนที่เข้าใกล้ท่าเรือ", weak: "light" },
+    pirparrot: { name: "นกแก้วโจรสลัด", emoji: "🦜", color: 0xe0302a, hp: 940, atk: 98, catch: 0.02, tier: 8, desc: "นกแก้วปากจัดของกัปตัน บินโฉบจิกเหรียญทองจากกระเป๋านักเดินทาง", animal: "bird", weak: "ice" },
+    pircrab: { name: "ปูก้ามดาบท่าเรือ", emoji: "🦀", color: 0xc8682a, hp: 1080, atk: 104, catch: 0.016, tier: 8, desc: "ปูยักษ์ที่ใช้ก้ามเหมือนดาบโค้ง เฝ้าลังสมบัติริมท่าไม่ให้ใครแตะ", animal: "beast", weak: "wind" },
+    pirshark: { name: "ฉลามแผลเป็น", emoji: "🦈", color: 0x4a5a64, hp: 1060, atk: 112, catch: 0.014, tier: 8, desc: "ฉลามเฒ่าแผลเต็มตัว ตามกลิ่นเลือดขึ้นมาถึงหาด กัดแล้วไม่ยอมปล่อย", animal: "fish", weak: "wind" },
+    pirkraken: { name: "คราเคนเรือผี", emoji: "🐙", color: 0x2ab88a, hp: 2200, atk: 124, catch: 0.005, tier: 8, desc: "อสูรหมึกยักษ์ผู้เฝ้าเรือผี โผล่จากทะเลลึกมาปกป้องสมบัติของกัปตันที่ตายไปแล้ว", weak: "light" },
+});
+Object.assign(EVOLVED, { pirskel: "ต้นหนโครงกระดูก", pirgunner: "กัปตันปืนใหญ่ทมิฬ", pirparrot: "นกแก้วราชันทะเล", pircrab: "ปูจอมดาบสมุทร", pirshark: "เมกาโลดอนแผลเป็น", pirkraken: "คราเคนจ้าวสมุทรผี" });
+Object.assign(WEAK, { pirskel: "light", pirgunner: "light", pirparrot: "ice", pircrab: "wind", pirshark: "wind", pirkraken: "light" });
+Object.assign(PET_ELEM, { pirskel: "earth", pirgunner: "fire", pirparrot: "wind", pircrab: "water", pirshark: "water", pirkraken: "arcane" });
+Object.assign(PET_SKILL, { pirskel: "ฟันดาบโค้ง", pirgunner: "ระดมยิงปืนใหญ่", pirparrot: "จิกขโมยทอง", pircrab: "ก้ามดาบหนีบ", pirshark: "งับกลิ่นเลือด", pirkraken: "หนวดยักษ์ดึงลงทะเล" });
+Object.assign(MON_SHAPE_EXTRA, { pirskel: "titan", pirgunner: "titan", pirparrot: "bird", pircrab: "crab", pirshark: "shark", pirkraken: "octopus" });
 // 🏚️ เมืองร้าง (Lv 1200-1300) — ใช้โมเดลที่มีอยู่แล้วย้อมสีใหม่ (ไม่โหลดไฟล์เพิ่ม)
 Object.assign(SPECIES, {
     ghoul: { name: "ชาวเมืองผีดิบ", emoji: "🧟", color: 0x8a8a78, hp: 760, atk: 70, catch: 0.018, tier: 8, desc: "อดีตชาวเมืองที่ฟื้นจากหลุมศพ เดินลากขาตามหาบ้านที่ไม่มีวันกลับไปได้", weak: "light" },
@@ -2649,6 +2673,7 @@ const ORE_TABLE = {
     antisle: { ironOre: 120, crystal: 54, earthEss: 66, windEss: 40, dragonScale: 18 },
     legotown: { ironOre: 110, crystal: 62, earthEss: 60, windEss: 48, dragonScale: 20 },
     aicity: { ironOre: 130, crystal: 70, earthEss: 50, windEss: 56, dragonScale: 22 },
+    pirate: { ironOre: 140, crystal: 76, earthEss: 60, windEss: 64, dragonScale: 24 },
     titan: { ironOre: 62, crystal: 56, earthEss: 74, dragonScale: 22 },
     amazon: { ironOre: 70, crystal: 38, earthEss: 70, windEss: 42 },
 };
@@ -2665,6 +2690,7 @@ const ORE_LOOK = {
     antisle: { rock: 0x8a8070, gem: 0xffb84a },
     legotown: { rock: 0xa0a5a9, gem: 0xfe8a18 },
     aicity: { rock: 0x2a3040, gem: 0x40e0ff },
+    pirate: { rock: 0xb8a888, gem: 0xffd060 }, // 🏴‍☠️ ประกายทองสมบัติ
 };
 // ---------- 🍳 ครัว — เอาผลผลิตฟาร์ม ปลา และแร่มาทำอาหาร ได้บัฟติดตัวตามเวลาจริง ----------
 // need: produce=พืชผลจากไร่ · goods=ของแปรรูป/ผลไม้ · fish=ปลาที่ตกได้ · mats=วัตถุดิบคราฟต์
@@ -2818,6 +2844,7 @@ const HERB_W = {
     antisle: { leaf: 48, root: 60, flower: 30, mush: 40, lotus: 14 },
     legotown: { leaf: 50, root: 40, flower: 56, mush: 30, lotus: 18 },
     aicity: { leaf: 40, root: 40, flower: 40, mush: 50, lotus: 20 },
+    pirate: { leaf: 50, root: 44, flower: 46, mush: 26, lotus: 26 },
     titan: { leaf: 44, root: 72, flower: 38, mush: 44, lotus: 18 },
     amazon: { leaf: 88, root: 60, flower: 58, mush: 62, lotus: 24 },
 };
@@ -2938,6 +2965,7 @@ const FISH_SPOT = {
     antisle: { kind: "shore", x: -10.0, z: 12.0, r: 3.4, lv: 25, bonus: 2.6, name: "ลากูนเกาะร้าง", water: 0x2aa8c8, rim: 0xe0d0a0, deco: 0x8ae0e0 },
     legotown: { kind: "pond", x: 11.0, z: 12.5, r: 3.2, lv: 26, bonus: 2.8, name: "บ่อน้ำตัวต่อสีฟ้า", water: 0x36aebf, rim: 0xf2cd37, deco: 0x4b9f4a },
     aicity: { kind: "basin", x: -11.0, z: 12.0, r: 3.2, lv: 27, bonus: 3.0, name: "สระหล่อเย็นเซิร์ฟเวอร์", water: 0x30d0ff, rim: 0x3a4050, deco: 0x40e0ff },
+    pirate: { kind: "shore", x: 10.0, z: -12.0, r: 3.4, lv: 28, bonus: 3.2, name: "อ่าวลับโจรสลัด", water: 0x1a8ac8, rim: 0xead9a8, deco: 0x8ae0e0 },
     ghosttown: { kind: "basin", x: 9.5, z: -12.5, r: 3.2, lv: 24, bonus: 2.4, name: "บ่อน้ำเก่ากลางเมืองร้าง", water: 0x3a4e4c, rim: 0x5a5650, deco: 0x9a8ae8 },
     robot: { kind: "basin", x: -9.0, z: 12.5, r: 3.4, lv: 22, bonus: 2.2, name: "บ่อหล่อเย็นเตาปฏิกรณ์", water: 0x2ad0e8, rim: 0x5a6070, deco: 0x6ad8ff },
     titan: { kind: "basin", x: 8.0, z: 13.0, r: 3.4, lv: 18, bonus: 1.7, name: "อ่างหินไททัน", water: 0x3a7a6a, rim: 0x5a5040, deco: 0xa8c890 },
@@ -2999,9 +3027,9 @@ const fishOdds = (lv, k, spotBonus) => {
 // (ข้ามสายต้องใช้ 📜 ใบวาร์ป หรือแท่นมิติเหมือนเดิม)
 // 🗺️ โลกเดียวต่อกันหมด — เดินจากด่าน 1 ไปถึงด่าน 13 ได้โดยไม่ต้องวาร์ป
 // ทางเดินงูเลื้อยเป็นแถว ๆ ตามกลุ่มที่ตั้งไว้ (1+2+3 / 4+5+6 / 7+8+9 / 10+11 / 12+13)
-const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle", "legotown", "aicity"];
+const WORLD_CHAIN = ["meadow", "desert", "snow", "cave", "volcano", "sky", "hell", "heaven", "moon", "candy", "beach", "titan", "amazon", "robot", "ghosttown", "antisle", "legotown", "aicity", "pirate"];
 //                          1→2  2→3  3→4  4→5  5→6  6→7  7→8  8→9  9→10 10→11 11→12 12→13
-const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W", "S", "E"]; // 17→18 เมืองเลโก้ → เมืองยุค AI (ทิศตะวันออก)   // 16→17 เกาะร้าง → เมืองเลโก้ (ทิศใต้)   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
+const WORLD_LINKS = ["E", "E", "S", "W", "W", "S", "E", "E", "S", "W", "S", "E", "S", "W", "W", "S", "E", "E"]; // 18→19 เมืองยุค AI → ท่าเรือโจรสลัด (ทิศตะวันออก)   // 17→18 เมืองเลโก้ → เมืองยุค AI (ทิศตะวันออก)   // 16→17 เกาะร้าง → เมืองเลโก้ (ทิศใต้)   // 15→16 เมืองร้าง → เกาะร้าง (ทิศตะวันตก)   // 14→15 อาณาจักรหุ่นยนต์ → เมืองร้าง (ทิศตะวันตก)   // 13→14 อเมซอน → อาณาจักรหุ่นยนต์ (ทิศใต้)
 // แถว/โซนของโลก — เอาไว้โชว์ว่าตอนนี้อยู่ช่วงไหนของเส้นทาง
 const ROUTES = [
     { id: "r1", name: "แถวต้นทาง", emoji: "🌸", biomes: ["meadow", "desert", "snow"] },
@@ -3014,6 +3042,7 @@ const ROUTES = [
     { id: "r8", name: "แถวเกาะร้าง", emoji: "🏝️", biomes: ["antisle"] },
     { id: "r9", name: "แถวเมืองเลโก้", emoji: "🧱", biomes: ["legotown"] },
     { id: "r10", name: "แถวเมืองยุค AI", emoji: "🤖", biomes: ["aicity"] },
+    { id: "r11", name: "แถวท่าเรือโจรสลัด", emoji: "🏴‍☠️", biomes: ["pirate"] },
 ];
 const ROUTE_OF = {};
 ROUTES.forEach((r) => r.biomes.forEach((b, i) => (ROUTE_OF[b] = { route: r, i })));
@@ -3082,6 +3111,7 @@ const BORDER = {
     ghosttown: { kind: "wall", a: 0x5a544a, b: 0x3a3630 },
     legotown: { kind: "wall", a: 0xc91a09, b: 0xf2cd37 }, // 🧱 กำแพงอิฐเลโก้แดง-เหลือง
     aicity: { kind: "wall", a: 0x1a1e2a, b: 0x40e0ff }, // 🤖 กำแพงเหล็กดำขอบนีออนฟ้า
+    pirate: { kind: "sea", a: 0x1f7fb5, b: 0x8a8070, c: 0xead9a8 }, // 🏴‍☠️ ทะเลเปิดล้อมเกาะถึงขอบฟ้า + ฟองคลื่นริมหาด
     antisle: { kind: "river", a: 0x2a9ac8, b: 0x7ad0d8, c: 0xe0d0a0 }, // 🏝️ ทะเลล้อมเกาะ   // 🏚️ กำแพงหินเก่าผุพัง   // 🤖 กำแพงเหล็กแผ่นหนา + ป้อม
     titan: { kind: "wall", a: 0x7a7060, b: 0x5a5040 },
     amazon: { kind: "forest", a: 0x2a5a2a, b: 0x4a8a3a, c: 0x5a4a30 },
@@ -13449,10 +13479,36 @@ function CherryAdventure() {
         // 💀 KayKit Skeletons (CC0 — Kay Lousberg) — มอนสเตอร์อันเดดใช้โมเดลมีโครงกระดูกจริง + อนิเมชัน
         //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
         //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
-        const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage", skelguard: "Skeleton_Warrior" }; // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
+        const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage", skelguard: "Skeleton_Warrior", pirskel: "Skeleton_Minion", pirgunner: "Skeleton_Minion" }; // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
         const KK_SKEL_H = 1.5;
         // 🎨 ย้อมสีเฉพาะสายพันธุ์ (ใช้ร่างเดียวกันแต่คนละด่าน) — hue = ย้อม texture รักษาลายเดิม · glow = เรืองแสงอ่อน ๆ
         const KK_SKEL_TINT = { skelguard: { hue: [168, 0.55, 1.45, 0.92, 0, 0.25], glow: 0x10483a, gi: 0.7 } }; // 🏚️ ทหารโครงกระดูกเมืองร้าง — กระดูกเขียวหยกผีสิง
+        // 🏴‍☠️ ของบนหัวโครงกระดูกโจรสลัด — ติดกระดูก head (ร่าง Minion หัวโล่ง ไม่มีฮู้ด/หมวกเหล็ก)
+        const KK_SKEL_ACC = { pirskel: "bandana", pirgunner: "tricorn" };
+        const kkAccLib = {};
+        const kkSkelAcc = (kind) => {
+            if (kkAccLib[kind])
+                return kkAccLib[kind].clone(); // แม่แบบสร้างครั้งเดียว — clone แชร์ geometry/วัสดุ (ไม่รั่วตอนมอนเกิดใหม่)
+            const M = kkAccLib._m || (kkAccLib._m = { black: new THREE.MeshStandardMaterial({ color: 0x1e1c24, roughness: 0.85 }), gold: new THREE.MeshStandardMaterial({ color: 0xe8b840, metalness: 0.6, roughness: 0.35 }), red: new THREE.MeshStandardMaterial({ color: 0xc81e28, roughness: 0.85 }), bone: new THREE.MeshStandardMaterial({ color: 0xf2ecdc, roughness: 0.6 }) });
+            Object.values(M).forEach((m) => { m.userData._shared = true; });
+            const g = new THREE.Group();
+            const add = (geo, m, x, y, z, rx, ry, rz, sx, sy, sz) => { geo.userData = Object.assign(geo.userData || {}, { _shared: true }); const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.set(rx || 0, ry || 0, rz || 0); if (sx)
+                o.scale.set(sx, sy, sz); o.castShadow = true; g.add(o); };
+            if (kind === "tricorn") { // 🎩 หมวกสามมุมดำขลิบทอง + หัวกะโหลกเล็กหน้าหมวก
+                add(new THREE.CylinderGeometry(0.66, 0.66, 0.07, 3), M.black, 0, 0, 0, 0, Math.PI, 0);
+                add(new THREE.CylinderGeometry(0.31, 0.39, 0.36, 12), M.black, 0, 0.2, 0);
+                add(new THREE.CylinderGeometry(0.395, 0.395, 0.06, 12), M.gold, 0, 0.06, 0);
+                add(new THREE.SphereGeometry(0.075, 8, 6), M.bone, 0, 0.22, 0.34);
+            }
+            else { // 🧣 ผ้าโพกหัวแดงผูกปมด้านหลัง + ต่างหูทอง
+                add(new THREE.SphereGeometry(0.47, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), M.red, 0, 0, 0, 0, 0, 0, 1, 0.75, 1.05);
+                add(new THREE.BoxGeometry(0.1, 0.32, 0.05), M.red, 0.08, -0.1, -0.46, 0.3, 0, 0.25);
+                add(new THREE.BoxGeometry(0.1, 0.28, 0.05), M.red, -0.08, -0.12, -0.46, 0.3, 0, -0.3);
+                add(new THREE.TorusGeometry(0.06, 0.018, 6, 12), M.gold, 0.45, -0.25, 0, 0, Math.PI / 2, 0);
+            }
+            kkAccLib[kind] = g;
+            return g.clone();
+        };
         const kkSkelTintCache = {}; // ความสูงในเกม (ตัวละครผู้เล่นสูงราว 2)
         const KK_ONCE = ["Hit_A", "Death_A", "Throw"];
         const kkSkelLib = {};
@@ -13625,6 +13681,18 @@ function CherryAdventure() {
             node.position.y = -src.y0 * sc; // ฝ่าเท้าแตะพื้น
             g.add(node);
             g.userData.kkSkelNode = node;
+            {
+                const ACC = KK_SKEL_ACC[g.userData.spId];
+                if (ACC) {
+                    const hb = node.getObjectByName("head");
+                    if (hb) {
+                        const a = kkSkelAcc(ACC);
+                        a.position.set(0, ACC === "tricorn" ? 0.74 : 0.44, ACC === "tricorn" ? -0.02 : 0);
+                        a.scale.setScalar(ACC === "tricorn" ? 1.45 : 1.22);
+                        hb.add(a);
+                    }
+                }
+            } // 🏴‍☠️ หมวก/ผ้าโพกโจรสลัด
             if (body)
                 body.visible = false; // ซ่อนตัวที่ปั้นเอง (เส้นขอบ/หน้า/ตัวอยู่ในนี้ทั้งก้อน)
             if (G.unfreezeStatic)
@@ -13780,6 +13848,11 @@ function CherryAdventure() {
             aiglitch: { f: "Blob_GreenBlob", c: "blob", by: "h", size: 1.8, holo: 0xff40c8 },
             aisentinel: { f: "mech/Mech_George", c: "big", by: "h", size: 3.1, hit: "HitRecieve_1", atk: "Punch", tint: { Main: 0x1e2028, Grey: 0x3a3e48, LightGrey: 0x6a707c, Accent: 0xff2a3a }, emis: { Accent: 0xff2a3a } },
             aicore: { f: "Big_Alien", c: "big", by: "h", size: 3.9, holo: 0x40e0ff },
+            // 🏴‍☠️ มอนสเตอร์ท่าเรือโจรสลัด (ลูกเรือ/พลปืนโครงกระดูกใช้ร่าง KayKit — ดู KK_SKEL)
+            pirparrot: { f: "Flying_Pigeon", c: "fly", size: 1.9, y: 0.9, hue: [2, 0.85, 1.15, 0.9, 1] },
+            pircrab: { f: "Crab", size: 2.4, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle", hue: [24, 0.7, 0.92] },
+            pirshark: { f: "Shark", size: 2.7, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim", tint: { Top: 0x4a5862, Bottom: 0xe2ddcc } },
+            pirkraken: { f: "Flying_Squidle", c: "fly", size: 5.2, y: 0.7, hue: [160, 0.6, 0.85], gloss: [0.1, 0.5, 0x0a3a2a] },
             ghoul: { f: "Zombie", size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                 tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } }, // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
             wraith: { f: "Flying_Ghost", c: "fly", size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] }, // 🏚️ วิญญาณม่วงหม่น
@@ -40086,6 +40159,536 @@ function CherryAdventure() {
                 aiAnim.botTick(dt, t); // 🤖🚶 ชาวเมืองหุ่นยนต์
             aiAnim.drones.forEach((d) => { const a = d.ph + t * d.sp; d.g.position.set(d.cx + Math.cos(a) * d.r, d.y + Math.sin(t * 1.3 + d.ph) * 0.6, d.cz + Math.sin(a) * d.r); d.g.rotation.y = -a; d.lt.visible = Math.sin(t * 6 + d.ph) > 0; });
         };
+        // 🏴‍☠️ PIRATE HARBOR DECOR — ท่าเรือโจรสลัด · โมเดล Kenney Pirate Kit 2.1 (CC0) รวมไว้ไฟล์เดียว assets/kenney/pirate/pirate_kit.glb (texture สีแผ่นเดียว 512²)
+        //    โหลดตอนเข้าแมพครั้งแรก (ยังไม่เคยไป = ไม่กินหน่วยความจำ) · ท่าเรือไม้ 2 สายยื่นลงทะเล + เรือโจรสลัดจอดเทียบ · ประภาคาร · หอคอยยาม
+        //    ป้อมปืนใหญ่ฝั่งตะวันออก · หาดซากเรืออับปาง + หลุมสมบัติฝั่งใต้ · หมู่บ้านชาวประมงฝั่งตะวันตกเฉียงเหนือ · ต้นมะพร้าว · นกนางนวลบินวน · เรือผีลอยกลางทะเล
+        const pirDecor = new THREE.Group();
+        pirDecor.visible = false;
+        scene.add(pirDecor);
+        const pirColliders = [], pirAnim = { ships: [], gulls: [], chests: [], beams: [], lamps: [], ghost: null };
+        G.pirDecor = pirDecor;
+        G.pirColliders = pirColliders;
+        let pirLoading = null, pirGl = null, pirBuilt = false;
+        const pirIsHere = () => (BIOMES[G.curBiome || 0] || {}).id === "pirate" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone; // ในเมือง/บ้าน/ฟาร์ม พื้นถูกปรับราบ — ห้ามสร้างตอนนั้น (ความสูงจะผิด)
+        const pirBuild = (gl) => {
+            if (pirBuilt)
+                return;
+            pirBuilt = true;
+            const lib = {};
+            let mat = null;
+            gl.scene.children.forEach((o) => { lib[o.name] = o; });
+            gl.scene.traverse((o) => {
+                if (!o.isMesh)
+                    return;
+                if (!mat) { // ทุกชิ้นใช้วัสดุเดียวกัน (texture สีแผ่นเดียว) — แชร์ไว้ ห้ามถูกล้างตอนลบของ
+                    mat = o.material;
+                    mat.metalness = 0;
+                    mat.roughness = 0.88;
+                    mat.color.setScalar(1.06);
+                    mat.userData.vivid = true;
+                    mat.userData._shared = true;
+                    if (mat.map) {
+                        mat.map.anisotropy = 4;
+                        mat.map.userData = Object.assign(mat.map.userData || {}, { _shared: true });
+                    }
+                }
+                o.material = mat;
+                o.castShadow = true;
+                o.receiveShadow = true;
+                o.geometry.userData = Object.assign(o.geometry.userData || {}, { _shared: true });
+            });
+            const TAU = Math.PI * 2, R = FIELD_R, WL = -0.12; // WL = ระดับผิวน้ำทะเล (ขอบแมพ)
+            const pol = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+            const tan = (a) => [-Math.sin(a), Math.cos(a)]; // ทิศเลียบฝั่ง ณ มุม a
+            const hAt = (x, z) => (Math.hypot(x, z) < R + 0.6 ? terrainAt(x, z) : WL);
+            const mk = (name, x, y, z, ry, s) => { const src = lib[name]; if (!src)
+                return null; const o = src.clone(); o.position.set(x, y, z); o.rotation.y = ry || 0; o.scale.setScalar(s || 1); return o; };
+            // ชิ้นใหญ่ตั้งเดี่ยวบนบก (ซ่อนได้ตอนสู้ใกล้ ๆ) — y = สูงจากพื้น · snapWorldDecor บวกความสูงพื้นให้ทีหลัง
+            const big = (name, x, z, ry, s, cr, y) => { const o = mk(name, x, y || 0, z, ry, s); if (!o)
+                return null; pirDecor.add(o); if (cr)
+                pirColliders.push({ x, z, r: cr }); return o; };
+            // ของชิ้นเล็กเตี้ย ๆ — รวมเป็นก้อนเดียวต่อโซน (ลด draw call) · ใส่ความสูงพื้นไว้ในตัวเลย
+            const chunks = {};
+            const small = (zone, name, x, z, ry, s, cr, y, rx, rz) => { const g = chunks[zone] || (chunks[zone] = new THREE.Group()); const o = mk(name, x, (y || 0) + hAt(x, z), z, ry, s); if (!o)
+                return null; if (rx)
+                o.rotation.x = rx; if (rz)
+                o.rotation.z = rz; g.add(o); if (cr)
+                pirColliders.push({ x, z, r: cr }); return o; };
+            const sea = new THREE.Group();
+            sea.userData.noHide = true;
+            pirDecor.add(sea); // ของกลางทะเล — วางอิงจุดกลางแมพ (พื้นราบ) จึงไม่ถูกดันตามความสูงพื้น
+            const occ = [], reserve = (x, z, r) => occ.push({ x, z, r });
+            const gateAng = ["town", "home", "ranch"].map((k) => Math.atan2(GATE_POS[k].z, GATE_POS[k].x));
+            const angD = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+            const lake = FISH_SPOT.pirate;
+            const okAt = (x, z, pad) => {
+                const d = Math.hypot(x, z), a = Math.atan2(z, x);
+                if (d < 21 + pad || d > R - 3 - pad || inKeepOut(x, z))
+                    return false;
+                if (x < -12 && Math.abs(z) < 6 + pad)
+                    return false; // 🛣️ ทางไปเมืองยุค AI (ตะวันตก)
+                if (gateAng.some((g) => angD(a, g) < 0.11 + pad / Math.max(8, d)))
+                    return false; // 🚪 แนวทางไปประตูเมือง/บ้าน/ฟาร์ม
+                if (["town", "home", "ranch"].some((k) => Math.hypot(x - GATE_POS[k].x, z - GATE_POS[k].z) < 8 + pad))
+                    return false;
+                if (lake && Math.hypot(x - lake.x, z - lake.z) < lake.r * 1.45 + 2 + pad)
+                    return false;
+                return !occ.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad) && !pirColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad);
+            };
+            const spot = (pad, r0, r1, a0, aw) => { for (let k = 0; k < 60; k++) {
+                const a = a0 != null ? a0 + (Math.random() - 0.5) * aw : Math.random() * TAU, r = r0 + Math.random() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                if (okAt(x, z, pad))
+                    return [x, z];
+            } return null; };
+            const rnd = (a, b) => a + Math.random() * (b - a), pick = (arr) => arr[(Math.random() * arr.length) | 0];
+            const postM = new THREE.MeshLambertMaterial({ color: 0x6a4a2a }), lampM = new THREE.MeshStandardMaterial({ color: 0xffe6a0, emissive: 0xffb040, emissiveIntensity: 0.5 });
+            pirAnim.lampM = lampM;
+            const deckTop = (x, z) => Math.max(hAt(x, z) + 0.1, WL + 0.48); // ระดับพื้นท่าเรือ (บนบก = เหนือพื้นนิดเดียว · ในน้ำ = เหนือผิวน้ำ)
+            const postG = new THREE.CylinderGeometry(0.13, 0.17, 1, 6);
+            const lantern = (zone, x, z, h) => {
+                const g = chunks[zone] || (chunks[zone] = new THREE.Group()), y0 = Math.max(hAt(x, z), WL + 0.2);
+                const p = new THREE.Mesh(postG, postM);
+                p.position.set(x, y0 + h / 2, z);
+                p.scale.set(0.8, h, 0.8);
+                g.add(p);
+                const l = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.42, 0.34), lampM);
+                l.position.set(x, y0 + h + 0.2, z);
+                g.add(l);
+            };
+            // ⚓ ท่าเรือไม้ยื่นลงทะเล — บนบกใช้แผ่นพื้นราบ (เดินขึ้นได้) · เลยฝั่งออกไปใช้แผ่นพื้นมีขา ปักลงน้ำ · ปลายสุดเป็นลานกว้าง
+            const PS = 1.5, STEP = 2.5 * PS * 0.98;
+            const pier = (zone, a, r0, r1, wide) => {
+                const [dx, dz] = pol(a, 1), [tx, tz] = tan(a), ry = Math.atan2(dx, dz);
+                for (let r = r0; r <= r1; r += STEP) {
+                    const head = r > r1 - STEP * (wide ? 1.5 : 0.5);
+                    for (let k = head ? -1 : 0; k <= (head ? 1 : 0); k++) {
+                        const x = dx * r + tx * k * STEP, z = dz * r + tz * k * STEP, top = deckTop(x, z);
+                        const onLand = Math.hypot(x, z) < R - 1.2;
+                        const g = chunks[zone] || (chunks[zone] = new THREE.Group());
+                        const o = onLand ? mk("platform", x, top - 0.23 * PS, z, ry, PS) : mk(k ? "structure-platform" : "structure-platform-dock", x, top - (k ? 0.93 : 1.31) * PS, z, ry, PS);
+                        if (o)
+                            g.add(o);
+                        if (!onLand)
+                            for (const s of [-1, 1]) {
+                                const px = x + tx * s * 1.55 * PS * 0.5 + dx * 0.9, pz = z + tz * s * 1.55 * PS * 0.5 + dz * 0.9;
+                                const p = new THREE.Mesh(postG, postM);
+                                p.position.set(px, top - 1.6, pz);
+                                p.scale.set(1, 3.2, 1);
+                                g.add(p);
+                            }
+                        reserve(x, z, 2.2);
+                    }
+                }
+            };
+            // ⛵ เรือจอดลอยน้ำ (โยกตามคลื่นใน pirTick) — ใส่ในกลุ่ม sea
+            const ship = (name, x, z, ry, s, sink) => {
+                const box = new THREE.Group();
+                box.position.set(x, 0, z);
+                box.rotation.order = "YXZ";
+                box.rotation.y = ry;
+                sea.add(box);
+                const o = mk(name, 0, WL - (sink == null ? 0.9 : sink) * s, 0, 0, s);
+                if (o)
+                    box.add(o);
+                pirAnim.ships.push({ g: box, y: 0, ph: Math.random() * 6, w: 0.55 + Math.random() * 0.25, amp: 0.1 + s * 0.02, roll: 0.022 + Math.random() * 0.014 });
+                return box;
+            };
+            const aN = -Math.PI / 2, aS = Math.PI / 2, aE = 0, aNW = -2.42;
+            // ===== ⚓ โซน 1: ท่าเรือหลักฝั่งเหนือ =====
+            const aA = aN - 0.13, aB = aN + 0.17;
+            pier("harbor", aA, 52, 86, true);
+            pier("harbor", aB, 54, 82, true);
+            {
+                const [x, z] = pol(aA, 82.5), [tx, tz] = tan(aA);
+                ship("ship-pirate-large", x - tx * 7.4, z - tz * 7.4, Math.atan2(...pol(aA, 1)), 1.85, 0.95);
+            }
+            {
+                const [x, z] = pol(aB, 80), [tx, tz] = tan(aB);
+                ship("ship-pirate-medium", x + tx * 7.0, z + tz * 7.0, Math.atan2(...pol(aB, 1)) + Math.PI, 1.7, 0.95);
+            }
+            {
+                const [x, z] = pol(aN + 0.52, 97);
+                ship("ship-pirate-small", x, z, aN + 0.52 + 0.9, 1.6, 0.95);
+            }
+            {
+                const [x, z] = pol(aN - 0.34, 84);
+                ship("boat-row-large", x, z, 0.6, 1.4, 0.25);
+            }
+            {
+                const [x, z] = pol(aA, 70), [tx, tz] = tan(aA);
+                ship("boat-row-small", x + tx * 3.6, z + tz * 3.6, Math.atan2(...pol(aA, 1)), 1.35, 0.25);
+            }
+            {
+                const [x, z] = pol(aB, 69.5), [tx, tz] = tan(aB);
+                ship("boat-row-small", x - tx * 3.6, z - tz * 3.6, Math.atan2(...pol(aB, 1)) + 0.3, 1.35, 0.25);
+            }
+            // ของบนท่า: ถัง ลัง กองลูกปืนใหญ่ ปืนใหญ่ ธง ตะเกียง
+            [[aA, 60], [aA, 66], [aA, 82], [aB, 62], [aB, 78]].forEach(([a, r], i) => {
+                const [x, z] = pol(a, r), [tx, tz] = tan(a), sd = i % 2 ? 1 : -1;
+                const bx = x + tx * sd * 1.25, bz = z + tz * sd * 1.25, cx = x - tx * sd * 1.3, cz = z - tz * sd * 1.3;
+                small("harbor", "barrel", bx, bz, rnd(0, 6), 1.0, 0, deckTop(bx, bz) - hAt(bx, bz));
+                small("harbor", i % 2 ? "crate" : "crate-bottles", cx, cz, rnd(0, 6), 1.0, 0, deckTop(cx, cz) - hAt(cx, cz));
+            });
+            [[aA, 54.5], [aB, 56.5], [aA, 84.5], [aB, 80.5]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); lantern("harbor", x + tx * 1.7, z + tz * 1.7, 2.6); lantern("harbor", x - tx * 1.7, z - tz * 1.7, 2.6); });
+            [[aA, 85], [aB, 81]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); const fx = x + tx * 3.4, fz = z + tz * 3.4; const f = mk("flag-pirate-high", fx, deckTop(fx, fz), fz, Math.random() * 6, 1.4); if (f)
+                sea.add(f); });
+            // โกดัง/เพิงหลังคามุงจากริมฝั่ง + กองสินค้า
+            [[aN - 0.02, 50], [aN + 0.07, 49], [aN - 0.27, 54], [aN + 0.32, 55]].forEach(([a, r], i) => {
+                const [x, z] = pol(a, r);
+                big("structure-roof", x, z, a + Math.PI / 2 + rnd(-0.3, 0.3), 1.55, 2.3);
+                reserve(x, z, 4.2);
+                for (let k = 0; k < 4; k++) {
+                    const [ox, oz] = pol(rnd(0, TAU), rnd(3.2, 4.6));
+                    small("harbor", pick(["barrel", "crate", "crate-bottles", "barrel"]), x + ox, z + oz, rnd(0, 6), rnd(0.9, 1.1), 0.7);
+                }
+            });
+            {
+                const [x, z] = pol(aN - 0.45, 62);
+                big("tower-complete-large", x, z, 0.4, 1.45, 2.8);
+                reserve(x, z, 5); // 🗼 ประภาคาร — โคมหมุนส่องทะเล
+                const bc = new THREE.Group();
+                bc.position.set(x, 0, z);
+                bc.userData.noHide = true;
+                bc.userData.beacon = 1;
+                pirDecor.add(bc);
+                const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.75, 12, 10), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
+                lamp.position.y = 11.3;
+                bc.add(lamp);
+                const glowT = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const x2 = c.getContext("2d"), gr = x2.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,240,180,1)"); gr.addColorStop(0.35, "rgba(255,210,120,0.55)"); gr.addColorStop(1, "rgba(255,200,100,0)"); x2.fillStyle = gr; x2.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+                const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+                glow.position.y = 11.3;
+                glow.scale.setScalar(5);
+                bc.add(glow);
+                const piv = new THREE.Group();
+                piv.position.y = 11.3;
+                bc.add(piv);
+                for (const s of [0, Math.PI]) {
+                    const cg = new THREE.ConeGeometry(1.25, 30, 14, 1, true);
+                    cg.translate(0, -15, 0);
+                    const cm = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+                    cm.rotation.z = Math.PI / 2 + 0.06;
+                    cm.rotation.y = s;
+                    piv.add(cm);
+                    pirAnim.beams.push(cm);
+                }
+                pirAnim.lamps.push({ glow, beamPiv: piv, beams: piv.children });
+            }
+            {
+                const [x, z] = pol(aN + 0.45, 60);
+                big("tower-watch", x, z, 0, 1.5, 2.4);
+                big("flag-pirate-high-pennant", x, z, 1.2, 1.5, 0, 2.79 * 1.5);
+                reserve(x, z, 4.5);
+            }
+            // ===== 🏰 โซน 2: ป้อมปืนใหญ่ฝั่งตะวันออก (ลานกลางมีปืนใหญ่ส่องทะเลผ่านช่องหน้าต่าง · ประตูหันเข้าหาหมู่บ้าน) =====
+            {
+                const CX = 52, CZ = 0, WS = 1.4, SL = 2 * WS, NX = 5, NZ = 6, hx = NX * SL / 2, hz = NZ * SL / 2;
+                reserve(CX, CZ, Math.hypot(hx, hz) + 3);
+                const wall = (name, x, z, ry) => { big(name, x, z, ry, WS); };
+                for (let i = 0; i < NX; i++) {
+                    const x = CX - hx + SL * (i + 0.5);
+                    wall(i % 2 ? "castle-window" : "castle-wall", x, CZ - hz, Math.PI);
+                    wall(i % 2 ? "castle-window" : "castle-wall", x, CZ + hz, 0);
+                }
+                for (let j = 0; j < NZ; j++) {
+                    const z = CZ - hz + SL * (j + 0.5);
+                    wall("castle-window", CX + hx, z, Math.PI / 2);
+                    if (j !== 2 && j !== 3)
+                        wall("castle-wall", CX - hx, z, -Math.PI / 2);
+                }
+                big("castle-gate", CX - hx, CZ, -Math.PI / 2, WS);
+                for (let i = 0; i <= NX * 2; i++) {
+                    const x = CX - hx + (SL / 2) * i;
+                    for (const z of [CZ - hz, CZ + hz])
+                        pirColliders.push({ x, z, r: 1.45 });
+                }
+                for (let j = 0; j <= NZ * 2; j++) {
+                    const z = CZ - hz + (SL / 2) * j;
+                    pirColliders.push({ x: CX + hx, z, r: 1.45 });
+                    if (Math.abs(z - CZ) > SL * 1.05)
+                        pirColliders.push({ x: CX - hx, z, r: 1.45 });
+                }
+                for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]])
+                    big("tower-complete-small", CX + sx * (hx + 0.4), CZ + sz * (hz + 0.4), Math.random() * 6, 1.4, 2.6);
+                for (let j = 0; j < 4; j++)
+                    small("fort", "cannon-mobile", CX + hx - 3.2, CZ - SL * 1.5 + SL * j, -Math.PI / 2 + Math.PI, 1.15, 1.0);
+                big("flag-pirate-high", CX - 1, CZ, 0.3, 1.6, 0.5);
+                for (let k = 0; k < 3; k++)
+                    small("fort", "cannon-ball", CX + 1.2 + k * 0.55, CZ + 4.2, 0, 0.8, 0, 0.27);
+                small("fort", "cannon-ball", CX + 1.47, CZ + 4.2, 0, 0.8, 0, 0.72);
+                small("fort", "chest", CX - 3.6, CZ - 4.6, 0.4, 1.1, 0.8);
+                for (let k = 0; k < 6; k++)
+                    small("fort", pick(["barrel", "crate", "barrel"]), CX - hx + 2.2 + rnd(0, 2), CZ + (k < 3 ? -1 : 1) * rnd(4.2, hz - 1.8), rnd(0, 6), 1.0, 0.7);
+            }
+            // ===== ☠️ โซน 3: หาดซากเรืออับปาง + หลุมสมบัติ (ฝั่งใต้) =====
+            {
+                const [x, z] = pol(aS - 0.07, 62.5), ry = -(aS - 0.07);
+                const w = big("ship-wreck", x, z, ry, 1.45, 0, -0.85);
+                if (w) {
+                    w.rotation.order = "YXZ";
+                    w.rotation.z = 0.24;
+                }
+                const [tx, tz] = tan(aS - 0.07);
+                for (let k = -2; k <= 2; k++)
+                    pirColliders.push({ x: x + tx * k * 3.2, z: z + tz * k * 3.2, r: 2.6 });
+                reserve(x, z, 10);
+            }
+            {
+                const [x, z] = pol(aS + 0.24, 56.5);
+                reserve(x, z, 4.5); // 💰 หลุมสมบัติ + พลั่วปัก + หีบเปิดปิด เรืองแสงทอง
+                small("beach", "hole", x, z, 0.5, 1.2, 0, 0.02);
+                small("beach", "tool-shovel", x + 1.9, z - 0.6, 0.6, 1.0, 0.3, 0, 0.32, 0.12);
+                const c = big("chest", x - 0.6, z + 2.4, -0.6, 1.25, 0.9);
+                if (c) {
+                    const lid = c.getObjectByName("lid");
+                    const gl2 = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffd060, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending }));
+                    gl2.position.set(0, 0.75, 0);
+                    gl2.scale.setScalar(1.4);
+                    c.add(gl2);
+                    if (lid)
+                        pirAnim.chests.push({ lid, glow: gl2, ph: 0 });
+                }
+            }
+            for (let k = 0; k < 14; k++) {
+                const p = spot(0.8, 54, 64, aS, 0.9);
+                if (!p)
+                    continue;
+                const nm = pick(["barrel", "barrel", "crate", "bottle", "bottle-large", "cannon-ball", "crate-bottles"]);
+                const tip = nm === "barrel" && Math.random() < 0.5;
+                small("beach", nm, p[0], p[1], rnd(0, 6), rnd(0.9, 1.1), nm === "bottle" || nm === "bottle-large" || nm === "cannon-ball" ? 0 : 0.6, tip ? 0.62 : 0, 0, tip ? Math.PI / 2 : 0);
+            }
+            {
+                const p = spot(2, 55, 62, aS - 0.32, 0.25);
+                if (p)
+                    big("cannon", p[0], p[1], rnd(0, 6), 1.1, 0.9);
+            }
+            {
+                const p = spot(2, 56, 63, aS + 0.5, 0.25);
+                if (p) {
+                    const m = big("mast-ropes", p[0], p[1], rnd(0, 6), 1.3, 0, 0.4);
+                    if (m) {
+                        m.rotation.order = "YXZ";
+                        m.rotation.z = 1.35;
+                    }
+                }
+            }
+            for (let k = 0; k < 6; k++) {
+                const p = spot(1.2, 58, 65, aS, 1.1);
+                if (p)
+                    big(pick(["rocks-sand-a", "rocks-sand-b", "rocks-sand-c"]), p[0], p[1], rnd(0, 6), rnd(0.8, 1.2), 2.0);
+            }
+            {
+                const gh = mk("ship-ghost", 0, WL - 0.7 * 1.55, 0, 0, 1.55);
+                if (gh) { // 👻 เรือผีลอยวนนอกฝั่งใต้ — เรืองเขียว โปร่งแสง
+                    const gm = mat.clone();
+                    gm.emissive = new THREE.Color(0x30ff9a);
+                    gm.emissiveIntensity = 0.38;
+                    gm.transparent = true;
+                    gm.opacity = 0.74;
+                    gm.userData = { vivid: true };
+                    gh.traverse((o) => { if (o.isMesh) {
+                        o.material = gm;
+                        o.castShadow = false;
+                    } });
+                    const box = new THREE.Group();
+                    box.rotation.order = "YXZ";
+                    box.add(gh);
+                    sea.add(box);
+                    pirAnim.ghost = { g: box, mat: gm, a0: aS + 0.15, r: 96 };
+                }
+            }
+            // ===== 🎣 โซน 4: หมู่บ้านชาวประมงฝั่งตะวันตกเฉียงเหนือ =====
+            pier("cove", aNW, 59, 74, false);
+            {
+                const [x, z] = pol(aNW, 71.5), [tx, tz] = tan(aNW);
+                ship("boat-row-large", x + tx * 3.7, z + tz * 3.7, Math.atan2(...pol(aNW, 1)), 1.4, 0.25);
+            }
+            [[aNW - 0.1, 57], [aNW + 0.1, 58.5], [aNW + 0.02, 52]].forEach(([a, r], i) => { const [x, z] = pol(a, r); big("structure-roof", x, z, a + rnd(-0.4, 0.4), 1.5, 2.2); reserve(x, z, 4); });
+            {
+                const [x, z] = pol(aNW + 0.2, 63);
+                small("cove", "boat-row-small", x, z, 1.1, 1.3, 1.6);
+                small("cove", "tool-paddle", x + 1.8, z + 0.8, 0.4, 1.0, 0, 0.12, Math.PI / 2);
+                reserve(x, z, 3);
+            }
+            for (let k = 0; k < 6; k++) {
+                const p = spot(0.8, 52, 63, aNW, 0.5);
+                if (p)
+                    small("cove", pick(["barrel", "crate", "crate-bottles"]), p[0], p[1], rnd(0, 6), 1.0, 0.6);
+            }
+            [[aNW - 0.05, 62], [aNW + 0.08, 62.5]].forEach(([a, r]) => { const [x, z] = pol(a, r); lantern("cove", x, z, 2.4); });
+            // ===== 🌴 โซน 5: ในแผ่นดิน — ต้นมะพร้าว · หิน · ค่ายโจรสลัด · เสากระโดงธง · ของเกลื่อน =====
+            for (let k = 0; k < 3; k++) { // ⛺ ค่ายโจรสลัด: เพิงมุงจาก + ปืนใหญ่ + ธง + ลังสินค้า
+                const p = spot(6, 28, 52);
+                if (!p)
+                    continue;
+                const [x, z] = p, a = Math.atan2(z, x);
+                big("structure-roof", x, z, a, 1.45, 2.2);
+                reserve(x, z, 6);
+                const [ox, oz] = pol(a + 0.6, 4.2);
+                big("flag-pirate", x + ox, z + oz, rnd(0, 6), 1.5, 0.3);
+                const [cx2, cz2] = pol(a - 0.9, 4.4);
+                small("inland", "cannon-mobile", x + cx2, z + cz2, a + Math.PI, 1.1, 1.0);
+                for (let j = 0; j < 4; j++) {
+                    const [qx, qz] = pol(rnd(0, TAU), rnd(2.6, 3.8));
+                    small("inland", pick(["barrel", "crate", "crate-bottles"]), x + qx, z + qz, rnd(0, 6), 1.0, 0.65);
+                }
+            }
+            for (let k = 0; k < 3; k++) {
+                const p = spot(3, 24, 50);
+                if (!p)
+                    continue;
+                big("mast-ropes", p[0], p[1], rnd(0, 6), 1.3, 0.5);
+                big("flag-pirate-high-pennant", p[0], p[1], rnd(0, 6), 1.4, 0, 7.8 * 1.3 - 0.6);
+                reserve(p[0], p[1], 3);
+            }
+            for (let k = 0; k < 38; k++) {
+                const p = spot(1.6, 22, 64);
+                if (!p)
+                    continue;
+                const nm = pick(["palm-bend", "palm-straight", "palm-detailed-bend", "palm-detailed-straight"]);
+                big(nm, p[0], p[1], rnd(0, TAU), rnd(1.25, 1.75), 0.55);
+            }
+            for (let k = 0; k < 9; k++) {
+                const p = spot(3.2, 26, 62);
+                if (!p)
+                    continue;
+                const s = rnd(0.9, 1.35);
+                big(pick(["rocks-a", "rocks-b", "rocks-c", "rocks-sand-a", "rocks-sand-b"]), p[0], p[1], rnd(0, TAU), s, 2.2 * s);
+            }
+            for (let k = 0; k < 22; k++) {
+                const p = spot(1, 22, 62);
+                if (!p)
+                    continue;
+                small("inland", pick(["barrel", "crate", "crate-bottles", "barrel", "bottle-large"]), p[0], p[1], rnd(0, 6), rnd(0.9, 1.1), 0.6);
+            }
+            for (let k = 0; k < 16; k++) {
+                const p = spot(2.5, 22, 63);
+                if (!p)
+                    continue;
+                small("ground", Math.random() < 0.6 ? "patch-sand-foliage" : "patch-grass-foliage", p[0], p[1], rnd(0, TAU), rnd(0.8, 1.2), 0, -0.06);
+            }
+            for (let k = 0; k < 34; k++) {
+                const p = spot(0.6, 22, 64);
+                if (!p)
+                    continue;
+                small("ground", Math.random() < 0.5 ? "grass-plant" : "grass-patch", p[0], p[1], rnd(0, TAU), rnd(0.9, 1.3), 0, -0.02);
+            }
+            // 🕊️ นกนางนวลบินวนเหนือท่าเรือ/หาด
+            const gullM = new THREE.MeshLambertMaterial({ color: 0xf6f6f2, side: THREE.DoubleSide }), wingG = new THREE.BufferGeometry();
+            wingG.setAttribute("position", new THREE.BufferAttribute(new Float32Array([0, 0, -0.18, 0, 0, 0.22, 0.95, 0.06, -0.02]), 3));
+            wingG.computeVertexNormals();
+            for (let k = 0; k < 8; k++) {
+                const g = new THREE.Group();
+                g.userData.noHide = true;
+                const body = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.62, 5), gullM);
+                body.rotation.x = Math.PI / 2;
+                g.add(body);
+                const wl = new THREE.Mesh(wingG, gullM), wr = new THREE.Mesh(wingG, gullM);
+                wr.scale.x = -1;
+                g.add(wl, wr);
+                const [cx, cz] = pol(k < 5 ? aN + rnd(-0.4, 0.4) : aS + rnd(-0.4, 0.4), rnd(56, 74));
+                pirDecor.add(g);
+                pirAnim.gulls.push({ g, wl, wr, cx, cz, r: rnd(6, 14), y: rnd(9, 15), a: rnd(0, TAU), w: (Math.random() < 0.5 ? -1 : 1) * rnd(0.25, 0.45), ph: rnd(0, 6) });
+            }
+            Object.keys(chunks).forEach((k) => { const g = chunks[k]; mergeByMat(g); g.userData.noHide = true; pirDecor.add(g); }); // 🚀 ของเล็กทั้งโซน = mesh เดียวต่อวัสดุ
+            G._seaSkip = [aA, aB, aNW]; // ขอบทะเล: เว้นก้อนหินตรงแนวท่าเรือ
+            if (G.buildBorder)
+                G.buildBorder("pirate");
+            if (G.snapWorldDecor)
+                G.snapWorldDecor();
+            if (G.rebuildNav) {
+                try {
+                    G.rebuildNav();
+                }
+                catch (e) { }
+            }
+            pirDecor.userData._frz = null;
+            if (G.refreshDecorFreeze)
+                G.refreshDecorFreeze();
+        };
+        G.pirLoad = () => {
+            if (pirBuilt)
+                return Promise.resolve(true);
+            if (pirGl) {
+                if (pirIsHere()) {
+                    pirBuild(pirGl);
+                    pirGl = null;
+                }
+                return Promise.resolve(pirBuilt);
+            }
+            if (pirLoading || !THREE.GLTFLoader)
+                return pirLoading || Promise.resolve(false);
+            pirLoading = new Promise((res) => new THREE.GLTFLoader().load("assets/kenney/pirate/pirate_kit.glb", res, undefined, () => res(null))).then((gl) => {
+                pirLoading = null;
+                if (!gl)
+                    return false; // โหลดไม่ได้ (เน็ตหลุด) — เข้าแมพครั้งหน้าลองใหม่
+                pirGl = gl;
+                if (pirIsHere()) {
+                    try {
+                        pirBuild(gl);
+                    }
+                    catch (e) {
+                        console.warn("pirate decor", e);
+                    }
+                }
+                if (pirBuilt)
+                    pirGl = null; // สร้างฉากแล้ว — ปล่อยไฟล์ต้นฉบับ (ชิ้นที่ไม่ได้ใช้คืนหน่วยความจำ)
+                return pirBuilt;
+            });
+            return pirLoading;
+        };
+        G.pirTick = (dt, t) => {
+            if (!pirBuilt) {
+                if (pirGl && pirDecor.visible && pirIsHere()) {
+                    try {
+                        pirBuild(pirGl);
+                    }
+                    catch (e) {
+                        console.warn("pirate decor", e);
+                    }
+                    if (pirBuilt)
+                        pirGl = null;
+                }
+                return;
+            }
+            if (!pirDecor.visible)
+                return;
+            for (const s of pirAnim.ships) {
+                s.g.position.y = s.y + Math.sin(t * s.w + s.ph) * s.amp;
+                s.g.rotation.z = Math.sin(t * s.w * 0.8 + s.ph) * s.roll;
+                s.g.rotation.x = Math.sin(t * s.w * 0.6 + s.ph * 1.7) * s.roll * 0.5;
+            }
+            const gh = pirAnim.ghost;
+            if (gh) {
+                const a = gh.a0 + Math.sin(t * 0.021) * 0.55, da = Math.cos(t * 0.021) >= 0 ? 1 : -1;
+                gh.g.position.set(Math.cos(a) * gh.r, Math.sin(t * 0.5) * 0.25, Math.sin(a) * gh.r);
+                gh.g.rotation.y = Math.atan2(-Math.sin(a) * da, Math.cos(a) * da);
+                gh.g.rotation.z = Math.sin(t * 0.4) * 0.03;
+                gh.mat.opacity = 0.6 + Math.sin(t * 1.3) * 0.12;
+                gh.mat.emissiveIntensity = 0.3 + Math.sin(t * 1.7) * 0.12;
+            }
+            for (const b of pirAnim.gulls) {
+                b.a += dt * b.w;
+                const x = b.cx + Math.cos(b.a) * b.r, z = b.cz + Math.sin(b.a) * b.r;
+                b.g.position.set(x, b.y + Math.sin(t * 0.7 + b.ph) * 0.6, z);
+                b.g.rotation.y = Math.atan2(-Math.sin(b.a) * Math.sign(b.w), Math.cos(b.a) * Math.sign(b.w));
+                const f = Math.sin(t * 7 + b.ph) * 0.55;
+                b.wl.rotation.z = f;
+                b.wr.rotation.z = -f;
+            }
+            for (const c of pirAnim.chests) {
+                const u = Math.max(0, Math.sin(t * 0.7 + c.ph));
+                c.lid.rotation.x = -u * 1.2;
+                c.glow.material.opacity = 0.15 + u * 0.6;
+            }
+            const night = Math.max(0, Math.min(1, (0.62 - (G.dayPhaseAmt != null ? G.dayPhaseAmt : 1)) / 0.55));
+            for (const L of pirAnim.lamps) {
+                L.beamPiv.rotation.y += dt * 0.7;
+                L.glow.scale.setScalar(4 + night * 4 + Math.sin(t * 3) * 0.3);
+                L.beams.forEach((m) => (m.material.opacity = 0.012 + night * 0.1));
+            }
+            if (pirAnim.lampM)
+                pirAnim.lampM.emissiveIntensity = 0.35 + night * 1.6;
+        };
         // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
         const antDecor = new THREE.Group();
         antDecor.visible = false;
@@ -41662,6 +42265,8 @@ function CherryAdventure() {
             G.biomeDecorGroups.push(G.legoDecor);
         if (G.aiDecor)
             G.biomeDecorGroups.push(G.aiDecor);
+        if (G.pirDecor)
+            G.biomeDecorGroups.push(G.pirDecor);
         // ---------- 👻 Night ghost boss (dead-tree grove) ----------
         let ghostMesh = null;
         const spawnGhost = () => {
@@ -42331,7 +42936,8 @@ function CherryAdventure() {
             const g = new THREE.Group();
             const legoRd = (BIOMES[G.curBiome || 0] || {}).id === "legotown" || (BIOMES[G.curBiome || 0] || {}).id === "aicity"; // 🤖 เมือง AI ใช้ถนนตรงแบบเดียวกัน (สีดำ/เส้นฟ้า)
             const aiRd = (BIOMES[G.curBiome || 0] || {}).id === "aicity"; // 🧱 เมืองเลโก้: ถนนแผ่นเทาตรงเป๊ะ + เส้นประขาวกลางถนน
-            const dirtM = new THREE.MeshLambertMaterial({ color: aiRd ? 0x16181e : legoRd ? 0x3c3e3a : ROAD_COL.dirt, flatShading: true });
+            const pirRd = (BIOMES[G.curBiome || 0] || {}).id === "pirate"; // 🏴‍☠️ ทางทรายอัดสีอ่อน
+            const dirtM = new THREE.MeshLambertMaterial({ color: aiRd ? 0x16181e : legoRd ? 0x3c3e3a : pirRd ? 0xb89a6a : ROAD_COL.dirt, flatShading: true });
             const dashM = aiRd ? new THREE.MeshBasicMaterial({ color: 0x40e0ff }) : legoRd ? new THREE.MeshLambertMaterial({ color: 0xf0f0f0 }) : null;
             const rutM = new THREE.MeshLambertMaterial({ color: ROAD_COL.rut, flatShading: true });
             const grassM = new THREE.MeshLambertMaterial({ color: ROAD_COL.grass, flatShading: true });
@@ -42933,6 +43539,30 @@ function CherryAdventure() {
                     put(rk, Math.cos(a) * rr, Math.sin(a) * rr, 0.18);
                 }
             }
+            else if (B.kind === "sea") { // 🏴‍☠️ ทะเลเปิดล้อมเกาะถึงขอบฟ้า — หาดทราย + ฟองคลื่นริมฝั่ง + หินริมน้ำ (เว้นแนวท่าเรือ)
+                const sand = new THREE.Mesh(new THREE.RingGeometry(R - 2.2, R + 0.8, 96), matC);
+                sand.rotation.x = -Math.PI / 2;
+                sand.position.y = 0.04;
+                borderGrp.add(sand);
+                const water = new THREE.Mesh(new THREE.RingGeometry(R + 0.3, R + 340, 96, 3), new THREE.MeshStandardMaterial({ color: B.a, transparent: true, opacity: 0.9, roughness: 0.15, metalness: 0.3, side: THREE.DoubleSide }));
+                water.rotation.x = -Math.PI / 2;
+                water.position.y = -0.12;
+                borderGrp.add(water);
+                G._borderWater = water;
+                const foam = new THREE.Mesh(new THREE.RingGeometry(R + 0.25, R + 1.15, 96), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.42, depthWrite: false }));
+                foam.rotation.x = -Math.PI / 2;
+                foam.position.y = -0.08;
+                borderGrp.add(foam);
+                const skip = G._seaSkip || [], N = 40 * WORLD_S;
+                for (let i = 0; i < N; i++) {
+                    const a = (i / N) * Math.PI * 2;
+                    if (nearGap(a) || Math.random() < 0.45 || skip.some((q) => Math.abs(Math.atan2(Math.sin(a - q), Math.cos(a - q))) < 0.07))
+                        continue;
+                    const rr = R + 0.4 + Math.random() * 1.4;
+                    const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35 + Math.random() * 0.6, 0), matB);
+                    put(rk, Math.cos(a) * rr, Math.sin(a) * rr, 0.12);
+                }
+            }
             else if (B.kind === "wall") { // 🧱 กำแพงหินก้อนใหญ่ + ป้อม
                 const N = 76 * WORLD_S;
                 for (let i = 0; i < N; i++) {
@@ -43125,7 +43755,7 @@ function CherryAdventure() {
             if (G.rollWeather)
                 G.rollWeather(b.id); // 🌦️ สุ่มสภาพอากาศของแมพนี้
             { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-                const FOG_D = { aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+                const FOG_D = { pirate: [60, 180], aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
                 const fd = FOG_D[b.id] || [58, 124];
                 G._fogBase = { near: fd[0], far: fd[1] }; // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
                 if (scene.fog && !G._townFogPrev) {
@@ -43166,7 +43796,8 @@ function CherryAdventure() {
             const isAnt = b.id === "antisle";
             const isLego = b.id === "legotown";
             const isAI = b.id === "aicity";
-            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt || isLego || isAI; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
+            const isPirate = b.id === "pirate";
+            const isEndgame = b.id === "hell" || b.id === "heaven" || b.id === "moon" || isRobot || isGhost || isAnt || isLego || isAI || isPirate; // 🔥😇🌙🤖 แดนเลเวลสูง — ไม่มีต้นไม้เขียว
             if (G.desertDecor)
                 G.desertDecor.visible = isDesert;
             if (G.snowDecor)
@@ -43201,6 +43832,10 @@ function CherryAdventure() {
                 G.legoDecor.visible = isLego;
             if (G.aiDecor)
                 G.aiDecor.visible = isAI;
+            if (G.pirDecor)
+                G.pirDecor.visible = isPirate;
+            if (isPirate && G.pirLoad)
+                G.pirLoad(); // 🏴‍☠️ โหลดโมเดลท่าเรือครั้งแรกที่เข้าแมพ
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.refreshDecorFreeze)
                 G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
@@ -43224,7 +43859,8 @@ function CherryAdventure() {
                                                                     : isAnt ? (G.antColliders || [])
                                                                         : isLego ? (G.legoColliders || [])
                                                                             : isAI ? (G.aiColliders || [])
-                                                                                : [];
+                                                                                : isPirate ? (G.pirColliders || [])
+                                                                                    : [];
             if (G.rebuildNav)
                 G.rebuildNav(); // 🗺️ each biome has different walls — re-rasterise the nav grid
             G.path = null;
@@ -43272,7 +43908,7 @@ function CherryAdventure() {
         };
         G.unfreezeStatic = (root) => { if (root)
             root.traverse((o) => { o.matrixAutoUpdate = true; }); };
-        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor"];
+        G._decorKeys = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor", "pirDecor"];
         // 🚀 PERF ② — รวม material ที่คุณสมบัติเหมือนกันเป็นตัวเดียว (ประหยัดหน่วยความจำ + สลับ uniform)
         // ปลอดภัยเฉพาะวัสดุทึบไม่มีเท็กซ์เจอร์ (ของโปร่งใส/มีลาย มักถูกอนิเมตแยกชิ้น — ไม่ยุ่ง)
         G.dedupeMaterials = (root) => {
@@ -43444,7 +44080,7 @@ function CherryAdventure() {
         // 🌀⏳ วาร์ป/ข้ามด่านผ่านหน้าจอโหลด — โชว์ฉากตัวอย่างของด่านปลายทางก่อน แล้วค่อยสร้างด่านจริง (การสร้างด่านค้างจอครู่หนึ่ง จึงซ่อนไว้หลังหน้าโหลด)
         // 🖼️ ภาพฉากหน้าโหลดประจำแมพ (assets/bg · CC0 OpenGameArt: Nidhoggn "Backgrounds" + ฟ้า Poly Haven)
         const BIOME_BG = { meadow: "meadow", desert: "desert", snow: "snow", cave: "cave", volcano: "volcano", sky: "skyday", hell: "hell", heaven: "skyday",
-            moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert", legotown: "candy", aicity: "hall" };
+            moon: "skynight", candy: "candy", beach: "desert", titan: "arena", amazon: "forest", robot: "hall", ghosttown: "town", antisle: "desert", legotown: "candy", aicity: "hall", pirate: "desert" };
         const bgUrl = (k) => (k ? "assets/bg/" + k + ".jpg" : null);
         const warpWithLoad = (idx, quiet, after) => {
             const b = BIOMES[((idx % BIOMES.length) + BIOMES.length) % BIOMES.length];
@@ -43470,7 +44106,14 @@ function CherryAdventure() {
                     catch (_) { }
                 }
                 let wait = Math.max(250, 1300 - (performance.now() - t0)); // โชว์อย่างน้อยให้อ่านชื่อด่านทัน
-                setTimeout(() => { G._warpLoading = false; setUi((u) => ({ ...u, warpLoad: null })); }, wait);
+                const hide = () => { G._warpLoading = false; setUi((u) => ({ ...u, warpLoad: null })); };
+                const pre = b.id === "pirate" && G.pirLoad ? G.pirLoad() : null; // 🏴‍☠️ รอโมเดลท่าเรือโหลดเสร็จก่อนปิดหน้าโหลด (ไม่เห็นเกาะโล่ง) · นานสุด 8 วิ
+                if (pre && pre.then) {
+                    const tS = performance.now();
+                    Promise.race([pre, new Promise((r) => setTimeout(r, 8000))]).then(() => setTimeout(hide, Math.max(0, wait - (performance.now() - tS))));
+                }
+                else
+                    setTimeout(hide, wait);
             }, 90);
         };
         G.warpWithLoad = warpWithLoad;
@@ -45056,7 +45699,7 @@ function CherryAdventure() {
         // ================= 🏠 MY HOME ZONE — บ้านส่วนตัว: แต่งบ้าน + นอนพักรับบัฟ + เยี่ยมบ้านเพื่อน =================
         G.inHomeZone = false;
         // 🌵 ซ่อน/คืนฉากประจำด่าน (ทะเลทราย หิมะ ฯลฯ) ตอนวาร์ปเข้าโซนฟาร์ม/บ้านจากด่านไหนก็ได้
-        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor"];
+        const BIOME_DECOR_KEYS = ["desertDecor", "snowDecor", "caveDecor", "volcanoDecor", "skyDecor", "hellDecor", "heavenDecor", "moonDecor", "beachDecor", "amazonDecor", "titanDecor", "candyDecor", "robotDecor", "ghostDecor", "antDecor", "legoDecor", "aiDecor", "pirDecor"];
         G._hideBiomeDecor = () => { G._decorPrev = {}; BIOME_DECOR_KEYS.forEach((k) => { if (G[k]) {
             G._decorPrev[k] = G[k].visible;
             G[k].visible = false;
@@ -49137,6 +49780,7 @@ function CherryAdventure() {
             antisle: { a: "ผู้เฒ่า: \"เลยเมืองร้างไปทางตะวันตก มีเกาะที่เคยเป็นเมืองใหญ่... ตอนนี้เหลือแต่ซากตึก กับเสียงอะไรบางอย่างขุดดินอยู่ใต้เท้า\"", h: "กองทัพมดยักษ์บุกยึดเกาะร้าง ขุดรังใต้ซากเมืองและวางไข่เต็มเกาะ ปีศาจในซากตึกก็ตื่นขึ้น ไปหยุดยั้งพวกมันที่เกาะร้าง", b: "ราชามดจอมทัพสั่งการกองทัพมดทั้งเกาะ โค่นมันลงเพื่อยึดเกาะร้างคืนมา!" },
             legotown: { a: "ผู้เฒ่า: \"ใต้เกาะร้างลงไป มีเมืองที่ทุกอย่างต่อจากตัวต่อพลาสติก... บ้าน ต้นไม้ แม้แต่สัตว์ประหลาดก็เป็นตัวต่อ ระวังเหยียบปุ่มด้วยล่ะ\"", h: "ตัวต่อในเมืองเลโก้มีชีวิตขึ้นมาเอง ไดโน หมาป่า ซอมบี้ ยักษ์ และปูตัวต่อออกอาละวาดทั่วเมือง ไปหยุดพวกมันที่เมืองเลโก้", b: "มังกรตัวต่อจอมราชันต่อร่างจากอิฐทั้งเมืองแล้วยึดเมืองเลโก้ โค่นมันลงแล้วเรียงตัวต่อคืนให้ชาวเมือง!" },
             aicity: { a: "ผู้เฒ่า: \"ทางตะวันออกของเมืองเลโก้ มีมหานครแห่งอนาคตที่ปัญญาประดิษฐ์ดูแลทุกอย่าง... แต่ช่วงนี้ไฟนีออนกะพริบผิดปกติ หุ่นยนต์เริ่มไม่ฟังคำสั่งแล้ว\"", h: "AI ควบคุมเมืองเริ่มคิดเอง ส่งโดรน แอนดรอยด์ หมาป่าไซเบอร์ และบั๊กโฮโลแกรมออกไล่ล่าผู้คน ไปหยุดยั้งพวกมันที่เมืองยุค AI", b: "จิตกลาง AI โอเวอร์มายด์แปลงร่างเป็นโฮโลแกรมยักษ์ลงมาเอง ปิดระบบมันแล้วคืนเมืองให้มนุษย์!" },
+            pirate: { a: "ผู้เฒ่า: \"เลยมหานคร AI ไปทางตะวันออกคือท่าเรือโจรสลัด... มีเรือผีลำหนึ่งลอยวนอยู่นอกฝั่งทุกคืน และลูกเรือที่ตายไปแล้วก็ลุกขึ้นมาขนสมบัติกันเอง\"", h: "ลูกเรือโครงกระดูก พลปืนใหญ่ นกแก้ว ปูก้ามดาบ และฉลามแผลเป็นยึดท่าเรือไว้ทั้งท่า ไปขับไล่พวกมันที่ท่าเรือโจรสลัด", b: "คราเคนเรือผีโผล่จากทะเลลึกมาปกป้องสมบัติของกัปตัน ปราบมันแล้วท่าเรือจะกลับมาสงบ!" },
             ghosttown: { a: "ผู้เฒ่า: \"ทางตะวันตกของแดนเหล็ก มีเมืองที่เงียบสนิทมาร้อยปี... ว่ากันว่ากลางคืนยังได้ยินเสียงคนเดินอยู่\"", h: "เมืองทั้งเมืองถูกคำสาปจนกลายเป็นเมืองร้าง คนตายลุกขึ้นมาเดินเพ่นพ่าน ไปสืบหาต้นตอคำสาปที่เมืองร้าง", b: "จอมลิชผู้สาปเมืองซ่อนตัวอยู่กลางซากเมือง ปราบมันเพื่อให้ดวงวิญญาณชาวเมืองได้พักผ่อนเสียที!" },
             robot: { a: "ผู้เฒ่า: \"เหนือป่าดิบลงไปทางใต้ มีเสียงเครื่องจักรดังไม่หยุด... อาณาจักรหุ่นยนต์ตื่นขึ้นแล้ว!\"", h: "กองทัพหุ่นเหล็กกำลังรุกคืบ เดินทางไปหยุดยั้งพวกมันที่อาณาจักรหุ่นยนต์", b: "จักรพรรดิหุ่นเหล็กสั่งการกองทัพจักรกลทั้งหมด ทำลายมันเพื่อปลดปล่อยแผ่นดินเหล็ก!" },
             amazon: { a: "ผู้เฒ่า: \"ป่าดิบอเมซอนคือปลายทางสุดท้ายของตำนาน... เข้าไปเถิด ผู้กล้าแห่งเชอร์รี่\"", h: "สัตว์ร้ายแห่งพงไพรถูกความมืดกลืนกินจนคลุ้มคลั่ง ปลดปล่อยผืนป่าอันยิ่งใหญ่", b: "อนาคอนด้าจ้าวป่าคือผู้พิทักษ์คนสุดท้ายแห่งตำนาน โค่นมันเพื่อปิดฉากมหากาพย์!" },
@@ -77148,8 +77792,9 @@ function CherryAdventure() {
                         const isAnt = !preview && b.id === "antisle";
                         const isLego = !preview && b.id === "legotown";
                         const isAI = !preview && b.id === "aicity";
+                        const isPirate = !preview && b.id === "pirate";
                         if (G.sceneryObjects)
-                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt && !isLego && !isAI));
+                            G.sceneryObjects.forEach((o) => (o.visible = !preview && !isDesert && !isSnow && !isCave && !isVolcano && !isSky && !isBeach && !isAmazon && !isTitan && !isCandy && !isRobot && !isGhost && !isAnt && !isLego && !isAI && !isPirate));
                         wilds.forEach((m) => (m.visible = !preview));
                         if (G.desertDecor)
                             G.desertDecor.visible = isDesert;
@@ -77179,6 +77824,8 @@ function CherryAdventure() {
                             G.legoDecor.visible = isLego;
                         if (G.aiDecor)
                             G.aiDecor.visible = isAI;
+                        if (G.pirDecor)
+                            G.pirDecor.visible = isPirate;
                         if (G.warpGate)
                             G.warpGate.visible = !preview;
                         if (G.npc)
@@ -78951,7 +79598,9 @@ function CherryAdventure() {
                 if (G.legoTick)
                     G.legoTick(dt, t);
                 if (G.aiTick)
-                    G.aiTick(dt, t); // 🤖 เมือง AI: โฮโลแกรม/โดรน/ข้อมูลไหล   // 🧍 ชาวเมืองมินิฟิกเกอร์เดินเล่น
+                    G.aiTick(dt, t);
+                if (G.pirTick)
+                    G.pirTick(dt, t); // 🏴‍☠️ ท่าเรือโจรสลัด: เรือโยก · เรือผี · นกนางนวล · ประภาคาร   // 🤖 เมือง AI: โฮโลแกรม/โดรน/ข้อมูลไหล   // 🧍 ชาวเมืองมินิฟิกเกอร์เดินเล่น
                 if (G.ghostTick)
                     G.ghostTick(dt, t); // 🏚️ ตะเกียงผีกะพริบ หมอกลอย   // 🤖 ฟันเฟืองหมุน สายพานวิ่ง ไฟนีออนกะพริบ
                 if (G.caveDecor && G.caveDecor.visible && G.caveMineTick) {

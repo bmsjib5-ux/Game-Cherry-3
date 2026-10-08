@@ -1,0 +1,5 @@
+Pirate Kit (2.1) by Kenney (www.kenney.nl)
+License: Creative Commons Zero, CC0 1.0 — http://creativecommons.org/publicdomain/zero/1.0/
+Source: https://kenney.nl/assets/pirate-kit
+54 of the kit's GLB models were merged into pirate_kit.glb (one shared material, colormap.png embedded) for the
+"ท่าเรือโจรสลัด" (Pirate Harbor) map in Cherry Adventure. Thank you Kenney!
