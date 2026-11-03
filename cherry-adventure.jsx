@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v734";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v735";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -4268,6 +4268,10 @@ export default function CherryAdventure() {
       warp: () => { if (smp("portal", 0.62)) return; sfx([1046, 1318, 1568, 2093], "sine", 0.09, 0.07); },
       open: () => smp("open", 0.45),     // 📖 เปิด/ปิดหน้าต่างเมนู
       close: () => smp("close", 0.4),
+      // 👑 บอสคำราม — เสียงคำรามต่ำ (สังเคราะห์: ลมหายใจกรองต่ำ + เสียงห้าวไล่ลง + ซับเบส)
+      roar: () => { if (!bsx()) return; noise(1.2, 0.24, 380, 0.6, 140); sfx([150, 118, 96], "sawtooth", 0.5, 0.07, -50); thump(46, 0.7, 0.34); },
+      // 🍄 ร่ายสปอร์ — ฟู่ฟุ้ง + ประกายใส
+      spore: () => { if (!bsx()) return; noise(0.7, 0.12, 2600, 0.8, 500); sfx([740, 990, 1240], "sine", 0.2, 0.05, 260); },
       splash: () => { sfx([400, 250], "sine", 0.18, 0.12, -120); noise(0.2, 0.1, 900, 0.6); },
       reel: () => sfx([700, 500, 700, 500], "triangle", 0.08, 0.1),
       fish: () => { if (smp("fish", 0.55)) return; sfx([660, 880, 1100, 1320], "sine", 0.12, 0.16); },
@@ -9790,7 +9794,9 @@ export default function CherryAdventure() {
       mshturtle:  { f: "Turtle",           size: 2.0, idle: "GenIdle", walk: "Walking-loop", run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop", mul: 0xa8e0b0,
                     gen: { GenIdle: { period: 2.6, tracks: [["Bone016", "x", 0.07, 0], ["Bone017", "x", 0.06, 0.6], ["Bone018", "x", 0.05, 1.2], ["Bone", "py", 0.015, 0], ["Bone006", "z", 0.1, 0.9]] } } },
       // 👑 ราชาเห็ดเรืองแสง — โมเดลจาก Higgsfield (ภาพคอนเซ็ปต์ → 3D → ใส่กระดูก + 5 ท่าจากคลังท่า Meshy) รวมเป็นไฟล์เดียว · glow = เรืองจากลายเท็กซ์เจอร์
-      mshking:    { f: "../higgsfield/mush_king", by: "h", size: 3.7, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", glow: 0.42, atkT: 1.45, atkTS: 2.1 },   // ท่าทุบพื้นยาว 3 วิ → เร่ง ×2.1 และค้างท่าให้จบ 1.45 วิ
+      mshking:    { f: "../higgsfield/mush_king", by: "h", size: 3.7, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", glow: 0.42, atkT: 1.45, atkTS: 2.1,   // ท่าทุบพื้นยาว 3 วิ → เร่ง ×2.1 และค้างท่าให้จบ 1.45 วิ
+                    cast: "Cast", castTS: 1.5, castFx: 0.72, castEvery: 3,   // 🍄✨ ทุกการโจมตีครั้งที่ 3 = ร่ายสปอร์ (ปล่อยที่ 72% ของท่า)
+                    roar: "Roar", roarTS: 1.3, fxCol: [0x40f0ff, 0xff50d0, 0xb8ff60] },   // 👑 คำรามทุบอกตอนผู้เล่นเข้าใกล้ครั้งแรก
       ghoul:      { f: "Zombie",          size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                     tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } },                                           // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
       wraith:     { f: "Flying_Ghost",    c: "fly",           size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] },             // 🏚️ วิญญาณม่วงหม่น
@@ -10311,8 +10317,62 @@ export default function CherryAdventure() {
       if (!G.kkOn) return;
       if (!G.qtSwap(g)) G.qtLoad(g.userData.spId, g.userData.stage);
     };
+    // ✨ เอฟเฟกต์ท่าพิเศษของบอส (คำราม / ร่ายสปอร์) — วงคลื่นบนพื้น + สปอร์พุ่ง/ระเบิด · สร้างเมื่อใช้ ลบทิ้งเมื่อจบ (นาน ๆ เกิดที)
+    const bfx = [];
+    let bfxTex = null;
+    const bfxDot = () => {
+      if (bfxTex) return bfxTex;
+      const cv = document.createElement("canvas"); cv.width = cv.height = 64; const cx = cv.getContext("2d"), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.35, "rgba(255,255,255,0.45)"); gr.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64);
+      bfxTex = new THREE.CanvasTexture(cv); bfxTex.userData = { _shared: true }; return bfxTex;
+    };
+    const bfxRing = (x, y, z, col, r1, dur) => {   // วงคลื่นแผ่บนพื้น
+      const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 1, 64), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+      m.rotation.x = -Math.PI / 2; m.position.set(x, y + 0.12, z); scene.add(m);
+      bfx.push({ k: "ring", o: m, t: 0, dur, r1 });
+    };
+    const bfxSpores = (from, to, cols, n, dur, spread) => {   // สปอร์กลุ่มหนึ่ง — to = null: ระเบิดออกรอบตัว · มีเป้า: พุ่งโค้งไปหาเป้าแล้วแตกกระจาย
+      const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), P = [];
+      for (let i = 0; i < n; i++) {
+        const c = new THREE.Color(cols[i % cols.length]); col.set([c.r, c.g, c.b], i * 3);
+        const a = Math.random() * Math.PI * 2, u = Math.random();
+        P.push(to ? { ox: (Math.random() - 0.5) * spread, oy: (Math.random() - 0.3) * spread, oz: (Math.random() - 0.5) * spread, d: Math.random() * 0.35, arc: 1.5 + Math.random() * 2 }
+                  : { vx: Math.cos(a) * (2 + u * 5), vy: 1.5 + Math.random() * 4.5, vz: Math.sin(a) * (2 + u * 5) });
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+      const pt = new THREE.Points(g, new THREE.PointsMaterial({ size: to ? 1.5 : 1.9, map: bfxDot(), vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
+      pt.frustumCulled = false; scene.add(pt);
+      bfx.push({ k: to ? "fly" : "pop", o: pt, t: 0, dur, P, f: from.clone(), to: to ? to.clone() : null, cols });
+    };
+    const bfxOrb = (pos, col, dur) => {   // 🔮 ลูกพลังสปอร์ที่ชาร์จบนมือก่อนปล่อย
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: bfxDot(), color: col, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+      sp.position.copy(pos); scene.add(sp); bfx.push({ k: "orb", o: sp, t: 0, dur });
+    };
+    const bfxTick = (dt) => {
+      for (let i = bfx.length - 1; i >= 0; i--) {
+        const e = bfx[i]; e.t += dt; const u = Math.min(1, e.t / e.dur);
+        if (e.k === "ring") { const s = 1 + (e.r1 - 1) * (1 - Math.pow(1 - u, 2.2)); e.o.scale.set(s, s, s); e.o.material.opacity = 1 - u; }
+        else if (e.k === "orb") { const s = 0.8 + 3.2 * u; e.o.scale.set(s, s, s); e.o.material.opacity = 0.45 + 0.55 * u; e.o.material.rotation += dt * 3; }
+        else {
+          const A = e.o.geometry.attributes.position, a = A.array;
+          for (let j = 0; j < e.P.length; j++) {
+            const q = e.P[j];
+            if (e.k === "pop") { const tt = e.t; a[j * 3] = e.f.x + q.vx * tt; a[j * 3 + 1] = e.f.y + q.vy * tt - 3.2 * tt * tt * 0.5; a[j * 3 + 2] = e.f.z + q.vz * tt; }
+            else { const v = Math.max(0, Math.min(1, (u - q.d) / (1 - q.d))), w = v * v * (3 - 2 * v);
+              a[j * 3] = e.f.x + (e.to.x - e.f.x) * w + q.ox * (1 - w * 0.6); a[j * 3 + 1] = e.f.y + (e.to.y - e.f.y) * w + Math.sin(v * Math.PI) * q.arc + q.oy * (1 - w); a[j * 3 + 2] = e.f.z + (e.to.z - e.f.z) * w + q.oz * (1 - w * 0.6); }
+          }
+          A.needsUpdate = true; e.o.material.opacity = e.k === "pop" ? 0.9 * (1 - u * u) : 0.62 * (u < 0.85 ? 1 : (1 - u) / 0.15);   // สปอร์ซ้อนกันเยอะ (บวกแสง) — ลดความทึบไม่ให้ขาวโพลน
+        }
+        if (u >= 1) {
+          if (e.k === "fly") { bfxSpores(e.to, null, e.cols, 36, 0.9); bfxRing(e.to.x, e.to.y - 1.2, e.to.z, e.cols[0], 4.2, 0.7); if (G.sfx && G.sfx.spore) G.sfx.spore(); }   // 💥 ถึงเป้า = แตกฟุ้ง
+          scene.remove(e.o); if (e.o.geometry && e.k !== "orb") e.o.geometry.dispose(); e.o.material.dispose(); bfx.splice(i, 1);
+        }
+      }
+    };
+    const _bfV = new THREE.Vector3(), _bfH = new THREE.Vector3();
     // 🎬 เลือกท่าตามสถานการณ์จริงของมอนแต่ละตัว แล้วไล่เฟรมให้ mixer (ท่าไหนไม่มีก็ข้ามไปใช้ท่าถัดไป)
     G.qtTick = (dt) => {
+      if (bfx.length) bfxTick(dt);
       const L = G._qtMix; if (!L || !L.length) return;
       for (let i = L.length - 1; i >= 0; i--) {
         const e = L[i];
@@ -10335,19 +10395,59 @@ export default function CherryAdventure() {
           if (e.glOn > 0) { e.glOn -= step; node.position.x = (Math.random() - 0.5) * 0.3 / (node.scale.x || 1); node.position.z = (Math.random() - 0.5) * 0.15 / (node.scale.x || 1); }
           else if (node.position.x) { node.position.x = 0; node.position.z = 0; }
         }
+        const dead = u.whp != null && u.whp <= 0;
+        // 👑 คำรามตอนผู้เล่นเข้าใกล้บอสครั้งแรก (ห่างออกไปไกลแล้วกลับมา = คำรามใหม่) · ระหว่างคำรามยังไม่โจมตี
+        if (P.roar && (u.boss || u.twrBoss || u.caveBoss) && !dead && e.acts[P.roar]) {
+          e.g.getWorldPosition(_bfV); char.getWorldPosition(_bfH);
+          const dP = Math.hypot(_bfV.x - _bfH.x, _bfV.z - _bfH.z);
+          if (!u._roared && dP < 16) {
+            u._roared = true; e.roarT = e.acts[P.roar].getClip().duration / (P.roarTS || 1); e.roarK = 0;
+            u.wcd = Math.max(u.wcd || 0, e.roarT * 0.85); u.kkAtk = 0;
+            if (G.toast) G.toast(`👑 ${(SPECIES[u.spId] || {}).name || "บอส"}คำรามก้องป่า!`);
+          } else if (u._roared && dP > 40) u._roared = false;
+        }
         let want = P.idle;
-        if (u.whp != null && u.whp <= 0 && P.die) want = P.die;
-        else if (u.kkAtk > 0 && P.atk) { u.kkAtk -= step; want = P.atk; }
+        if (dead && P.die) want = P.die;
+        else if (e.roarT > 0) { e.roarT -= step; want = P.roar; }
+        else if (u.kkAtk > 0 && P.atk) { u.kkAtk -= step; want = P.cast && e.cur === P.cast ? P.cast : P.atk; }
         else if (u.flinch > 0.25 && P.hit) want = P.hit;
         else if (sp > 1.4 && P.run) want = P.run;
         else if (sp > 0.22 && P.walk) want = P.walk;
-        if (want === P.atk && e.cur !== P.atk && P.atkT) u.kkAtk = Math.max(u.kkAtk, P.atkT);   // ท่าโจมตียาว (บอส) — ค้างให้เล่นจนจบท่า
+        if (want === P.atk && e.cur !== P.atk && e.cur !== P.cast) {   // ⚔️ เริ่มการโจมตีใหม่ — ทุก ๆ castEvery ครั้งเปลี่ยนเป็นร่ายสปอร์
+          u._atkN = (u._atkN || 0) + 1;
+          if (P.cast && e.acts[P.cast] && u._atkN % (P.castEvery || 3) === 0) {
+            want = P.cast; const cd = e.acts[P.cast].getClip().duration / (P.castTS || 1);
+            u.kkAtk = Math.max(u.kkAtk, cd); e.castFx = cd * (P.castFx || 0.7);
+            if (P.fxCol) { e.g.getWorldPosition(_bfV); bfxOrb(_bfV.clone().setY(_bfV.y + 3.9 * (e.g.scale.y || 1)), P.fxCol[1], e.castFx); }
+          } else if (P.atkT) u.kkAtk = Math.max(u.kkAtk, P.atkT);   // ท่าโจมตียาว (บอส) — ค้างให้เล่นจนจบท่า
+        }
+        // ✨ จังหวะเอฟเฟกต์ระหว่างท่า
+        if (e.cur === P.roar && want === P.roar && P.fxCol) {
+          const D = e.acts[P.roar].getClip().duration / (P.roarTS || 1), el = D - e.roarT;
+          const marks = [0.12, 0.45, 0.62];   // ตะโกน · ทุบอก 2 ครั้ง
+          while (e.roarK < marks.length && el >= marks[e.roarK] * D) {
+            e.g.getWorldPosition(_bfV);
+            if (e.roarK === 0) { if (G.sfx && G.sfx.roar) G.sfx.roar(); G._camShake = Math.max(G._camShake || 0, 0.45); bfxSpores(_bfV.clone().setY(_bfV.y + 3.2 * (e.g.scale.y || 1)), null, P.fxCol, 90, 1.5); bfxRing(_bfV.x, _bfV.y, _bfV.z, P.fxCol[0], 12, 1.2); }
+            else { G._camShake = Math.max(G._camShake || 0, 0.3); bfxRing(_bfV.x, _bfV.y, _bfV.z, P.fxCol[e.roarK % P.fxCol.length], 10, 1.0); bfxSpores(_bfV.clone().setY(_bfV.y + 1.6 * (e.g.scale.y || 1)), null, P.fxCol, 40, 1.0); }
+            e.roarK++;
+          }
+        }
+        if (e.cur === P.cast && e.castFx > 0 && P.fxCol) {
+          e.castFx -= step;
+          if (e.castFx <= 0) {   // 🍄 ปล่อยสปอร์จากมือที่ชูขึ้น พุ่งโค้งไปหาผู้เล่น
+            e.g.getWorldPosition(_bfV); char.getWorldPosition(_bfH);
+            const sc = e.g.scale.y || 1;
+            bfxSpores(_bfV.clone().setY(_bfV.y + 3.9 * sc), _bfH.clone().setY(_bfH.y + 1.2), P.fxCol, 90, 0.8, 1.6 * sc);
+            bfxRing(_bfV.x, _bfV.y, _bfV.z, P.fxCol[1], 5, 0.6);
+            if (G.sfx && G.sfx.skill) G.sfx.skill();
+          }
+        }
         if (want !== e.cur) {
           const from = e.acts[e.cur], to = e.acts[want];
           if (to) {
             to.reset();
-            to.timeScale = want === P.atk && P.atkTS ? P.atkTS : 1;
-            if (want === P.die || want === P.atk || want === P.hit) { to.setLoop(THREE.LoopOnce, 1); to.clampWhenFinished = true; }
+            to.timeScale = want === P.atk && P.atkTS ? P.atkTS : want === P.cast && P.castTS ? P.castTS : want === P.roar && P.roarTS ? P.roarTS : 1;
+            if (want === P.die || want === P.atk || want === P.hit || want === P.cast || want === P.roar) { to.setLoop(THREE.LoopOnce, 1); to.clampWhenFinished = true; }
             else { to.setLoop(THREE.LoopRepeat, Infinity); to.clampWhenFinished = false; }
             to.fadeIn(0.18).play();
             if (from && from !== to) from.fadeOut(0.18);
