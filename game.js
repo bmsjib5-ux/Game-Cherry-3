@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v736"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v737"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -17817,11 +17817,26 @@ function CherryAdventure() {
                 H.g.add(m);
                 H.skin = { m, mx, acts, ts, D, cur: null, n: -1, on: null, hand: m.getObjectByName(D.hand), arm: m.getObjectByName(D.arm), handL: m.getObjectByName(D.handL), armL: m.getObjectByName(D.armL),
                     v: new THREE.Vector3(), v2: new THREE.Vector3(), v3: new THREE.Vector3(), q: new THREE.Quaternion(), mW: new THREE.Matrix4(), mO: new THREE.Matrix4(), s: new THREE.Vector3() };
+                { // 🗡️ จูนด้ามดาบกับกระดูกมือขวาจากท่ายืนพัก (ท่า A ฝ่ามือหันเข้าลำตัว นิ้วโป้งชี้หน้า) → ดาบชี้ไปหน้า ด้านบนขึ้นฟ้า
+                    //    แล้วให้หมุนตามข้อมือจริงทุกท่า (ท่าฟันของคลังท่าทำมาสำหรับถืออาวุธมือขวาแบบนี้) · จุดจับ = กลางกำปั้น
+                    const hd = H.skin.hand, ar = H.skin.arm;
+                    if (hd && ar) {
+                        m.updateMatrixWorld(true);
+                        const G0 = HERO_SKIN_GRIP, mq = m.getWorldQuaternion(new THREE.Quaternion()); // คิดเทียบกับตัวโมเดล (ไม่ขึ้นกับทิศที่ตัวละครหันอยู่ตอนโหลด)
+                        const rq = mq.clone().invert().multiply(hd.getWorldQuaternion(new THREE.Quaternion()));
+                        const offQ = rq.clone().invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(G0.tilt || 0, G0.yaw || 0, 0)));
+                        const hp = hd.getWorldPosition(new THREE.Vector3()), ap = ar.getWorldPosition(new THREE.Vector3());
+                        const fd = hp.clone().sub(ap).normalize(), L = hp.distanceTo(ap); // ทิศนิ้ว (ศอก → ข้อมือ) · ความยาวแขนท่อนล่าง
+                        const offL = hd.worldToLocal(hp.clone().addScaledVector(fd, L * G0.fist).add(new THREE.Vector3(G0.inX * L, 0, G0.inZ * L).applyQuaternion(mq)));
+                        H.skin.gripR = { offQ, offL };
+                    }
+                }
                 heroSkinVis(H, true);
                 H.lit = -1;
             });
             const heroSkinTick = (H, dt) => {
-                const S = H.skin, cl = HERO_SKIN_CLIP(H.cur);
+                const S = H.skin;
+                let cl = HERO_SKIN_CLIP(H.cur);
                 if (!cl || !S.acts[cl]) {
                     heroSkinVis(H, false);
                     S.n = H.playN;
@@ -17846,7 +17861,41 @@ function CherryAdventure() {
                 S.mx.update(dt);
             };
             // 🗡️ อาวุธในกำปั้นสกิน — ใบดาบตั้งฉากกับแขนท่อนล่าง: ห้อยแขน = ชี้ไปหน้า · ยกแขนฟัน = ชี้ขึ้น (กรอบ grip: อาวุธชี้ +Z)
-            const HERO_SKIN_GRIP = { s: 1.0, pz: 0.12 }; // pz = เลื่อนจากข้อมือไปกลางกำปั้น (หน่วยตัวละคร สูง 4)
+            const HERO_SKIN_GRIP = { s: 1.0, pz: 0.12, // มือซ้าย (โล่): pz = เลื่อนจากข้อมือไปกลางกำปั้น (หน่วยตัวละคร สูง 4)
+                tilt: -0.25, yaw: 0, fist: 0.24, inX: 0.03, inZ: 0.02 }; // มือขวา (ดาบ): tilt = เชิดปลายดาบขึ้น (เรเดียน) · fist = กลางกำปั้นห่างข้อมือ (สัดส่วนแขนท่อนล่าง) · inX/inZ = เยื้องเข้าฝ่ามือ
+            //  ท่าฟัน/สกิล = ดาบหมุนตามข้อมือจริง (คลังท่าโจมตีทำมาสำหรับถืออาวุธ) · ท่ายืน/เดิน/วิ่ง/โดนตี = ท่าถือดาบ "พร้อมรบ"
+            //  (ท่าเดินปกติแกว่งมือหงาย/คว่ำ ถ้าตามข้อมือดาบจะชี้ไปหลัง/ข้างตัว) — ปลายดาบชี้หน้าเฉียงลงตามแขน · ผสมสองแบบนุ่ม ๆ ตอนเปลี่ยนท่า
+            const SKIN_WRIST = { Attack1: 1, Attack2: 1, Skill: 1 };
+            const _sgQ = new THREE.Quaternion(), _sgM = new THREE.Matrix4(), _sgV = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+            const heroSkinGripHand = (H, grip, hand, dt) => {
+                const S = H.skin, R = S.gripR, bone = S.hand;
+                if (!grip || !hand || !R || !bone || !S.arm)
+                    return false;
+                const tw = SKIN_WRIST[S.cur] ? 1 : 0;
+                S.gw = S.gw == null ? tw : S.gw + (tw - S.gw) * Math.min(1, (dt || 0.016) * 14);
+                bone.getWorldQuaternion(S.q).multiply(R.offQ); // ตามข้อมือ = (ทิศตัวโมเดล) × (ข้อมือที่หมุนไปจากท่าพัก) × เชิดปลายดาบ
+                if (S.gw < 0.999) { // ท่าถือดาบพร้อมรบ
+                    const [Fd, Fw, Rt, Z, X] = _sgV;
+                    bone.getWorldPosition(Fd);
+                    S.arm.getWorldPosition(Z);
+                    Fd.sub(Z).normalize(); // ศอก → ข้อมือ
+                    char.getWorldQuaternion(_sgQ);
+                    Fw.set(0, 0, 1).applyQuaternion(_sgQ);
+                    Rt.set(-1, 0, 0).applyQuaternion(_sgQ);
+                    Z.copy(Fw).multiplyScalar(0.86).addScaledVector(Fd, 0.5).normalize(); // ปลายดาบ: หน้า + ไปตามแขน (ห้อยแขน = ชี้หน้าเฉียงลง)
+                    X.copy(Rt).addScaledVector(Z, -Rt.dot(Z)).normalize();
+                    const Y = Rt.crossVectors(Z, X);
+                    _sgQ.setFromRotationMatrix(_sgM.makeBasis(X, Y, Z));
+                    S.q.copy(_sgQ.slerp(S.q, S.gw));
+                }
+                const P = bone.localToWorld(S.v.copy(R.offL));
+                grip.getWorldScale(S.s);
+                const ws = S.s.x * HERO_SKIN_GRIP.s; // ขนาดเท่าที่ร่างเดิมถือ (รวมอาวุธประจำฮีโร่ขยาย)
+                S.mW.compose(P, S.q, S.s.set(ws, ws, ws));
+                S.mO.copy(hand.matrixWorld).invert().multiply(S.mW);
+                S.mO.decompose(grip.position, grip.quaternion, grip.scale);
+                return true;
+            };
             const heroSkinGrip = (H, grip, bone, arm, hand) => {
                 if (!grip || !bone || !arm || !hand)
                     return;
@@ -20137,7 +20186,8 @@ function CherryAdventure() {
                     H.bowArrow.visible = false;
                 if (H.skin && H.skin.on) { // ✨ อาวุธ/โล่ย้ายไปอยู่ในกำปั้นสกิน
                     H.g.updateMatrixWorld(true);
-                    heroSkinGrip(H, H.grip, H.skin.hand, H.skin.arm, H.hand);
+                    if (!heroSkinGripHand(H, H.grip, H.hand, dt))
+                        heroSkinGrip(H, H.grip, H.skin.hand, H.skin.arm, H.hand);
                     if (H.gripL)
                         heroSkinGrip(H, H.gripL, H.skin.handL, H.skin.armL, H.gripL.parent);
                 }
