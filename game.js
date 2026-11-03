@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v735"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v736"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -1170,7 +1170,8 @@ const FashionTab = ({ G, ui, font, wide, onBack, setUi }) => {
     const SECS = [["look", "👕", "รูปลักษณ์"], ["over", "✨", "สวมทับ"], ["wing", "🪽", "ปีก"], ["set", "🎉", "เซ็ตชุด"], ["hero", "🦸", "ฮีโร่"], ["dye", "🎨", "ย้อมสี"], ["save", "💾", "ตู้เสื้อผ้า"]];
     const overItems = LOOT.filter((x) => (x.tech || x.id === "lego_suit") && inv.includes(x.id));
     const wingsOwned = G.wingsOwned || {}, activeWing = G.activeWing || "none";
-    const nowOn = [cos.outfit && LOOT.find((x) => x.id === cos.outfit), G.legoSkinOn && { emoji: "🧱", name: "ชุดตัวต่อ" }, activeWing !== "none" && WINGS.find((w) => w.id === activeWing), G.activeSet && OUTFIT_SETS.find((x) => x.id === G.activeSet), G.heroId && HERO_GALLERY.find((h) => h.id === G.heroId)].filter(Boolean);
+    const skinDef = HERO_SKINS[G.cls], skinOn = !!(skinDef && G.heroSkinOn && G.heroSkinOn[G.cls]);
+    const nowOn = [cos.outfit && LOOT.find((x) => x.id === cos.outfit), skinOn && { emoji: "✨", name: skinDef.name }, G.legoSkinOn && { emoji: "🧱", name: "ชุดตัวต่อ" }, activeWing !== "none" && WINGS.find((w) => w.id === activeWing), G.activeSet && OUTFIT_SETS.find((x) => x.id === G.activeSet), G.heroId && HERO_GALLERY.find((h) => h.id === G.heroId)].filter(Boolean);
     return (React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0, color: "#eee" } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
             !wide && onBack && React.createElement("button", { onClick: onBack, style: { padding: "6px 10px", borderRadius: 10, border: `1px solid ${line}`, background: "rgba(26,34,28,0.7)", color: "#e8d8e0", fontFamily: font, fontWeight: 900, fontSize: 11.5, cursor: "pointer" } }, "\u2190 \u0E01\u0E23\u0E30\u0E40\u0E1B\u0E4B\u0E32"),
@@ -1202,10 +1203,10 @@ const FashionTab = ({ G, ui, font, wide, onBack, setUi }) => {
         }),
         sec === "over" && (React.createElement("div", { style: card },
             title("✨ ชุด/อาวุธสวมทับ", "ไม่เข้าช่องจริง — ทับรูปลักษณ์อย่างเดียว"),
-            overItems.length ? grid(overItems.map((it) => {
+            (overItems.length || skinDef) ? grid((skinDef ? [tile("hfskin", skinOn, skinDef.emoji, "✨ " + skinDef.name, () => G.heroSkinToggle && G.heroSkinToggle(), "#7affe0", false, "ใหม่")] : []).concat(overItems.map((it) => {
                 const on = it.id === "lego_suit" ? !!G.legoSkinOn : cos[it.slot] === it.id;
                 return tile(it.id, on, it.emoji, it.name, () => (it.id === "lego_suit" ? G.legoSkinToggle() : G.techSkinToggle(it.id)), (RARITY[it.rarity] || {}).color);
-            }))
+            })))
                 : React.createElement("div", { style: { fontSize: 11, color: "#c8b0c0" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 \u2014 \u0E0B\u0E37\u0E49\u0E2D\u0E44\u0E14\u0E49\u0E17\u0E35\u0E48 \uD83E\uDDF1 \u0E23\u0E49\u0E32\u0E19\u0E15\u0E31\u0E27\u0E15\u0E48\u0E2D (\u0E40\u0E21\u0E37\u0E2D\u0E07\u0E40\u0E25\u0E42\u0E01\u0E49) \u0E41\u0E25\u0E30 \uD83E\uDD16 \u0E23\u0E49\u0E32\u0E19\u0E44\u0E2E\u0E40\u0E17\u0E04 (\u0E40\u0E21\u0E37\u0E2D\u0E07\u0E22\u0E38\u0E04 AI)"))),
         sec === "wing" && (React.createElement("div", { style: card },
             title("🪽 ปีก", `${Object.keys(wingsOwned).length} แบบ`),
@@ -4386,6 +4387,13 @@ const HERO_MODELS = {
     mage: { name: "นักเวท", emoji: "🔮", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Buns"], h: 3.85, hue: [280, 0.52, 1.02], hairC: 0xa88ac8, desc: "นักเวทชุดม่วงมวยผม" },
     coder: { name: "โปรแกรมเมอร์", emoji: "💻", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_SimpleParted"], h: 3.85, hue: [186, 0.55, 1.02], hairC: 0x2a3a3e, desc: "โปรแกรมเมอร์ชุดฟ้าน้ำทะเล" },
     tamer: { name: "นักฝึกสัตว์", emoji: "🐾", gender: 0, files: ["Female_Base", "Female_Peasant", "Hair_Long"], h: 3.9, hue: [36, 0.50, 1.02], hairC: 0xb08a4a, desc: "นักฝึกสัตว์ชุดน้ำตาลทอง" },
+};
+// ✨ สกินพิเศษประจำอาชีพ (Higgsfield) — ร่าง 3D ทั้งตัวที่ทำจาก Higgsfield (ภาพคอนเซ็ปต์ → 3D → ใส่กระดูก + ท่าจากคลังท่า Meshy)
+//    สวมทับร่างประกอบชิ้นเดิม (เปิด/ปิดได้ในแฟชั่น › สวมทับ) · ร่างเดิมยังคุมท่า/อาวุธอยู่เบื้องหลัง ร่างสกินเล่นท่าของตัวเองตาม
+//    clips = ชื่อคลิปในไฟล์ · ท่าที่สกินไม่มี (ขี่สัตว์ ว่ายน้ำ เต้น ขุดแร่ ฯลฯ) → กลับไปใช้ร่างเดิมชั่วคราวเอง
+const HERO_SKINS = {
+    warrior: { name: "นักรบเกราะนิล", emoji: "🛡️", file: "assets/higgsfield/hero_warrior.glb", h: 4.0, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        clip: { Attack1: { from: 0.12, spd: 1.9 }, Attack2: { from: 0.15, spd: 2.0 }, Skill: { from: 0.05, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } }, // from = ข้ามช่วงเงื้อ (สัดส่วนคลิป) · spd = เร่งให้ทันจังหวะตีของเกม
 };
 // 🦸👗 ธีมชุดฮีโร่บนโมเดล 3D — แต่ละฮีโร่ได้ลุคตามคาแรกเตอร์: เพศ · แบบชุด (Peasant ผ้า/Ranger เกราะหนัง) · สีย้อม · ทรงผม/สีผม · โทนผิว
 //    + ของสวม (ใช้ตัวปั้นหมวก/หน้ากาก/ถุงมือ/กางเกง/รองเท้าเดิม) + ของประดับเฉพาะตัว fx (หู หาง เขา ปีก มงกุฎ/ชฎา รัศมี ผ้าคลุม ฯลฯ)
@@ -17740,6 +17748,127 @@ function CherryAdventure() {
                 Mc.n = H.playN;
                 Mc.mx.update(dt);
             };
+            // ✨ สกินพิเศษ (Higgsfield) — โหลดร่าง · แปลงชื่อท่าของร่างเดิมเป็นคลิปของสกิน · ย้ายอาวุธเข้ากำปั้นสกินทุกเฟรม
+            const skinFiles = {};
+            const skinLoad = (f) => skinFiles[f] || (skinFiles[f] = new Promise((res) => {
+                if (!THREE.GLTFLoader)
+                    return res(null);
+                new THREE.GLTFLoader().load(f, (gl) => res(gl), undefined, () => { delete skinFiles[f]; res(null); });
+            }));
+            //  null = ท่าที่สกินไม่มี → แสดงร่างเดิมชั่วคราว (ขี่สัตว์/ว่ายน้ำ/เต้น/เปิดหีบ/ขุดแร่/ปลูกผัก ...)
+            const HERO_SKIN_CLIP = (n) => !n ? "Idle" : /Death/.test(n) ? "Death"
+                : /^Hit_|Knockback|Shield_OneShot|Shield_Break|Sword_Block/.test(n) ? "Hit"
+                    : /Sprint|Jog|Roll|Slide/.test(n) ? "Run" : /^Walk/.test(n) ? "Walk"
+                        : /Heavy_Combo|Sword_Dash|Shield_Dash|Spell/.test(n) ? "Skill"
+                            : /_Rec$/.test(n) ? "Idle"
+                                : /Sword_Regular_B|Punch_Jab|Hook|Kick|Knee/.test(n) ? "Attack2" : /Sword_Regular|Sword_Attack|Punch|Throw|Shoot/.test(n) ? "Attack1"
+                                    : /^Jump|NinjaJump/.test(n) ? "Idle" : /Idle/.test(n) && !/Sitting|Swim|Torch|Chest|Shield_Break/.test(n) ? "Idle" : null;
+            const _skinOnce = { Death: 1, Hit: 1, Attack1: 1, Attack2: 1, Skill: 1 };
+            const heroSkinVis = (H, on) => {
+                const S = H.skin;
+                if (!S || S.on === on)
+                    return;
+                if (on) {
+                    S.hid = [];
+                    H.parts.forEach((pt) => pt.traverse((o) => { if (o.isSkinnedMesh && o.visible) {
+                        o.visible = false;
+                        S.hid.push(o);
+                    } }));
+                }
+                else
+                    (S.hid || []).forEach((o) => { o.visible = true; });
+                if (H.tk)
+                    H.tk.grp.visible = !on;
+                if (H.deco)
+                    H.deco.forEach((K) => { if (K.grp)
+                        K.grp.visible = !on; });
+                S.m.visible = on;
+                S.on = on;
+                if (!on && H.grip) {
+                    H.grip.scale.setScalar(HERO_GRIP.s / H.k);
+                    H.grip.rotation.set(HERO_GRIP.rx, HERO_GRIP.ry, HERO_GRIP.rz);
+                    H.grip.position.set(HERO_GRIP.px, HERO_GRIP.py, HERO_GRIP.pz);
+                }
+            };
+            const heroSkinAttach = (H, D, token) => skinLoad(D.file).then((gl) => {
+                if (!gl || token !== G._heroTok || G._heroModel !== H || !THREE.SkeletonUtils)
+                    return;
+                const m = THREE.SkeletonUtils.clone(gl.scene);
+                m.name = "heroSkin";
+                m.updateMatrixWorld(true);
+                const b = new THREE.Box3().setFromObject(m), k = (D.h || H.h || 4) / Math.max(0.01, b.max.y - b.min.y);
+                m.scale.setScalar(k);
+                m.position.y = -b.min.y * k;
+                m.traverse((o) => {
+                    if (!o.isMesh)
+                        return;
+                    o.castShadow = true;
+                    o.frustumCulled = false;
+                    const c = o.material.clone();
+                    c.metalness = 0;
+                    c.roughness = 0.82;
+                    if (c.map)
+                        c.emissiveMap = c.map; // ไฟกลางคืนของตัวละคร (emissive = สี × ความสว่าง) คูณลายเท็กซ์เจอร์ ไม่ทำให้ขาวซีด
+                    o.material = c;
+                    H.mats.push(c);
+                });
+                const mx = new THREE.AnimationMixer(m), acts = {}, ts = {};
+                gl.animations.forEach((c) => { acts[c.name] = mx.clipAction(c); ts[c.name] = (D.clip && D.clip[c.name]) || {}; });
+                H.g.add(m);
+                H.skin = { m, mx, acts, ts, D, cur: null, n: -1, on: null, hand: m.getObjectByName(D.hand), arm: m.getObjectByName(D.arm), handL: m.getObjectByName(D.handL), armL: m.getObjectByName(D.armL),
+                    v: new THREE.Vector3(), v2: new THREE.Vector3(), v3: new THREE.Vector3(), q: new THREE.Quaternion(), mW: new THREE.Matrix4(), mO: new THREE.Matrix4(), s: new THREE.Vector3() };
+                heroSkinVis(H, true);
+                H.lit = -1;
+            });
+            const heroSkinTick = (H, dt) => {
+                const S = H.skin, cl = HERO_SKIN_CLIP(H.cur);
+                if (!cl || !S.acts[cl]) {
+                    heroSkinVis(H, false);
+                    S.n = H.playN;
+                    return;
+                } // ท่าที่สกินไม่มี → ร่างเดิม
+                heroSkinVis(H, true);
+                const a = S.acts[cl];
+                if (cl !== S.cur || (H.playN !== S.n && _skinOnce[cl])) {
+                    const once = !!_skinOnce[cl], prev = S.cur ? S.acts[S.cur] : null;
+                    a.reset();
+                    a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+                    a.clampWhenFinished = once;
+                    if (S.ts[cl].from)
+                        a.time = a.getClip().duration * S.ts[cl].from; // เริ่มที่จังหวะเหวี่ยงจริง
+                    a.fadeIn(0.1).play();
+                    if (prev && prev !== a)
+                        prev.fadeOut(0.1);
+                    S.cur = cl;
+                }
+                a.timeScale = cl === "Run" ? (/Sprint/.test(H.cur || "") ? 1.25 : 1) : (S.ts[cl].spd || 1); // 🏃 วิ่งเต็มฝีเท้าเร่งขาเร็วขึ้น
+                S.n = H.playN;
+                S.mx.update(dt);
+            };
+            // 🗡️ อาวุธในกำปั้นสกิน — ใบดาบตั้งฉากกับแขนท่อนล่าง: ห้อยแขน = ชี้ไปหน้า · ยกแขนฟัน = ชี้ขึ้น (กรอบ grip: อาวุธชี้ +Z)
+            const HERO_SKIN_GRIP = { s: 1.0, pz: 0.12 }; // pz = เลื่อนจากข้อมือไปกลางกำปั้น (หน่วยตัวละคร สูง 4)
+            const heroSkinGrip = (H, grip, bone, arm, hand) => {
+                if (!grip || !bone || !arm || !hand)
+                    return;
+                const S = H.skin, T = HERO_SKIN_GRIP;
+                const P = bone.getWorldPosition(S.v), A = arm.getWorldPosition(S.v2);
+                const F = A.sub(P).negate().normalize(); // ศอก → ข้อมือ
+                const R = S.v3.set(1, 0, 0).applyQuaternion(char.getWorldQuaternion(S.q)); // ด้านขวาของตัวละคร
+                const Z = new THREE.Vector3().crossVectors(F, R);
+                if (Z.lengthSq() < 1e-6)
+                    Z.set(0, 0, 1).applyQuaternion(S.q);
+                Z.normalize();
+                const Y = F.clone().negate(), X = new THREE.Vector3().crossVectors(Y, Z).normalize();
+                Y.crossVectors(Z, X);
+                S.q.setFromRotationMatrix(S.mO.makeBasis(X, Y, Z));
+                grip.getWorldScale(S.s);
+                const ws = S.s.x * T.s; // ขนาดอาวุธเท่าที่ร่างเดิมถืออยู่เฟรมนี้ (รวมอาวุธประจำฮีโร่ขยาย/นวม)
+                char.getWorldScale(S.v2);
+                P.addScaledVector(F, T.pz * S.v2.x);
+                S.mW.compose(P, S.q, S.s.set(ws, ws, ws));
+                S.mO.copy(hand.matrixWorld).invert().multiply(S.mW);
+                S.mO.decompose(grip.position, grip.quaternion, grip.scale);
+            };
             // 🦾 ชุดอาวุธหนักของจักรกลสังหาร (จักรกลพิทักษ์ขั้น 4) — ปืนกลหกลำกล้องสองมือ · ฝักจรวดบนหลัง · แขนกลแมงมุม 4 แขน (เลื่อย/เลเซอร์/คีม/สว่าน)
             //    ทุกชิ้นอยู่ใน H.g (หน่วยตัวละคร) · ปืนตามแนวแขนท่อนล่างของหุ่น · ของบนหลังตามกระดูกอก (Chest)
             const kkM = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.45, metalness: 0.6 }, o || {}));
@@ -19454,6 +19583,8 @@ function CherryAdventure() {
                     } // 🧱 ชุดตัวต่อเลโก้ → ทั้งตัวเป็นอิฐ
                     if (M.mech)
                         heroMechAttach(G._heroModel, M, token); // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
+                    else if (HERO_SKINS[id] && G.heroSkinOn && G.heroSkinOn[id] && !(OI && OI.theme) && !G.legoSkinOn && !G.heroId)
+                        heroSkinAttach(G._heroModel, HERO_SKINS[id], token); // ✨ สกินพิเศษ Higgsfield
                 });
             };
             // 🎬 เลือกท่าจากสถานะจริงของผู้เล่นทุกเฟรม — ตาย > ขี่สัตว์ > พุ่ง > กระโดด > โจมตี/ร่าย > โดนตี > วิ่ง/เดิน > ยืน
@@ -19824,6 +19955,8 @@ function CherryAdventure() {
                 H.mixers.forEach((m) => m.update(dt));
                 if (H.mech)
                     heroMechTick(H, dt); // 🤖
+                if (H.skin)
+                    heroSkinTick(H, dt); // ✨
                 {
                     const ty = G._swimming ? (HERO_SWIM_Y[H.cur] || 0) : 0;
                     H.swimY = (H.swimY || 0) + (ty - (H.swimY || 0)) * Math.min(1, dt * 6); // 🏊 ปรับระดับตัวในน้ำ (ค่อย ๆ เปลี่ยน)
@@ -20002,6 +20135,12 @@ function CherryAdventure() {
                     heroBowDraw(H, H.cur === "Pistol_Idle_Loop"); // ❄️ ธนูยูกิ — มือซ้ายถือคันทุกอาชีพ   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
                 else if (H.bowArrow)
                     H.bowArrow.visible = false;
+                if (H.skin && H.skin.on) { // ✨ อาวุธ/โล่ย้ายไปอยู่ในกำปั้นสกิน
+                    H.g.updateMatrixWorld(true);
+                    heroSkinGrip(H, H.grip, H.skin.hand, H.skin.arm, H.hand);
+                    if (H.gripL)
+                        heroSkinGrip(H, H.gripL, H.skin.handL, H.skin.armL, H.gripL.parent);
+                }
                 if (H.mech) { // 🤖 อาวุธไปอยู่บนฝ่ามือหุ่นยนต์
                     H.g.updateMatrixWorld(true);
                     heroMechGrip(H, H.grip, H.mech.palm, H.mech.arm, H.hand);
@@ -42606,6 +42745,25 @@ function CherryAdventure() {
                 setUi((u) => ({ ...u, costume: { ...G.costume } }));
                 if (G.syncPlayer)
                     G.syncPlayer();
+                if (G.saveGame)
+                    G.saveGame();
+            };
+            G.heroSkinToggle = (on) => {
+                const D = HERO_SKINS[G.cls];
+                if (!D) {
+                    toast("อาชีพนี้ยังไม่มีสกินพิเศษ");
+                    return;
+                }
+                G.heroSkinOn = Object.assign({}, G.heroSkinOn || {});
+                G.heroSkinOn[G.cls] = on == null ? !G.heroSkinOn[G.cls] : !!on;
+                if (G.heroSkinOn[G.cls] && G.legoSkinOn)
+                    G.legoSkinOn = false; // ชุดตัวต่อกับสกินพิเศษใส่พร้อมกันไม่ได้
+                if (G.heroModelId && G.heroModelSet)
+                    G.heroModelSet(G.heroModelId);
+                else if (G.heroSkinOn[G.cls])
+                    toast("✨ สกินพิเศษใช้กับตัวละครโมเดล 3D — เปิดโมเดล 3D ในตั้งค่าก่อนนะ");
+                toast(G.heroSkinOn[G.cls] ? `✨ สวมสกิน ${D.name} แล้ว! (ชุด/อาวุธ/ค่าสถานะไม่เปลี่ยน)` : `✨ ถอดสกิน ${D.name} แล้ว`);
+                setUi((u) => ({ ...u, heroSkinOn: Object.assign({}, G.heroSkinOn), legoSkinOn: !!G.legoSkinOn }));
                 if (G.saveGame)
                     G.saveGame();
             };
@@ -73941,7 +74099,7 @@ function CherryAdventure() {
                     titleId: G.titleId || "t_none", // 🏅 equipped title
                     titleId: G.titleId || "t_none", // 🏅 equipped title
                     rolls: G.rolls || {}, sockets: G.sockets || {}, gems: G.gems || {}, // 💎 quality rolls + gems
-                    costume: G.costume || null, legoSkin: G.legoSkinOn ? 1 : 0, danceRec: G.danceRec || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
+                    costume: G.costume || null, legoSkin: G.legoSkinOn ? 1 : 0, heroSkin: G.heroSkinOn || null, danceRec: G.danceRec || null, dye: G.dye || null, wardrobePresets: G.wardrobePresets || [], dyePalette: G.dyePalette || [], // 👗 fashion
                     profile: (G.profileInfo ? G.profileInfo() : null), // 📊 computed profile snapshot (for the web dashboard's character detail)
                     pos: (G.inTownZone && G._townReturn) ? { x: G._townReturn.x, z: G._townReturn.z } : { x: char.position.x, z: char.position.z }, // 🏰 เซฟระหว่างอยู่ในเมือง = จำจุดผจญภัยเดิมไว้แทน
                 }));
@@ -78115,6 +78273,7 @@ function CherryAdventure() {
             G.gems = d.gems || {};
             G.costume = d.costume || { weapon: null, outfit: null };
             G.legoSkinOn = !!d.legoSkin;
+            G.heroSkinOn = d.heroSkin && typeof d.heroSkin === "object" ? d.heroSkin : {}; // ✨ สกินพิเศษ Higgsfield ต่ออาชีพ
             { // ♻️ เซฟเก่า (v723-725) สวมของไฮเทคเข้าช่องจริง → ย้ายเป็นสวมทับ แล้วใส่ของดีที่สุดชิ้นอื่นในกระเป๋าคืนช่องนั้น
                 const eq = G.equip || {}, sc = (x) => (x.atk || 0) * 3 + (x.def || 0) * 3 + (x.hp || 0) + (x.crit || 0) * 2 + (x.spd || 0) + (x.eva || 0);
                 ["outfit", "weapon"].forEach((sl) => {
