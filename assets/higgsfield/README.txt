@@ -27,3 +27,10 @@ hero_mage.glb — สกินพิเศษอาชีพนักเวท "
 - Idle / Run / Hit / Death borrowed from hero_warrior.glb (same Meshy skeleton names; hips translation rescaled)
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
+
+hero_archer.glb — สกินพิเศษอาชีพนักธนู "พรานไพรใบไม้เขียว" (HERO_SKINS.archer)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-03 · Image-to-3D: Meshy 7 · auto-rig + 2 own clips via Meshy rigging:
+  Attack1 (#224 Archery_Shot), Skill (#226 Archery_Shot_2)
+- Borrowed: Idle / Run / Hit / Death from hero_warrior.glb, Walk (Walking_Woman) from hero_mage.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB

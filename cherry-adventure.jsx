@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v738";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v739";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3793,6 +3793,9 @@ const HERO_MODELS = {
 const HERO_SKINS = {
   warrior: { name: "นักรบเกราะนิล", emoji: "🛡️", file: "assets/higgsfield/hero_warrior.glb", h: 4.0, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
              grip: "sword", clip: { Attack1: { from: 0.12, spd: 1.9 }, Attack2: { from: 0.15, spd: 2.0 }, Skill: { from: 0.05, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } },   // from = ข้ามช่วงเงื้อ (สัดส่วนคลิป) · spd = เร่งให้ทันจังหวะตีของเกม
+  archer:  { name: "พรานไพรใบไม้เขียว", emoji: "🏹", file: "assets/higgsfield/hero_archer.glb", h: 3.9, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+             grip: "bow", aimYaw: -Math.PI / 2,   // คันธนูมือซ้าย · ท่ายิงของคลังท่ายืนหันข้างยิงออกซ้าย → หมุนตัวสกิน -90° ตอนยิงให้ลูกธนูพุ่งไปหน้า
+             clip: { Attack1: { from: 0.2, spd: 2.0 }, Skill: { from: 0.05, spd: 1.7 }, Hit: { spd: 1.6 } } },   // ยืน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ · เดิน ยืมจากนักเวท
   mage:    { name: "จอมเวทย์ดาราม่วง", emoji: "🔮", file: "assets/higgsfield/hero_mage.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
              grip: "staff", alt: 1,   // คทาตั้งตรง (ร่ายเวท = เอนปลายคทาไปหน้า) · โจมตีปกติสลับท่าร่าย 2 แบบ
              clip: { Attack1: { from: 0.12, spd: 2.2 }, Attack2: { from: 0.15, spd: 2.4 }, Skill: { from: 0.05, spd: 1.9 }, Hit: { spd: 1.6 }, Walk: { spd: 0.95 } } },   // ยืน/วิ่ง/โดนตี/ตาย ยืมท่าจากสกินนักรบ (โครงกระดูก Meshy ชื่อเดียวกัน)
@@ -12479,6 +12482,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         : /^Hit_|Knockback|Shield_OneShot|Shield_Break|Sword_Block/.test(n) ? "Hit"
         : /Sprint|Jog|Roll|Slide/.test(n) ? "Run" : /^Walk/.test(n) ? "Walk"
         : /_Rec$/.test(n) ? "Idle"
+        : /^Pistol_/.test(n) ? "Attack1"                                  // 🏹 นักธนูเล็ง/ยิง (ร่างเดิมค้างท่าเล็งสองมือ)
         : /Idle/.test(n) ? (/Sitting|Swim|Torch|Chest/.test(n) ? null : "Idle")
         : /Heavy_Combo|Sword_Dash|Shield_Dash/.test(n) ? "Skill"
         : /Sword_Regular_B|Punch_Jab|Hook|Kick|Knee/.test(n) ? "Attack2" : /Sword_Regular|Sword_Attack|Punch|Throw|Shoot|Spell/.test(n) ? "Attack1"
@@ -12511,7 +12515,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                    v: new THREE.Vector3(), v2: new THREE.Vector3(), v3: new THREE.Vector3(), q: new THREE.Quaternion(), mW: new THREE.Matrix4(), mO: new THREE.Matrix4(), s: new THREE.Vector3() };
         {   // 🗡️ จูนด้ามดาบกับกระดูกมือขวาจากท่ายืนพัก (ท่า A ฝ่ามือหันเข้าลำตัว นิ้วโป้งชี้หน้า) → ดาบชี้ไปหน้า ด้านบนขึ้นฟ้า
             //    แล้วให้หมุนตามข้อมือจริงทุกท่า (ท่าฟันของคลังท่าทำมาสำหรับถืออาวุธมือขวาแบบนี้) · จุดจับ = กลางกำปั้น
-          const hd = H.skin.hand, ar = H.skin.arm;
+          const wl = D.grip === "bow", hd = wl ? H.skin.handL : H.skin.hand, ar = wl ? H.skin.armL : H.skin.arm;   // 🏹 ธนูถือมือซ้าย
           if (hd && ar) {
             m.updateMatrixWorld(true);
             const G0 = HERO_SKIN_GRIP, mq = m.getWorldQuaternion(new THREE.Quaternion());   // คิดเทียบกับตัวโมเดล (ไม่ขึ้นกับทิศที่ตัวละครหันอยู่ตอนโหลด)
@@ -12520,8 +12524,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const refL = new THREE.Vector3(-1, 0, 0).applyQuaternion(rqi);                                                 // ด้านขวาของตัว (คุมการบิดของใบดาบ)
             const hp = hd.getWorldPosition(new THREE.Vector3()), ap = ar.getWorldPosition(new THREE.Vector3());
             const fd = hp.clone().sub(ap).normalize(), L = hp.distanceTo(ap);   // ทิศนิ้ว (ศอก → ข้อมือ) · ความยาวแขนท่อนล่าง
-            const offL = hd.worldToLocal(hp.clone().addScaledVector(fd, L * G0.fist).add(new THREE.Vector3(G0.inX * L, 0, G0.inZ * L).applyQuaternion(mq)));
-            H.skin.gripR = { bladeL, refL, offL };
+            const offL = hd.worldToLocal(hp.clone().addScaledVector(fd, L * G0.fist).add(new THREE.Vector3((wl ? -G0.inX : G0.inX) * L, 0, G0.inZ * L).applyQuaternion(mq)));
+            H.skin.gripR = { bladeL, refL, offL, bone: hd, arm: ar };
           }
         }
         heroSkinVis(H, true);
@@ -12529,17 +12533,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       });
       const heroSkinTick = (H, dt) => {
         const S = H.skin; let cl = HERO_SKIN_CLIP(H.cur);
+        const newAtk = S.lastAge != null && (H.atkAge || 0) < S.lastAge; S.lastAge = H.atkAge || 0;   // เริ่มตี/ยิงนัดใหม่ (ร่างเดิมรีเซ็ตเวลาท่าโจมตี)
         if (cl === "Attack1" || cl === "Attack2" || cl === "Skill") {
           if (G._skCast && S.acts.Skill) cl = "Skill";                          // ✨ กำลังร่ายสกิล → ท่าสกิลเสมอ (นักเวทใช้คลิปเดียวกันทั้งตีปกติ/สกิล)
           else if (S.D.alt && cl !== "Skill") {                                 // 🔮 ตีปกติสลับท่าร่าย 2 แบบ
-            if (H.playN !== S.n) S.atkK = (S.atkK || 0) + 1;                 // เริ่มท่าโจมตีใหม่ (ร่างเดิมเพิ่งสั่งเล่นท่า)
+            if (H.playN !== S.n || newAtk) S.atkK = (S.atkK || 0) + 1;      // เริ่มท่าโจมตีใหม่ (ร่างเดิมเพิ่งสั่งเล่นท่า)
             cl = (S.atkK & 1) ? "Attack1" : "Attack2";
           }
         }
         if (!cl || !S.acts[cl]) { heroSkinVis(H, false); S.n = H.playN; return; }   // ท่าที่สกินไม่มี → ร่างเดิม
         heroSkinVis(H, true);
         const a = S.acts[cl];
-        if (cl !== S.cur || (H.playN !== S.n && _skinOnce[cl])) {
+        if (cl !== S.cur || ((H.playN !== S.n || newAtk) && _skinOnce[cl])) {
           const once = !!_skinOnce[cl], prev = S.cur ? S.acts[S.cur] : null;
           a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity); a.clampWhenFinished = once;
           if (S.ts[cl].from) a.time = a.getClip().duration * S.ts[cl].from;   // เริ่มที่จังหวะเหวี่ยงจริง
@@ -12547,6 +12552,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           S.cur = cl;
         }
         a.timeScale = cl === "Run" ? (/Sprint/.test(H.cur || "") ? 1.25 : 1) : (S.ts[cl].spd || 1);   // 🏃 วิ่งเต็มฝีเท้าเร่งขาเร็วขึ้น
+        if (S.D.aimYaw) { const ty = (cl === "Attack1" || cl === "Attack2" || cl === "Skill") ? S.D.aimYaw : 0; S.m.rotation.y += (ty - S.m.rotation.y) * Math.min(1, dt * 12); }   // 🏹 หันข้างตอนง้างยิง
         S.n = H.playN;
         S.mx.update(dt);
       };
@@ -12568,6 +12574,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); _sgTB.copy(o.geometry.boundingBox).applyMatrix4(_sgM4.multiplyMatrices(_sgInv, o.matrixWorld)); _sgB.union(_sgTB); });
         const c = _sgB.isEmpty() ? new THREE.Vector3(0, 1, 0) : _sgB.getCenter(new THREE.Vector3());
         if (c.lengthSq() < 1e-6) c.set(0, 1, 0);
+        const sz = _sgB.isEmpty() ? new THREE.Vector3(0, 1, 0) : _sgB.getSize(new THREE.Vector3());
+        const lng = sz.x >= sz.y && sz.x >= sz.z ? new THREE.Vector3(1, 0, 0) : sz.y >= sz.z ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);   // แกนยาวสุด (คันธนู = แนวกิ่งบน-ล่าง)
+        const dep = c.clone().addScaledVector(lng, -c.dot(lng)); if (dep.lengthSq() < 1e-6) dep.set(lng.x ? 0 : 1, 0, lng.x ? 1 : 0);   // ทิศตัวคันออกจากจุดจับ (ตั้งฉากแนวกิ่ง)
+        S.wCenter = c.clone(); S.wLong = lng; S.wDepth = dep.normalize();
         S.wKey = key; S.wAxis = c.normalize(); return S.wAxis;
       };
       const _sgF1 = new THREE.Matrix4(), _sgF2 = new THREE.Matrix4(), _sgX = new THREE.Vector3(), _sgY = new THREE.Vector3(), _sgZ = new THREE.Vector3(), _sgQ2 = new THREE.Quaternion();
@@ -12577,19 +12587,23 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         _sgX.normalize(); _sgY.crossVectors(_sgZ, _sgX); return out.makeBasis(_sgX, _sgY, _sgZ);
       };
       const _sgRefL = new THREE.Vector3(1, 0, 0);
-      const sgAim = (outQ, axisL, bladeW, refW) => {   // หมุน grip ให้แกนอาวุธ (ในกรอบ grip) ชี้ไปทิศ bladeW
-        sgFrame(_sgF1, bladeW, refW); sgFrame(_sgF2, axisL, _sgRefL);
+      const sgAim = (outQ, axisL, bladeW, refW, refL) => {   // หมุน grip ให้แกนอาวุธ (ในกรอบ grip) ชี้ไปทิศ bladeW · refL (ในกรอบ grip) ชี้ตาม refW
+        sgFrame(_sgF1, bladeW, refW); sgFrame(_sgF2, axisL, refL || _sgRefL);
         return outQ.setFromRotationMatrix(_sgF1.multiply(_sgF2.transpose()));
       };
       const heroSkinGripHand = (H, grip, hand, dt) => {   // 🗡️🔮 อาวุธมือขวา — ยึดกระดูกมือสกิน
-        const S = H.skin, R = S.gripR, bone = S.hand;
-        if (!grip || !hand || !R || !bone || !S.arm) return false;
-        const tw = SKIN_WRIST[S.cur] ? 1 : 0, staff = S.D.grip === "staff";
+        const S = H.skin, R = S.gripR, bone = R && R.bone, arm = R && R.arm;
+        if (!grip || !hand || !R || !bone || !arm) return false;
+        const tw = SKIN_WRIST[S.cur] ? 1 : 0, staff = S.D.grip === "staff", bowM = S.D.grip === "bow";
         S.gw = S.gw == null ? tw : S.gw + (tw - S.gw) * Math.min(1, (dt || 0.016) * 14);
         const aL = skinWpnAxis(S, grip), [Fd, Fw, Rt, Up, T] = _sgV;
-        bone.getWorldPosition(Fd); S.arm.getWorldPosition(T); Fd.sub(T).normalize();             // ศอก → ข้อมือ
+        bone.getWorldPosition(Fd); arm.getWorldPosition(T); Fd.sub(T).normalize();               // ศอก → ข้อมือ
         char.getWorldQuaternion(_sgQ); Fw.set(0, 0, 1).applyQuaternion(_sgQ); Rt.set(-1, 0, 0).applyQuaternion(_sgQ); Up.set(0, 1, 0);
-        if (staff) {                                     // 🔮 คทาตั้งตรงข้างตัว (เอนหน้านิดหน่อย) · ระหว่างร่าย = ปลายคทาเอนชี้ไปข้างหน้า
+        if (bowM) {                                      // 🏹 คันธนูตั้งตรง (แนวกิ่งขึ้น-ลง) · ปกติ = ตัวคันหันออกข้างซ้าย · ยิง = หันคันไปหน้า (สายเข้าหาตัว)
+          T.copy(Up).addScaledVector(Fw, 0.15 * (1 - S.gw));
+          const Lf = _sgV[3].set(1, 0, 0).applyQuaternion(_sgQ).multiplyScalar(1 - S.gw).addScaledVector(Fw, S.gw + 0.001);
+          sgAim(S.q, S.wLong, T, Lf, S.wDepth);
+        } else if (staff) {                              // 🔮 คทาตั้งตรงข้างตัว (เอนหน้านิดหน่อย) · ระหว่างร่าย = ปลายคทาเอนชี้ไปข้างหน้า
           T.copy(Up).multiplyScalar(1 - 0.45 * S.gw).addScaledVector(Fw, 0.22 + 0.7 * S.gw);
           sgAim(S.q, aL, T, Rt);
         } else {
@@ -12602,6 +12616,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           }
         }
         const P = bone.localToWorld(S.v.copy(R.offL));
+        if (bowM && S.wCenter) { grip.getWorldScale(S.v2); P.sub(S.v3.copy(S.wCenter).multiplyScalar(S.v2.x).applyQuaternion(S.q)); }   // 🏹 คันธนูวางห่างจุดจับของร่างเดิม → เลื่อนให้กลางคันอยู่ในกำปั้น
         grip.getWorldScale(S.s); const ws = S.s.x * HERO_SKIN_GRIP.s;   // ขนาดเท่าที่ร่างเดิมถือ (รวมอาวุธประจำฮีโร่ขยาย)
         S.mW.compose(P, S.q, S.s.set(ws, ws, ws));
         S.mO.copy(hand.matrixWorld).invert().multiply(S.mW);
@@ -13802,7 +13817,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (sr > 0 && sl > sr * 1.15) { gv.l.s *= sr / sl; H.gripL.scale.setScalar(gv.l.s); }
           } catch (eFL) {}
         }
-        if ((G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) || wand.children.some((x) => x.visible && x.userData && x.userData.heroBow)) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // ❄️ ธนูยูกิ — มือซ้ายถือคันทุกอาชีพ   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
+        if (H.skin && H.skin.on) { if (H.bowArrow) H.bowArrow.visible = false; }   // ✨ สกินพิเศษ: สาย/ลูกธนูของร่างเดิมไม่ตรงมือสกิน — ปิดไว้
+        else if ((G.cls === "archer" && wand.children.some((x) => x.visible && x.userData && (x.userData.kkFam === "bow" || (x.userData.kk && /bow/i.test(x.userData.kk))))) || wand.children.some((x) => x.visible && x.userData && x.userData.heroBow)) heroBowDraw(H, H.cur === "Pistol_Idle_Loop");   // ❄️ ธนูยูกิ — มือซ้ายถือคันทุกอาชีพ   // 🏹 คันธนูอยู่มือซ้ายทุกท่า
         else if (H.bowArrow) H.bowArrow.visible = false;
         if (H.skin && H.skin.on) {                         // ✨ อาวุธ/โล่ย้ายไปอยู่ในกำปั้นสกิน
           H.g.updateMatrixWorld(true);
