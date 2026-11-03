@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v732";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v733";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -24014,6 +24014,47 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       mushMatCache[c] = m; mushAnim.mats.push({ m, ph: Math.random() * 6 });
       return m;
     };
+    // 👑🍄 ต้นเห็ดแม่เรืองแสงยักษ์ — โมเดลจาก Higgsfield (วาดภาพคอนเซ็ปต์ → แปลงเป็น 3D) ลดเหลือ 16k สามเหลี่ยม + เท็กซ์เจอร์ 1024 (770KB)
+    //    โหลดแยกเฉพาะตอนเข้าแมพนี้ครั้งแรก · สูงราว 2 เท่าของเห็ดยักษ์ต้นอื่น ตั้งเด่นเหนือลำธารทางทิศเหนือของลานกลาง
+    const MOM = { x: 2, z: -33, h: 28, file: "assets/higgsfield/mother_mushroom.glb" };
+    let momGl = null, momLoading = null, momBuilt = false, momTry = 0;
+    const momAnim = { mat: null, ring: null, spores: null, sp: null, gy: 0 };
+    const momPlace = () => {
+      if (momBuilt || !momGl) return;
+      momBuilt = true;
+      const o = momGl.scene; momGl = null;
+      const bb = new THREE.Box3().setFromObject(o), sz = bb.getSize(new THREE.Vector3()), k = MOM.h / sz.y;
+      o.scale.setScalar(k); o.position.set(-(bb.min.x + bb.max.x) / 2 * k, -bb.min.y * k - 0.35, -(bb.min.z + bb.max.z) / 2 * k);   // รากจมดินนิดหน่อย
+      const meshes = [];
+      o.traverse((m) => {
+        if (!m.isMesh) return;
+        const mt = m.material;   // เรืองแสงจากลายเท็กซ์เจอร์เอง (หมวกชมพู/จุดฟ้า เด่นสุด · bloom จับสีสด)
+        mt.color.multiplyScalar(0.6); mt.emissive = new THREE.Color(0xffffff); mt.emissiveMap = mt.map; mt.emissiveIntensity = 0.45; mt.metalness = 0; mt.roughness = 0.85;
+        mt.userData = Object.assign({}, mt.userData, { _shared: true });
+        m.castShadow = false; m.receiveShadow = false; momAnim.mat = mt; meshes.push(m);
+      });
+      const g = new THREE.Group(); g.add(o); g.position.set(MOM.x, 0, MOM.z); g.rotation.y = 0.25; g.userData.noHide = true; mushDecor.add(g);
+      const capR = Math.max(sz.x, sz.z) * k / 2, trunkR = MOM.h * 0.08;
+      mushColliders.push({ x: MOM.x, z: MOM.z, r: trunkR });
+      if (momAnim.mat) mushGiants.push({ g, meshes, base: momAnim.mat, rc: capR * 0.9 + 0.9, top: MOM.h, bot: MOM.h * 0.52, rt: trunkR + 1.6, fm: null, fade: false, op: 1 });   // ลอดใต้หมวกได้ไม่จาง
+      if (G.snapWorldDecor) G.snapWorldDecor();
+      if (G.rebuildNav) { try { G.rebuildNav(); } catch (e) {} }
+      mushDecor.userData._frz = null; if (G.refreshDecorFreeze) G.refreshDecorFreeze();
+    };
+    G.momFetch = () => {   // โหลดไฟล์ (หน้าโหลดวาร์ปรอได้) · วางเมื่อฉากเห็ดสร้างแล้ว
+      if (momBuilt || momGl) return Promise.resolve(true);
+      if (momLoading) return momLoading;
+      if (!THREE.GLTFLoader || momTry >= 3) return Promise.resolve(false);
+      momTry++;
+      momLoading = new Promise((res) => new THREE.GLTFLoader().load(MOM.file, res, undefined, () => res(null))).then((gl) => {
+        momLoading = null;
+        if (!gl) return false;   // โหลดไม่ได้ (เน็ตหลุด) — ลองใหม่ได้อีก 2 ครั้ง
+        momGl = gl;
+        if (mushBuilt && mushIsHere()) { try { momPlace(); } catch (e) { console.warn("mother mushroom", e); } }
+        return true;
+      });
+      return momLoading;
+    };
     const mushBuild = () => {
       const L = natLib.Mushroom_Common, Fe = natLib.Fern_1, Rks = [natLib.Rock_Medium_1, natLib.Rock_Medium_2].filter(Boolean);
       if (!L) return;
@@ -24046,6 +24087,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (!mushStreamPts.every((q) => Math.hypot(q.x - x, q.z - z) > q.w + pad)) return false;
         return !occ.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad) && !mushColliders.some((c) => Math.hypot(c.x - x, c.z - z) < c.r + pad);
       };
+      occ.push({ x: MOM.x, z: MOM.z, r: 11 });   // 👑 เว้นลานให้ต้นเห็ดแม่
       const spot = (pad, r0, r1) => { for (let k = 0; k < 60; k++) { const a = Math.random() * Math.PI * 2, r = r0 + Math.random() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r; if (okAt(x, z, pad)) return [x, z]; } return null; };
       // 🍄 เห็ดยักษ์เรืองแสง — สูงราว 6–15 หน่วย หลายสี · ชนได้ที่ลำต้น · ซ่อนได้ตอนสู้ใกล้ ๆ
       L.obj.updateMatrixWorld(true);
@@ -24058,7 +24100,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const node = L.obj.clone(); node.scale.setScalar(s); node.position.y = -L.y0 * s;
         const meshes = []; node.traverse((o) => { if (o.isMesh) { o.material = mushMat(col); meshes.push(o); } });
         g.add(node); mushDecor.add(g);
-        mushGiants.push({ g, meshes, base: mushMat(col), rc: LRX * s + 0.9, top: LH * s, fm: null, fade: false, op: 1 });
+        mushGiants.push({ g, meshes, base: mushMat(col), rc: LRX * s + 0.9, top: LH * s, bot: 0, rt: 0, fm: null, fade: false, op: 1 });
         { const gy = terrainAt(p[0], p[1]), cc = new THREE.Color(col); for (let j = 0; j < 3; j++) { const a = rnd(0, 6.28), rr = rnd(0, 0.12 * s); glowPos.push(p[0] + Math.cos(a) * rr, gy + s * rnd(0.24, 0.4), p[1] + Math.sin(a) * rr); glowCol.push(cc.r, cc.g, cc.b); } }
         mushColliders.push({ x: p[0], z: p[1], r: 0.07 * s }); occ.push({ x: p[0], z: p[1], r: 0.3 * s });
       }
@@ -24091,6 +24133,26 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         chunk.add(o); occ.push({ x: p[0], z: p[1], r: 1.2 });
       }
       mergeByMat(chunk); mushDecor.add(chunk);
+      {   // 👑✨ ลานต้นเห็ดแม่ — วงแสงบนพื้น + สปอร์เรืองลอยขึ้นช้า ๆ รอบต้น (สร้างได้ก่อนโมเดลโหลดเสร็จ)
+        const gy = terrainAt(MOM.x, MOM.z), cv = document.createElement("canvas"); cv.width = cv.height = 64;
+        const cx = cv.getContext("2d"), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.35, "rgba(255,255,255,0.4)"); gr.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64);
+        const tex = new THREE.CanvasTexture(cv), mg = new THREE.Group(); mg.userData.noHide = true;
+        const ring = new THREE.Mesh(new THREE.CircleGeometry(11, 40), new THREE.MeshBasicMaterial({ map: tex, color: 0x30e8ff, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+        ring.rotation.x = -Math.PI / 2; ring.position.set(MOM.x, gy + 0.08, MOM.z); mg.add(ring); momAnim.ring = ring.material;
+        const N = 70, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), C = [new THREE.Color(0x40f0ff), new THREE.Color(0xff50d0), new THREE.Color(0xfff080)];
+        momAnim.sp = [];
+        for (let i = 0; i < N; i++) {
+          const a = rnd(0, 6.28), r = rnd(2.5, 12), c = C[i % 3];
+          momAnim.sp.push({ a, r, y: rnd(0, MOM.h), v: rnd(0.5, 1.3), w: rnd(-0.12, 0.12) });
+          col.set([c.r, c.g, c.b], i * 3);
+        }
+        const sg2 = new THREE.BufferGeometry(); sg2.setAttribute("position", new THREE.BufferAttribute(pos, 3)); sg2.setAttribute("color", new THREE.BufferAttribute(col, 3));
+        const sp = new THREE.Points(sg2, new THREE.PointsMaterial({ size: 1.6, map: tex, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
+        sp.frustumCulled = false; mg.add(sp); momAnim.spores = sp; momAnim.gy = gy;
+        mushDecor.add(mg);
+      }
+      if (momGl) momPlace(); else G.momFetch();   // 👑 วางต้นเห็ดแม่ (ไฟล์มาแล้ว) หรือเริ่มโหลด
       if (G.snapWorldDecor) G.snapWorldDecor();   // ปักทุกชิ้นลงพื้นจริง
       if (G.rebuildNav) { try { G.rebuildNav(); } catch (e) {} }
       mushDecor.userData._frz = null; if (G.refreshDecorFreeze) G.refreshDecorFreeze();
@@ -24109,6 +24171,18 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (const e of mushAnim.mats) e.m.emissiveIntensity = 0.95 + 0.25 * Math.sin(t * 1.4 + e.ph);
       if (mushAnim.glowM) mushAnim.glowM.opacity = 0.55 + 0.2 * Math.sin(t * 1.1);
       if (mushAnim.streamM) mushAnim.streamM.opacity = 0.62 + 0.18 * Math.sin(t * 2.2);
+      // 👑 ต้นเห็ดแม่ — ยังไม่มา: วาง/ลองโหลดใหม่ · มาแล้ว: หายใจแสงช้า ๆ + สปอร์ลอยวนขึ้น
+      if (!momBuilt) { if (momGl && mushIsHere()) { try { momPlace(); } catch (e) { console.warn("mother mushroom", e); } } else if (!momLoading && momTry < 3 && mushIsHere()) G.momFetch(); }
+      if (momAnim.mat) momAnim.mat.emissiveIntensity = 0.42 + 0.1 * Math.sin(t * 0.9);
+      if (momAnim.ring) momAnim.ring.opacity = 0.38 + 0.14 * Math.sin(t * 0.9);
+      if (momAnim.spores) {
+        const P = momAnim.spores.geometry.attributes.position, A = P.array;
+        for (let i = 0; i < momAnim.sp.length; i++) {
+          const q = momAnim.sp[i]; q.y += q.v * dt; q.a += q.w * dt; if (q.y > MOM.h) q.y = 0;
+          A[i * 3] = MOM.x + Math.cos(q.a) * q.r; A[i * 3 + 1] = momAnim.gy + q.y; A[i * 3 + 2] = MOM.z + Math.sin(q.a) * q.r;
+        }
+        P.needsUpdate = true;
+      }
       // 👀 เห็ดยักษ์ที่บังระหว่างกล้องกับตัวละคร (หรือกล้องจมอยู่ในหมวกเห็ด) → ค่อย ๆ จางเหลือเงาโปร่ง แล้วค่อย ๆ กลับเมื่อพ้น
       if (mushGiants.length) {
         char.getWorldPosition(_mhV);
@@ -24117,7 +24191,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         for (const M of mushGiants) {
           const me = M.g.matrixWorld.elements, mx = me[12], mz = me[14];
           const u = Math.max(0, Math.min(1, ((mx - hx) * dx + (mz - hz) * dz) / L2));
-          const block = M.g.visible && Math.hypot(mx - (hx + dx * u), mz - (hz + dz * u)) < M.rc && hy + (cy - hy) * u < me[13] + M.top;
+          const dd = Math.hypot(mx - (hx + dx * u), mz - (hz + dz * u)), ry = hy + (cy - hy) * u - me[13];   // ry = ความสูงเส้นสายตาเหนือโคนเห็ด
+          const block = M.g.visible && ry < M.top && ((dd < M.rc && ry > M.bot) || dd < M.rt);   // ชนหมวก (ช่วงความสูงหมวก) หรือชนลำต้น
           if (!block && !M.fade) continue;
           if (!M.fm) { M.fm = M.base.clone(); M.fm.transparent = true; M.fm.depthWrite = false; M.fm.userData = Object.assign({}, M.base.userData); }
           if (!M.fade) { M.fade = true; for (const m of M.meshes) m.material = M.fm; }
@@ -26166,7 +26241,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         try { switchBiome(idx, quiet); if (after) after(); } catch (e) { try { console.warn("warp failed", e); } catch (_) {} }
         let wait = Math.max(250, 1300 - (performance.now() - t0));   // โชว์อย่างน้อยให้อ่านชื่อด่านทัน
         const hide = () => { G._warpLoading = false; setUi((u) => ({ ...u, warpLoad: null })); };
-        const pre = b.id === "pirate" && G.pirLoad ? G.pirLoad() : null;   // 🏴‍☠️ รอโมเดลท่าเรือโหลดเสร็จก่อนปิดหน้าโหลด (ไม่เห็นเกาะโล่ง) · นานสุด 8 วิ
+        const pre = b.id === "pirate" && G.pirLoad ? G.pirLoad() : b.id === "mushroom" && G.momFetch ? G.momFetch() : null;   // 🍄👑 ป่าเห็ด: รอต้นเห็ดแม่   // 🏴‍☠️ รอโมเดลท่าเรือโหลดเสร็จก่อนปิดหน้าโหลด (ไม่เห็นเกาะโล่ง) · นานสุด 8 วิ
         if (pre && pre.then) { const tS = performance.now(); Promise.race([pre, new Promise((r) => setTimeout(r, 8000))]).then(() => setTimeout(hide, Math.max(0, wait - (performance.now() - tS)))); }
         else setTimeout(hide, wait);
       }, 90);
