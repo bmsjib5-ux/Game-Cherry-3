@@ -61,7 +61,7 @@ const BIOMES = [
     // 🏴‍☠️⚓ ด่านท่าเรือโจรสลัด — Lv 1600-1700 · เกาะทรายล้อมทะเลเปิด ท่าเรือไม้ยื่นลงทะเล เรือโจรสลัดจอดเทียบ ป้อมปืนใหญ่ หาดซากเรือ เรือผีลอยวน (Kenney Pirate Kit · CC0)
     { id: "pirate", name: "ท่าเรือโจรสลัด", emoji: "🏴‍☠️", lvMin: 1600, lvMax: 1700, ground: 0xe2cc94, sky: 0x58b4ee, fog: 0xa8d8f2, pool: ["pirskel", "pirgunner", "pirparrot", "pircrab", "pirshark"], tree: "none", boss: "pirkraken", bossName: "คราเคนเรือผี 🐙", hpMul: 1.35, atkMul: 1.35 },
     // 🍄✨ ด่านป่าเห็ดเรืองแสง — Lv 1700-1800 · กลางคืนตลอด · เห็ดยักษ์เรืองสีฟ้า/ชมพู/ส้ม ลำธารเรืองแสงคดเคี้ยว สปอร์ลอยเหมือนหิ่งห้อย
-    { id: "mushroom", name: "ป่าเห็ดเรืองแสง", emoji: "🍄", lvMin: 1700, lvMax: 1800, ground: 0x1d2e3a, sky: 0x120c30, fog: 0x2a1f52, pool: ["mshling", "mshfox", "mshsnake", "mshslime", "mshturtle"], tree: "none", boss: "mshking", bossName: "ราชาเห็ดเรืองแสง 👑", hpMul: 1.35, atkMul: 1.35, night: true },
+    { id: "mushroom", name: "ป่าเห็ดเรืองแสง", emoji: "🍄", lvMin: 1700, lvMax: 1800, ground: 0x1d2e3a, sky: 0x120c30, fog: 0x2a1f52, pool: ["mshling", "mshfox", "mshsnake", "mshslime", "mshturtle"], tree: "none", boss: "mshking", bossName: "ราชาเห็ดเรืองแสง 👑", hpMul: 1.35, atkMul: 1.35, night: true, bloom: true },
 ];
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v731"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v732"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -5211,6 +5211,126 @@ function CherryAdventure() {
         renderer.toneMapping = THREE.ACESFilmicToneMapping; // 🎬 ไล่โทนแบบฟิล์ม — สีอิ่มขึ้น ส่วนสว่างนวลไม่ไหม้ขาว
         renderer.toneMappingExposure = 0.82; // ACES ยกโทนกลางขึ้นเองราว 1.5 เท่า → ตั้งต่ำกว่า 1 ภาพถึงไม่ขาวโพลน
         mount.appendChild(renderer.domElement);
+        // ✨ BLOOM แสงเรืองฟุ้ง — เปิดเฉพาะแมพที่ตั้ง bloom: true (🍄 ป่าเห็ดเรืองแสง)
+        //    วาดฉากลงจอตามปกติ (ขอบเรียบ AA เดิม) → คัดลอกภาพจอเป็นเท็กซ์เจอร์ → ตัดเอาเฉพาะส่วนที่สว่าง → เบลอ 2 ชั้น (1/4 และ 1/8 ของจอ) → บวกแสงฟุ้งกลับลงจอ
+        //    เขียนเองแทน EffectComposer (three r128 ต้องโหลดเพิ่ม 6 ไฟล์ + เป้าเต็มจอหลายใบ) · ไม่มีเป้า MSAA เต็มจอ = ไม่กินหน่วยความจำมือถือเพิ่ม
+        //    ไม่ได้ใช้เกิน 4 วิ (ออกจากแมพ) → คืนหน่วยความจำการ์ดจอทันที
+        const bloomFx = (() => {
+            const S = { w: 0, h: 0, src: null, lv: [], last: 0, thr: 0.6, knee: 0.16, str: [1.3, 1.2, 1.1] }; // ชั้นเบลอ 1/4 · 1/8 · 1/16 (ชั้นเล็กสุด = แสงฟุ้งวงกว้าง)
+            const quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quadScene = new THREE.Scene();
+            const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+            quad.frustumCulled = false;
+            quadScene.add(quad);
+            const VS = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
+            const mk = (fs, uniforms, extra) => new THREE.ShaderMaterial(Object.assign({ uniforms, vertexShader: VS, fragmentShader: fs, depthTest: false, depthWrite: false, toneMapped: false }, extra || {}));
+            const TAP4 = "(texture2D(tSrc, vUv + uTexel * vec2(-1.0, -1.0)).rgb + texture2D(tSrc, vUv + uTexel * vec2(1.0, -1.0)).rgb + texture2D(tSrc, vUv + uTexel * vec2(-1.0, 1.0)).rgb + texture2D(tSrc, vUv + uTexel * vec2(1.0, 1.0)).rgb) * 0.25";
+            // ตัดส่วนสว่าง (เกณฑ์ขอบนุ่ม ไม่ตัดฉับ) + ย่อภาพ 4×4 ในครั้งเดียว
+            const brightM = mk(`uniform sampler2D tSrc; uniform vec2 uTexel; uniform float uThr, uKnee; varying vec2 vUv;
+        void main(){
+          vec3 c = ${TAP4};
+          float br = max(c.r, max(c.g, c.b)), sat = br - min(c.r, min(c.g, c.b));
+          float key = br * 0.5 + min(sat, 0.45);   // เน้นของสีสด (เห็ด/ลำธาร/เวท) — ฟ้าสีซีดกับตัวหนังสือสีขาวแทบไม่ฟุ้ง
+          float sk = clamp(key - uThr + uKnee, 0.0, 2.0 * uKnee); sk = sk * sk / (4.0 * uKnee + 0.0001);
+          gl_FragColor = vec4(c * (max(sk, key - uThr) / max(key, 0.0001)), 1.0);
+        }`, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uThr: { value: 0.6 }, uKnee: { value: 0.22 } });
+            const downM = mk(`uniform sampler2D tSrc; uniform vec2 uTexel; varying vec2 vUv;
+        void main(){ gl_FragColor = vec4(${TAP4}, 1.0); }`, { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() } });
+            // เบลอเกาส์ 9 จุด (ใช้ 5 ครั้งอ่านด้วยการกรองเชิงเส้น) แยกแนวนอน/แนวตั้ง
+            const blurM = mk(`uniform sampler2D tSrc; uniform vec2 uDir; varying vec2 vUv;
+        void main(){
+          vec3 c = texture2D(tSrc, vUv).rgb * 0.227027;
+          c += (texture2D(tSrc, vUv + uDir * 1.384615).rgb + texture2D(tSrc, vUv - uDir * 1.384615).rgb) * 0.316216;
+          c += (texture2D(tSrc, vUv + uDir * 3.230769).rgb + texture2D(tSrc, vUv - uDir * 3.230769).rgb) * 0.070270;
+          gl_FragColor = vec4(c, 1.0);
+        }`, { tSrc: { value: null }, uDir: { value: new THREE.Vector2() } });
+            // บวกแสงฟุ้งลงบนภาพที่อยู่บนจอแล้ว (+ dither กันแถบสีเป็นขั้นในที่มืด)
+            const compM = mk(`uniform sampler2D tB1, tB2, tB3; uniform float uS1, uS2, uS3; varying vec2 vUv;
+        void main(){
+          vec3 b = texture2D(tB1, vUv).rgb * uS1 + texture2D(tB2, vUv).rgb * uS2 + texture2D(tB3, vUv).rgb * uS3;
+          b += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
+          gl_FragColor = vec4(max(b, 0.0), 1.0);
+        }`, { tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, uS1: { value: 1 }, uS2: { value: 1 }, uS3: { value: 1 } }, { blending: THREE.AdditiveBlending, transparent: true });
+            const RT = (w, h) => new THREE.WebGLRenderTarget(w, h, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: false, stencilBuffer: false });
+            const free = () => { if (S.src)
+                S.src.dispose(); S.src = null; S.lv.forEach((l) => { l.a.dispose(); l.b.dispose(); }); S.lv = []; S.w = S.h = 0; };
+            const ensure = (W, H) => {
+                if (S.src && W === S.w && H === S.h)
+                    return;
+                free();
+                S.w = W;
+                S.h = H;
+                const tex = new THREE.DataTexture(null, W, H, THREE.RGBFormat); // RGB เพราะจอไม่มีช่อง alpha (alpha:false)
+                tex.minFilter = tex.magFilter = THREE.LinearFilter;
+                tex.generateMipmaps = false;
+                tex.needsUpdate = true;
+                S.src = tex;
+                for (const d of [4, 8, 16]) {
+                    const lw = Math.max(2, Math.round(W / d)), lh = Math.max(2, Math.round(H / d));
+                    S.lv.push({ a: RT(lw, lh), b: RT(lw, lh), w: lw, h: lh });
+                }
+            };
+            const pass = (m, target) => { quad.material = m; renderer.setRenderTarget(target); renderer.render(quadScene, quadCam); };
+            const blur = (L) => {
+                blurM.uniforms.tSrc.value = L.a.texture;
+                blurM.uniforms.uDir.value.set(1 / L.w, 0);
+                pass(blurM, L.b);
+                blurM.uniforms.tSrc.value = L.b.texture;
+                blurM.uniforms.uDir.value.set(0, 1 / L.h);
+                pass(blurM, L.a);
+            };
+            const _v = new THREE.Vector2(), _p0 = new THREE.Vector2(0, 0);
+            return {
+                S,
+                render(cam) {
+                    renderer.render(scene, cam || camera); // ภาพปกติลงจอก่อน
+                    const ar = renderer.info.autoReset;
+                    renderer.info.autoReset = false;
+                    try {
+                        renderer.getDrawingBufferSize(_v);
+                        ensure(_v.x | 0, _v.y | 0);
+                        renderer.copyFramebufferToTexture(_p0, S.src);
+                        const L = S.lv;
+                        const bu = brightM.uniforms;
+                        bu.tSrc.value = S.src;
+                        bu.uTexel.value.set(1 / S.w, 1 / S.h);
+                        bu.uThr.value = S.thr;
+                        bu.uKnee.value = S.knee;
+                        pass(brightM, L[0].a);
+                        blur(L[0]);
+                        for (let i = 1; i < L.length; i++) {
+                            downM.uniforms.tSrc.value = L[i - 1].a.texture;
+                            downM.uniforms.uTexel.value.set(1 / L[i - 1].w, 1 / L[i - 1].h);
+                            pass(downM, L[i].a);
+                            blur(L[i]);
+                        }
+                        const cu = compM.uniforms;
+                        cu.tB1.value = L[0].a.texture;
+                        cu.tB2.value = L[1].a.texture;
+                        cu.tB3.value = L[2].a.texture;
+                        cu.uS1.value = S.str[0];
+                        cu.uS2.value = S.str[1];
+                        cu.uS3.value = S.str[2];
+                        const ac = renderer.autoClear;
+                        renderer.autoClear = false;
+                        pass(compM, null);
+                        renderer.autoClear = ac;
+                        S.last = performance.now();
+                    }
+                    catch (e) {
+                        G._bloomOff = true;
+                        G._bloomErr = String(e && e.message || e);
+                        try {
+                            renderer.setRenderTarget(null);
+                        }
+                        catch (_) { }
+                    } // 🛟 เครื่องไหนทำไม่ได้ = ปิดถาวร ภาพปกติยังอยู่ครบ
+                    renderer.info.autoReset = ar;
+                },
+                idle(now) { if (S.src && now - S.last > 4000)
+                    free(); },
+            };
+        })();
+        G._bloomFx = bloomFx;
         const amb = new THREE.AmbientLight(0xffffff, 0.32);
         scene.add(amb);
         // sky/ground bounce light for softer, more realistic shading
@@ -40737,10 +40857,11 @@ function CherryAdventure() {
         const mushColliders = [], mushAnim = { mats: [], streamM: null };
         G.mushDecor = mushDecor;
         G.mushColliders = mushColliders;
-        const MUSH_COLS = [0x40e0ff, 0xff40c8, 0xffa040, 0x7affc8, 0xb080ff];
+        const MUSH_COLS = [0x20d8ff, 0xff30b8, 0xff8c20, 0x30f080, 0x9040ff]; // สีนีออนอิ่มจัด — แสงฟุ้ง (bloom) จับสีสดได้ชัด
         const mushMatCache = {};
         let mushBuilt = false, mushLoading = false, mushTry = 0, mushBase = null;
         const mushStreamPts = [];
+        const mushGiants = [], _mhV = new THREE.Vector3(); // 👀 เห็ดยักษ์แต่ละต้น — ใช้ทำให้จางตอนบังกล้อง
         const mushIsHere = () => (BIOMES[G.curBiome || 0] || {}).id === "mushroom" && !G.inTownZone && !G.inHomeZone && !G.inRanchZone; // ในเมือง/บ้าน/ฟาร์มพื้นถูกปรับราบ — ห้ามสร้างตอนนั้น
         const mushMat = (c) => {
             if (mushMatCache[c])
@@ -40812,6 +40933,8 @@ function CherryAdventure() {
                     return [x, z];
             } return null; };
             // 🍄 เห็ดยักษ์เรืองแสง — สูงราว 6–15 หน่วย หลายสี · ชนได้ที่ลำต้น · ซ่อนได้ตอนสู้ใกล้ ๆ
+            L.obj.updateMatrixWorld(true);
+            const LB = new THREE.Box3().setFromObject(L.obj), LRX = Math.max(-LB.min.x, LB.max.x, -LB.min.z, LB.max.z), LH = LB.max.y - LB.min.y; // ขนาดโมเดลต้นแบบ (รัศมีหมวก/ความสูง)
             const glowPos = [], glowCol = []; // ✨ แสงฟุ้งใต้หมวกเห็ด — รวมเป็น Points ก้อนเดียว (วาดครั้งเดียวทั้งด่าน)
             for (let k = 0; k < 34; k++) {
                 const p = spot(k < 10 ? 3.5 : 2.4, 13, 62);
@@ -40824,10 +40947,14 @@ function CherryAdventure() {
                 const node = L.obj.clone();
                 node.scale.setScalar(s);
                 node.position.y = -L.y0 * s;
-                node.traverse((o) => { if (o.isMesh)
-                    o.material = mushMat(col); });
+                const meshes = [];
+                node.traverse((o) => { if (o.isMesh) {
+                    o.material = mushMat(col);
+                    meshes.push(o);
+                } });
                 g.add(node);
                 mushDecor.add(g);
+                mushGiants.push({ g, meshes, base: mushMat(col), rc: LRX * s + 0.9, top: LH * s, fm: null, fade: false, op: 1 });
                 {
                     const gy = terrainAt(p[0], p[1]), cc = new THREE.Color(col);
                     for (let j = 0; j < 3; j++) {
@@ -40959,6 +41086,39 @@ function CherryAdventure() {
                 mushAnim.glowM.opacity = 0.55 + 0.2 * Math.sin(t * 1.1);
             if (mushAnim.streamM)
                 mushAnim.streamM.opacity = 0.62 + 0.18 * Math.sin(t * 2.2);
+            // 👀 เห็ดยักษ์ที่บังระหว่างกล้องกับตัวละคร (หรือกล้องจมอยู่ในหมวกเห็ด) → ค่อย ๆ จางเหลือเงาโปร่ง แล้วค่อย ๆ กลับเมื่อพ้น
+            if (mushGiants.length) {
+                char.getWorldPosition(_mhV);
+                const hx = _mhV.x, hy = _mhV.y + 2.2, hz = _mhV.z, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+                const dx = cx - hx, dz = cz - hz, L2 = dx * dx + dz * dz || 1, k = Math.min(1, dt * 8);
+                for (const M of mushGiants) {
+                    const me = M.g.matrixWorld.elements, mx = me[12], mz = me[14];
+                    const u = Math.max(0, Math.min(1, ((mx - hx) * dx + (mz - hz) * dz) / L2));
+                    const block = M.g.visible && Math.hypot(mx - (hx + dx * u), mz - (hz + dz * u)) < M.rc && hy + (cy - hy) * u < me[13] + M.top;
+                    if (!block && !M.fade)
+                        continue;
+                    if (!M.fm) {
+                        M.fm = M.base.clone();
+                        M.fm.transparent = true;
+                        M.fm.depthWrite = false;
+                        M.fm.userData = Object.assign({}, M.base.userData);
+                    }
+                    if (!M.fade) {
+                        M.fade = true;
+                        for (const m of M.meshes)
+                            m.material = M.fm;
+                    }
+                    M.op += ((block ? 0.2 : 1) - M.op) * k;
+                    M.fm.opacity = M.op;
+                    M.fm.emissiveIntensity = M.base.emissiveIntensity;
+                    if (!block && M.op > 0.97) {
+                        M.fade = false;
+                        M.op = 1;
+                        for (const m of M.meshes)
+                            m.material = M.base;
+                    }
+                }
+            }
         };
         // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
         const antDecor = new THREE.Group();
@@ -98665,6 +98825,11 @@ function CherryAdventure() {
                                     G.toast("🌡️ เครื่องทำงานหนัก — ลดความละเอียดอัตโนมัติเพื่อลดความร้อน");
                                 }
                             }
+                            else if (G._bloomOn && !G._bloomOff) {
+                                G._bloomOff = true;
+                                G._heatCoolAt = nowH;
+                                G._heatAvg = 16.7;
+                            } // ✨ ลดสุดแล้วยังหนัก → ปิดแสงเรืองฟุ้ง
                         }
                     }
                     G._heatLast = nowH;
@@ -98744,8 +98909,16 @@ function CherryAdventure() {
                     }
                     catch (_) { }
                 }
-                if (dtForce == null)
-                    renderer.render(scene, camera); // ข้ามการวาดตอนซิมพื้นหลัง
+                if (dtForce == null) { // ข้ามการวาดตอนซิมพื้นหลัง
+                    const _bl = !G._bloomOff && !!(BIOMES[G.curBiome] || {}).bloom && !G.equipScreen && G.mode !== "create" && G.mode !== "class"; // ✨ แสงเรืองฟุ้ง เฉพาะแมพที่ตั้งไว้
+                    G._bloomOn = _bl;
+                    if (_bl)
+                        bloomFx.render();
+                    else {
+                        renderer.render(scene, camera);
+                        bloomFx.idle(performance.now());
+                    }
+                }
                 if (dtForce == null && G._paintMap) {
                     try {
                         G._paintMap();
