@@ -13,3 +13,10 @@ mush_king.glb — บอส ราชาเห็ดเรืองแสง (ms
 - Seven rigged exports merged into one skin (same 24-joint skeleton), skinned mesh moved to scene root,
   horizontal root motion removed from Idle/Walk/Attack/Hit/Cast/Roar, 20k -> 14.6k triangles, 1024 JPEG,
   normals/UVs/weights quantized (positions kept float) — 5.5 MB x7 -> 1.4 MB
+
+hero_warrior.glb — สกินพิเศษอาชีพนักรบ "นักรบเกราะนิล" (HERO_SKINS.warrior)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-03 · Image-to-3D: Meshy 7 · auto-rig + 8 clips via Meshy rigging:
+  Idle (#0), Walk (#106 Confident_Walk), Run (#14 Run_02), Attack1 (#4 Attack), Attack2 (#97 Left_Slash),
+  Skill (#105 Triple_Combo_Attack), Hit (#178 Hit_Reaction), Death (#8 Dead)
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.4 MB
