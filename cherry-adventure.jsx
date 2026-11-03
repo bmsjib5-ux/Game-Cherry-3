@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v733";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v734";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -9789,7 +9789,8 @@ export default function CherryAdventure() {
       mshslime:   { f: "Slime",            size: 1.7, idle: "Slime_Idle", walk: "Slime_Walk", run: "Slime_Walk", atk: "Slime_Attack", die: "Slime_Death", mul: 0x90ffc8 },
       mshturtle:  { f: "Turtle",           size: 2.0, idle: "GenIdle", walk: "Walking-loop", run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop", mul: 0xa8e0b0,
                     gen: { GenIdle: { period: 2.6, tracks: [["Bone016", "x", 0.07, 0], ["Bone017", "x", 0.06, 0.6], ["Bone018", "x", 0.05, 1.2], ["Bone", "py", 0.015, 0], ["Bone006", "z", 0.1, 0.9]] } } },
-      mshking:    { f: "Big_MushroomKing", c: "big",  by: "h", size: 3.4, mul: 0x80fff0 },
+      // 👑 ราชาเห็ดเรืองแสง — โมเดลจาก Higgsfield (ภาพคอนเซ็ปต์ → 3D → ใส่กระดูก + 5 ท่าจากคลังท่า Meshy) รวมเป็นไฟล์เดียว · glow = เรืองจากลายเท็กซ์เจอร์
+      mshking:    { f: "../higgsfield/mush_king", by: "h", size: 3.7, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", glow: 0.42, atkT: 1.45, atkTS: 2.1 },   // ท่าทุบพื้นยาว 3 วิ → เร่ง ×2.1 และค้างท่าให้จบ 1.45 วิ
       ghoul:      { f: "Zombie",          size: 2.35, by: "h", idle: "Zombie_Idle_Loop", walk: "Zombie_Walk_Fwd_Loop", run: "Zombie_Walk_Fwd_Loop", atk: "Zombie_Scratch",
                     tint: { M_Main: 0x8a8c80, M_Joints: 0x3a2a3a } },                                           // 🏚️ ผีดิบชาวเมือง — ผิวเทาซีด ข้อต่อม่วงคล้ำ
       wraith:     { f: "Flying_Ghost",    c: "fly",           size: 2.4, y: 0.8, hue: [262, 0.5, 2.2] },             // 🏚️ วิญญาณม่วงหม่น
@@ -10205,7 +10206,7 @@ export default function CherryAdventure() {
       node.position.y = (P.y || 0) - src.y0 * sc;        // ฝ่าเท้าแตะพื้น (ปลา/มังกรบวกความสูงลอย)
       // 🎨 สีเฉพาะสายพันธุ์ — ทำบนสำเนาวัสดุของตัวนั้น เพราะไฟล์เดียวใช้ร่วมหลายสายพันธุ์ (Dragon = มังกรเยาว์ + มังกรไข่ทอง)
       //    tint = แทนสีตามชื่อวัสดุ · lift < 1 = ยกสีที่คล้ำให้สว่างขึ้น (สำเนาไม่ติดป้าย _shared จะได้ถูกเก็บไปพร้อมตัว)
-      if (P.lift || P.tint || P.mul || P.flat != null || P.hue || P.holo || P.emis) node.traverse((o) => {
+      if (P.lift || P.tint || P.mul || P.flat != null || P.hue || P.holo || P.emis || P.glow) node.traverse((o) => {
         if (!o.isMesh || !o.material) return;
         const arr = Array.isArray(o.material) ? o.material : [o.material];
         const fresh = arr.map((m) => {
@@ -10215,6 +10216,7 @@ export default function CherryAdventure() {
             c.transparent = true; c.opacity = 0.62; c.metalness = 0.1; c.roughness = 0.3;
             return c;
           }
+          if (P.glow && c.emissive) { c.emissive.setHex(0xffffff); c.emissiveMap = c.map || null; c.emissiveIntensity = P.glow; c.color.multiplyScalar(0.7); }   // ✨ เรืองแสงตามลายเท็กซ์เจอร์ (จุดฟ้า/ครีบใต้หมวกเด่นสุด)
           if (P.emis && P.emis[m.name] != null && c.emissive) { c.emissive.setHex(P.emis[m.name]); c.emissiveIntensity = 1.6; }
           if (P.tint && P.tint[m.name] != null) c.color.setHex(P.tint[m.name]);
           else if (P.hue) { c.map = qtHueMap(c.map, P.f, P.hue); if (P.gloss) { c.metalness = P.gloss[0]; c.roughness = P.gloss[1]; c.emissive.setHex(P.gloss[2] || 0); } }
@@ -10339,10 +10341,12 @@ export default function CherryAdventure() {
         else if (u.flinch > 0.25 && P.hit) want = P.hit;
         else if (sp > 1.4 && P.run) want = P.run;
         else if (sp > 0.22 && P.walk) want = P.walk;
+        if (want === P.atk && e.cur !== P.atk && P.atkT) u.kkAtk = Math.max(u.kkAtk, P.atkT);   // ท่าโจมตียาว (บอส) — ค้างให้เล่นจนจบท่า
         if (want !== e.cur) {
           const from = e.acts[e.cur], to = e.acts[want];
           if (to) {
             to.reset();
+            to.timeScale = want === P.atk && P.atkTS ? P.atkTS : 1;
             if (want === P.die || want === P.atk || want === P.hit) { to.setLoop(THREE.LoopOnce, 1); to.clampWhenFinished = true; }
             else { to.setLoop(THREE.LoopRepeat, Infinity); to.clampWhenFinished = false; }
             to.fadeIn(0.18).play();
