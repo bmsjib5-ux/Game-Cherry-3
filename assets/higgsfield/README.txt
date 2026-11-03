@@ -20,3 +20,10 @@ hero_warrior.glb — สกินพิเศษอาชีพนักรบ "
   Skill (#105 Triple_Combo_Attack), Hit (#178 Hit_Reaction), Death (#8 Dead)
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.4 MB
+
+hero_mage.glb — สกินพิเศษอาชีพนักเวท "จอมเวทย์ดาราม่วง" (HERO_SKINS.mage)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-03 · Image-to-3D: Meshy 7 · auto-rig + 4 own clips via Meshy rigging:
+  Walk (#1 Walking_Woman), Attack1 (#129 mage_soell_cast), Attack2 (#131 mage_soell_cast_2), Skill (#125 Charged_Spell_Cast)
+- Idle / Run / Hit / Death borrowed from hero_warrior.glb (same Meshy skeleton names; hips translation rescaled)
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
