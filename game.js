@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v741"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v742"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -4415,6 +4415,15 @@ const HERO_SKINS = {
     aegis: { name: "จักรกลพิทักษ์ขาวมุก", emoji: "🤖", file: "assets/higgsfield/hero_aegis.glb", h: 3.95, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
         grip: "sword", // ปืนเลเซอร์มือขวา (วัดแกนลำกล้องจริง) · สกิล = ย่อชาร์จพลังแล้วกระโดดฟันลงพื้น (ข้ามช่วงย่อยาว)
         clip: { Attack1: { from: 0.08, spd: 1.8 }, Attack2: { from: 0.15, spd: 2.0 }, Skill: { from: 0.35, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } }, // ยืน/เดิน/วิ่ง/ฟันซ้าย/โดนตี/ตาย ยืมจากนักรบ
+    office: { name: "ซูเปอร์มนุษย์เงินเดือน", emoji: "💼", file: "assets/higgsfield/hero_office.glb", h: 3.95, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "sword", map: { Spell_Simple_Shoot: "Attack1", OverhandThrow: "Attack2" }, // ดินสอยักษ์มือขวา · ขว้างเอกสารแบบพิชเชอร์ / ขว้างข้ามไหล่
+        clip: { Attack1: { from: 0.35, spd: 2.2 }, Attack2: { from: 0.3, spd: 2.2 }, Skill: { from: 0.08, spd: 1.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } }, // ยืน/เดิน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ
+    coder: { name: "แฮกเกอร์สายนีออน", emoji: "💻", file: "assets/higgsfield/hero_coder.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "sword", alt: 1, // ยิงโค้ดมือเดียว สลับผลักพลังสองมือ · สกิน = รวมพลังคอมไพล์โลก
+        clip: { Attack1: { from: 0.15, spd: 1.8 }, Attack2: { from: 0.1, spd: 1.6 }, Skill: { from: 0, spd: 1.0 }, Hit: { spd: 1.6 }, Walk: { spd: 0.95 } } }, // ยืน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ · เดิน ยืมจากนักเวท
+    tamer: { name: "พรานสัตว์ป่าเขียวมอส", emoji: "🐾", file: "assets/higgsfield/hero_tamer.glb", h: 3.9, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "coil", alt: 1, // แส้ม้วนห้อยในมือ · ง้างแส้ฟาดลงพื้น สลับชี้สั่งสัตว์ · สกิน = ชูสองแขนเรียกฝูง
+        clip: { Attack1: { from: 0.48, spd: 2.0 }, Attack2: { from: 0.4, spd: 1.8 }, Skill: { from: 0.05, spd: 1.9 }, Hit: { spd: 1.6 }, Walk: { spd: 0.95 } } }, // ยืน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ · เดิน + ท่าสกิน ยืมจากนักเวท
 };
 // 🦸👗 ธีมชุดฮีโร่บนโมเดล 3D — แต่ละฮีโร่ได้ลุคตามคาแรกเตอร์: เพศ · แบบชุด (Peasant ผ้า/Ranger เกราะหนัง) · สีย้อม · ทรงผม/สีผม · โทนผิว
 //    + ของสวม (ใช้ตัวปั้นหมวก/หน้ากาก/ถุงมือ/กางเกง/รองเท้าเดิม) + ของประดับเฉพาะตัว fx (หู หาง เขา ปีก มงกุฎ/ชฎา รัศมี ผ้าคลุม ฯลฯ)
@@ -18011,7 +18020,7 @@ function CherryAdventure() {
                     return false;
                 const tw = SKIN_WRIST[S.cur] ? 1 : 0, staff = S.D.grip === "staff", bowM = S.D.grip === "bow";
                 S.gw = S.gw == null ? tw : S.gw + (tw - S.gw) * Math.min(1, (dt || 0.016) * 14);
-                const aL = skinWpnAxis(S, grip), [Fd, Fw, Rt, Up, T] = _sgV;
+                const coil = S.D.grip === "coil", aW = skinWpnAxis(S, grip), aL = coil ? S.wLong : aW, [Fd, Fw, Rt, Up, T] = _sgV; // 🪢 แส้ม้วน: กล่องสมมาตรรอบจุดจับ → ใช้แกนยาวของม้วนแทนทิศไปกลางกล่อง
                 bone.getWorldPosition(Fd);
                 arm.getWorldPosition(T);
                 Fd.sub(T).normalize(); // ศอก → ข้อมือ
@@ -18027,6 +18036,15 @@ function CherryAdventure() {
                 else if (staff) { // 🔮 คทาตั้งตรงข้างตัว (เอนหน้านิดหน่อย) · ระหว่างร่าย = ปลายคทาเอนชี้ไปข้างหน้า
                     T.copy(Up).multiplyScalar(1 - 0.45 * S.gw).addScaledVector(Fw, 0.22 + 0.7 * S.gw);
                     sgAim(S.q, aL, T, Rt);
+                }
+                else if (coil) { // 🪢 แส้ม้วนห้อยตั้งในกำปั้น · ท่าฟาดแส้ = แกนม้วนหมุนตามข้อมือ
+                    T.copy(Up).addScaledVector(Fw, 0.15);
+                    sgAim(S.q, aL, T, Fw, S.wDepth);
+                    if (S.gw > 0.001) {
+                        bone.getWorldQuaternion(_sgQ2);
+                        sgAim(_sgQ, aL, T.copy(R.bladeL).applyQuaternion(_sgQ2), Up.copy(R.refL).applyQuaternion(_sgQ2));
+                        S.q.slerp(_sgQ, S.gw);
+                    }
                 }
                 else {
                     if (S.D.ready === "up")
