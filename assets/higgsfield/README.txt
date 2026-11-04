@@ -101,3 +101,12 @@ All 11 hero_*.glb skins (2026-11-04 update):
   (the game moves the body)
 - Finger joints added (Right/LeftFingers1 + Fingers2 under each hand; the Meshy rig has none) with the finger vertices
   re-weighted onto them, so the game can curl a fist around the held weapon
+
+Stage 1 (meadow / ทุ่งซากุระ) remake — 2026-11-04
+- sky_meadow_day.jpg / sky_meadow_dusk.jpg: Higgsfield (GPT Image 2.5) 21:9 sky panoramas → 2048x1024 equirect
+  (seam cross-faded, picture spans 12° below to 70° above the horizon, haze below). Night keeps assets/sky/night.jpg
+- ground_meadow.jpg: Higgsfield (GPT Image 2.5) seamless top-down meadow grass texture, 1024 JPEG
+- meadow_oak.glb / meadow_round.glb / meadow_sakura.glb: concept GPT Image 2.5 → Meshy 7 image-to-3D,
+  simplified (oak 2.9k, fruit tree 1.9k, sakura 7.4k triangles), 512 JPEG, quantized
+- meadow_house.glb (timber-frame cottage, red roof) / meadow_loghouse.glb (log house, green roof):
+  concept GPT Image 2.5 → Meshy 7, ~10k triangles, 1024 JPEG, quantized
