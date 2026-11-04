@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v740"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v741"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -4406,6 +4406,15 @@ const HERO_SKINS = {
     assassin: { name: "เงาราตรีนักฆ่า", emoji: "🥷", file: "assets/higgsfield/hero_assassin.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
         grip: "sword", // มีดสั้นมือขวา (แกนใบมีดวัดจากตัวมีด) · แทงพุ่ง + หมุนตัวคู่ใบมีด
         clip: { Attack1: { from: 0.1, spd: 1.8 }, Attack2: { from: 0.15, spd: 2.2 }, Skill: { from: 0.05, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.15 } } }, // ยืน/เดิน/วิ่ง/ฟันซ้าย/โดนตี/ตาย ยืมจากนักรบ
+    lancer: { name: "อัศวินหอกนิลมังกร", emoji: "🔱", file: "assets/higgsfield/hero_lancer.glb", h: 4.0, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "sword", ready: "up", map: { Sword_Dash: "Attack1" }, // หอกตั้งข้างตัว · แทงพุ่งของร่างเดิม (Sword_Dash) = ท่าแทงของสกิน ไม่ใช่ท่าสกิล
+        clip: { Attack1: { from: 0.08, spd: 1.8 }, Attack2: { from: 0.12, spd: 2.0 }, Skill: { from: 0.05, spd: 1.5 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } }, // ยืน/เดิน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ
+    boxer: { name: "ยอดมวยมงคลแดง", emoji: "🥊", file: "assets/higgsfield/hero_boxer.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "glove", map: { Punch_Jab: "Jab", Punch_Cross: "Attack1", Melee_Hook: "Attack2", Boxer_Kick: "Kick", Boxer_Knee: "Knee" }, // นวมสองข้างตามข้อมือ · แย็บ/หมัดตรง/ฮุก/เตะ/เข่า แยกท่าจริง
+        clip: { Attack1: { from: 0.18, spd: 1.6 }, Attack2: { from: 0.15, spd: 1.3 }, Jab: { from: 0.25, spd: 1.6 }, Kick: { from: 0.3, spd: 1.4 }, Knee: { from: 0.12, spd: 1.5 }, Skill: { from: 0.15, spd: 1.8 }, Hit: { spd: 1.6 }, Walk: { spd: 1.15 } } }, // ยืนการ์ด = ช่วงต้นท่าแย็บวนไปกลับ · เดิน/วิ่ง/โดนตี/ตาย ยืมจากนักรบ
+    aegis: { name: "จักรกลพิทักษ์ขาวมุก", emoji: "🤖", file: "assets/higgsfield/hero_aegis.glb", h: 3.95, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+        grip: "sword", // ปืนเลเซอร์มือขวา (วัดแกนลำกล้องจริง) · สกิล = ย่อชาร์จพลังแล้วกระโดดฟันลงพื้น (ข้ามช่วงย่อยาว)
+        clip: { Attack1: { from: 0.08, spd: 1.8 }, Attack2: { from: 0.15, spd: 2.0 }, Skill: { from: 0.35, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } }, // ยืน/เดิน/วิ่ง/ฟันซ้าย/โดนตี/ตาย ยืมจากนักรบ
 };
 // 🦸👗 ธีมชุดฮีโร่บนโมเดล 3D — แต่ละฮีโร่ได้ลุคตามคาแรกเตอร์: เพศ · แบบชุด (Peasant ผ้า/Ranger เกราะหนัง) · สีย้อม · ทรงผม/สีผม · โทนผิว
 //    + ของสวม (ใช้ตัวปั้นหมวก/หน้ากาก/ถุงมือ/กางเกง/รองเท้าเดิม) + ของประดับเฉพาะตัว fx (หู หาง เขา ปีก มงกุฎ/ชฎา รัศมี ผ้าคลุม ฯลฯ)
@@ -17777,7 +17786,8 @@ function CherryAdventure() {
                                     : /Heavy_Combo|Sword_Dash|Shield_Dash/.test(n) ? "Skill"
                                         : /Sword_Regular_B|Punch_Jab|Hook|Kick|Knee/.test(n) ? "Attack2" : /Sword_Regular|Sword_Attack|Punch|Throw|Shoot|Spell/.test(n) ? "Attack1"
                                             : /^Jump|NinjaJump/.test(n) ? "Idle" : null;
-            const _skinOnce = { Death: 1, Hit: 1, Attack1: 1, Attack2: 1, Skill: 1 };
+            const _skinOnce = { Death: 1, Hit: 1, Attack1: 1, Attack2: 1, Skill: 1, Jab: 1, Kick: 1, Knee: 1 };
+            const SKIN_ATK = { Attack1: 1, Attack2: 1, Skill: 1, Jab: 1, Kick: 1, Knee: 1 }; // ท่าโจมตีของสกิน (Jab/Kick/Knee = นักมวย)
             const heroSkinVis = (H, on) => {
                 const S = H.skin;
                 if (!S || S.on === on)
@@ -17845,18 +17855,35 @@ function CherryAdventure() {
                         const offL = hd.worldToLocal(hp.clone().addScaledVector(fd, L * G0.fist).add(new THREE.Vector3((wl ? -G0.inX : G0.inX) * L, 0, G0.inZ * L).applyQuaternion(mq)));
                         H.skin.gripR = { bladeL, refL, offL, bone: hd, arm: ar };
                     }
+                    if (D.grip === "glove") { // 🥊 นวมสองข้าง: แกนนวมแบบเดียวกับ heroGloveFit ของร่างเดิม (Y = ปลายนิ้ว→ข้อมือ · X = แนวข้อนิ้ว ชี้→ก้อย)
+                        //    สกินไม่มีกระดูกนิ้ว → ทิศนิ้ว = ศอก→ข้อมือ (ท่า A มือแบตรง) · นิ้วโป้งชี้หน้า จึงแนวชี้→ก้อย = ไปหลัง (ขวา) / ไปหน้า (ซ้าย)
+                        m.updateMatrixWorld(true);
+                        const mq = m.getWorldQuaternion(new THREE.Quaternion()), fw = new THREE.Vector3(0, 0, 1).applyQuaternion(mq);
+                        H.skin.glove = {};
+                        [["R", H.skin.hand, H.skin.arm, -1], ["L", H.skin.handL, H.skin.armL, 1]].forEach(([sd, hd2, ar2, sg]) => {
+                            if (!hd2 || !ar2)
+                                return;
+                            const bq = hd2.getWorldQuaternion(new THREE.Quaternion());
+                            const hp = hd2.getWorldPosition(new THREE.Vector3()), ap = ar2.getWorldPosition(new THREE.Vector3()), f = hp.clone().sub(ap).normalize(), L = hp.distanceTo(ap);
+                            const xg = fw.clone().multiplyScalar(sg);
+                            xg.addScaledVector(f, -xg.dot(f)).normalize();
+                            const yg = f.clone().negate(), zg = new THREE.Vector3().crossVectors(xg, yg).normalize();
+                            const qW = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xg, yg, zg));
+                            H.skin.glove[sd] = { bone: hd2, qL: bq.clone().invert().multiply(qW), pL: hd2.worldToLocal(hp.clone().addScaledVector(f, L * HERO_SKIN_GLOVE.org)) };
+                        });
+                    }
                 }
                 heroSkinVis(H, true);
                 H.lit = -1;
             });
             const heroSkinTick = (H, dt) => {
-                const S = H.skin;
-                let cl = HERO_SKIN_CLIP(H.cur);
+                const S = H.skin, mp = S.D.map && H.cur && S.D.map[H.cur];
+                let cl = mp && S.acts[mp] ? mp : HERO_SKIN_CLIP(H.cur); // 🗺️ สกินแมปท่าเองได้ (หอกแทง = ท่าตี · หมัด/เตะ/เข่ามวย)
                 const newAtk = S.lastAge != null && (H.atkAge || 0) < S.lastAge;
                 S.lastAge = H.atkAge || 0; // เริ่มตี/ยิงนัดใหม่ (ร่างเดิมรีเซ็ตเวลาท่าโจมตี)
-                if (cl === "Attack1" || cl === "Attack2" || cl === "Skill") {
-                    if (G._skCast && S.acts.Skill)
-                        cl = "Skill"; // ✨ กำลังร่ายสกิล → ท่าสกิลเสมอ (นักเวทใช้คลิปเดียวกันทั้งตีปกติ/สกิล)
+                if (SKIN_ATK[cl]) {
+                    if (G._skCast && S.acts.Skill && cl !== "Kick" && cl !== "Knee")
+                        cl = "Skill"; // ✨ กำลังร่ายสกิล → ท่าสกิลเสมอ (สกิลเตะ/เข่าของนักมวยใช้ท่าเท้าจริง)
                     else if (S.D.alt && cl !== "Skill") { // 🔮 ตีปกติสลับท่าร่าย 2 แบบ
                         if (H.playN !== S.n || newAtk)
                             S.atkK = (S.atkK || 0) + 1; // เริ่มท่าโจมตีใหม่ (ร่างเดิมเพิ่งสั่งเล่นท่า)
@@ -17884,7 +17911,7 @@ function CherryAdventure() {
                 }
                 a.timeScale = cl === "Run" ? (/Sprint/.test(H.cur || "") ? 1.25 : 1) : (S.ts[cl].spd || 1); // 🏃 วิ่งเต็มฝีเท้าเร่งขาเร็วขึ้น
                 if (S.D.aimYaw) {
-                    const ty = (cl === "Attack1" || cl === "Attack2" || cl === "Skill") ? S.D.aimYaw : 0;
+                    const ty = SKIN_ATK[cl] ? S.D.aimYaw : 0;
                     S.m.rotation.y += (ty - S.m.rotation.y) * Math.min(1, dt * 12);
                 } // 🏹 หันข้างตอนง้างยิง
                 S.n = H.playN;
@@ -17895,7 +17922,7 @@ function CherryAdventure() {
                 tilt: -0.25, yaw: 0, fist: 0.24, inX: 0.03, inZ: 0.02 }; // มือขวา (ดาบ): tilt = เชิดปลายดาบขึ้น (เรเดียน) · fist = กลางกำปั้นห่างข้อมือ (สัดส่วนแขนท่อนล่าง) · inX/inZ = เยื้องเข้าฝ่ามือ
             //  ท่าฟัน/สกิล = ดาบหมุนตามข้อมือจริง (คลังท่าโจมตีทำมาสำหรับถืออาวุธ) · ท่ายืน/เดิน/วิ่ง/โดนตี = ท่าถือดาบ "พร้อมรบ"
             //  (ท่าเดินปกติแกว่งมือหงาย/คว่ำ ถ้าตามข้อมือดาบจะชี้ไปหลัง/ข้างตัว) — ปลายดาบชี้หน้าเฉียงลงตามแขน · ผสมสองแบบนุ่ม ๆ ตอนเปลี่ยนท่า
-            const SKIN_WRIST = { Attack1: 1, Attack2: 1, Skill: 1 }; // ดาบ = ตามข้อมือ · คทา = เอนชี้หน้าระหว่างร่าย
+            const SKIN_WRIST = { Attack1: 1, Attack2: 1, Skill: 1, Jab: 1, Kick: 1, Knee: 1 }; // ดาบ = ตามข้อมือ · คทา = เอนชี้หน้าระหว่างร่าย
             const _sgQ = new THREE.Quaternion(), _sgM = new THREE.Matrix4(), _sgV = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
             // 📐 แกนยาวของอาวุธในกรอบ grip วัดจากกล่องรอบตัวอาวุธที่แสดงอยู่ (ด้ามอยู่ที่จุดจับ → ทิศไปกลางกล่อง = ทิศปลายอาวุธ)
             //    อาวุธแต่ละชิ้นถูกวางในมือร่างเดิมคนละแบบ (ดาบเอียง · คทาตั้ง) จึงวัดจริงทุกครั้งที่เปลี่ยนอาวุธ ไม่สมมติแกนตายตัว
@@ -17960,7 +17987,25 @@ function CherryAdventure() {
                 sgFrame(_sgF2, axisL, refL || _sgRefL);
                 return outQ.setFromRotationMatrix(_sgF1.multiply(_sgF2.transpose()));
             };
+            // 🥊 นวมมวยสองข้าง — ยึดกระดูกมือสกินและหมุนตามข้อมือจริงทุกท่า (หมัดตรง/ฮุก/การ์ด)
+            //    วัดว่านวมวางบนมือร่างเดิมอย่างไรเทียบกับทิศ "ศอก→ข้อมือ + ด้านขวาของตัว" แล้ววางแบบเดียวกันบนมือสกิน · กลางนวม = กลางกำปั้นสกิน
+            const HERO_SKIN_GLOVE = { org: 0.22 }; // จุดกำเนิดนวม = 30% ของทางข้อมือ→ปลายนิ้ว (มือยาว ≈ 0.73 ของแขนท่อนล่าง) เหมือนร่างเดิม
+            const heroSkinGlove = (H, grip, side) => {
+                const S = H.skin, C = S.glove && S.glove[side], hb = grip && grip.parent;
+                if (!C || !C.bone || !hb)
+                    return false;
+                S.q.copy(C.bone.getWorldQuaternion(_sgQ2)).multiply(C.qL);
+                grip.getWorldScale(S.s);
+                const ws = S.s.x; // ขนาดนวมเท่าที่ร่างเดิมสวม
+                const P = C.bone.localToWorld(S.v.copy(C.pL));
+                S.mW.compose(P, S.q, S.s.set(ws, ws, ws));
+                S.mO.copy(hb.matrixWorld).invert().multiply(S.mW);
+                S.mO.decompose(grip.position, grip.quaternion, grip.scale);
+                return true;
+            };
             const heroSkinGripHand = (H, grip, hand, dt) => {
+                if (H.skin.D.grip === "glove")
+                    return heroSkinGlove(H, grip, "R");
                 const S = H.skin, R = S.gripR, bone = R && R.bone, arm = R && R.arm;
                 if (!grip || !hand || !R || !bone || !arm)
                     return false;
@@ -17984,7 +18029,10 @@ function CherryAdventure() {
                     sgAim(S.q, aL, T, Rt);
                 }
                 else {
-                    T.copy(Fw).multiplyScalar(0.86).addScaledVector(Fd, 0.5); // ⚔️ ถือพร้อมรบ: ปลายดาบชี้หน้าเฉียงลงตามแขน
+                    if (S.D.ready === "up")
+                        T.copy(Up).multiplyScalar(0.92).addScaledVector(Fw, 0.32); // 🔱 หอกตั้งข้างตัว ปลายชี้ฟ้าเอนหน้านิด
+                    else
+                        T.copy(Fw).multiplyScalar(0.86).addScaledVector(Fd, 0.5); // ⚔️ ถือพร้อมรบ: ปลายดาบชี้หน้าเฉียงลงตามแขน
                     sgAim(S.q, aL, T, Rt);
                     if (S.gw > 0.001) { // ท่าฟัน: ใบดาบตามข้อมือจริง
                         bone.getWorldQuaternion(_sgQ2);
@@ -19738,9 +19786,10 @@ function CherryAdventure() {
                             console.warn("lego hero", eHL);
                         }
                     } // 🧱 ชุดตัวต่อเลโก้ → ทั้งตัวเป็นอิฐ
-                    if (M.mech)
-                        heroMechAttach(G._heroModel, M, token); // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์
-                    else if (HERO_SKINS[id] && G.heroSkinOn && G.heroSkinOn[id] && !(OI && OI.theme) && !G.legoSkinOn && !G.heroId)
+                    const skinWant = !!(HERO_SKINS[id] && G.heroSkinOn && G.heroSkinOn[id] && !(OI && OI.theme) && !G.legoSkinOn && !G.heroId);
+                    if (M.mech && !skinWant)
+                        heroMechAttach(G._heroModel, M, token); // 🤖 จักรกลพิทักษ์ → ร่างหุ่นยนต์ (เปิดสกินพิเศษ = ใช้สกินแทนร่างหุ่น)
+                    else if (skinWant)
                         heroSkinAttach(G._heroModel, HERO_SKINS[id], token); // ✨ สกินพิเศษ Higgsfield
                 });
             };
@@ -20300,7 +20349,7 @@ function CherryAdventure() {
                     H.g.updateMatrixWorld(true);
                     if (!heroSkinGripHand(H, H.grip, H.hand, dt))
                         heroSkinGrip(H, H.grip, H.skin.hand, H.skin.arm, H.hand);
-                    if (H.gripL)
+                    if (H.gripL && !(H.skin.D.grip === "glove" && heroSkinGlove(H, H.gripL, "L")))
                         heroSkinGrip(H, H.gripL, H.skin.handL, H.skin.armL, H.gripL.parent);
                 }
                 if (H.mech) { // 🤖 อาวุธไปอยู่บนฝ่ามือหุ่นยนต์
