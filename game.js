@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v745"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v746"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -5449,7 +5449,8 @@ function CherryAdventure() {
         const skyPhoto = {}, skyHz = {};
         try {
             const SKY_IMG = { day: "assets/sky/day.jpg", dusk: "assets/sky/dusk.jpg", night: "assets/sky/night.jpg",
-                m_day: "assets/higgsfield/sky_meadow_day.jpg", m_dusk: "assets/higgsfield/sky_meadow_dusk.jpg" }; // 🌸 ด่าน 1 ทุ่งซากุระ: ฟ้าวาดมือ Higgsfield (กลางวัน/เย็น)
+                m_day: "assets/higgsfield/sky_meadow_day.jpg", m_dusk: "assets/higgsfield/sky_meadow_dusk.jpg",
+                d_day: "assets/higgsfield/sky_desert_day.jpg", d_dusk: "assets/higgsfield/sky_desert_dusk.jpg" }; // 🏜️ ด่าน 2 ทะเลทรายเพลิง: ฟ้าร้อนจัด / อาทิตย์ตกแดงม่วง   // 🌸 ด่าน 1 ทุ่งซากุระ: ฟ้าวาดมือ Higgsfield (กลางวัน/เย็น)
             const tl = new THREE.TextureLoader();
             Object.keys(SKY_IMG).forEach((k) => tl.load(SKY_IMG[k], (t) => {
                 t.wrapS = THREE.RepeatWrapping;
@@ -6029,14 +6030,29 @@ function CherryAdventure() {
             });
         }
         catch (e) { }
+        // 🏜️ ด่าน 2 ทะเลทรายเพลิง: ลายทรายเป็นริ้วคลื่นลม (Higgsfield · ต่อลายได้)
+        let desertGroundTex = null;
+        try {
+            new THREE.TextureLoader().load("assets/higgsfield/ground_desert.jpg", (t) => {
+                t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                t.repeat.set(0.5, 0.5);
+                t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
+                desertGroundTex = t;
+                if (G._groundKind === "desert") {
+                    G._groundKind = null;
+                    G._groundSkin("desert");
+                }
+            });
+        }
+        catch (e) { }
         G._groundSkin = (kind) => {
             G._groundKind = kind;
-            const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : kind === "metal" ? metalGroundTex : kind === "meadow" && meadowGroundTex ? meadowGroundTex : groundTex;
+            const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : kind === "metal" ? metalGroundTex : kind === "meadow" && meadowGroundTex ? meadowGroundTex : kind === "desert" && desertGroundTex ? desertGroundTex : groundTex;
             if (m.map === want)
                 return;
             m.map = want;
             m.bumpMap = want;
-            m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : kind === "metal" ? 0.12 : want === meadowGroundTex ? 0.05 : 0.16;
+            m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : kind === "metal" ? 0.12 : want === meadowGroundTex ? 0.05 : want === desertGroundTex ? 0.07 : 0.16;
             m.emissive.setHex(kind === "snow" ? 0x2a3440 : kind === "cloud" ? 0x3c4658 : kind === "metal" ? 0x14181e : 0x000000); // หิมะ/เมฆสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
             m.needsUpdate = true;
         };
@@ -14193,9 +14209,7 @@ function CherryAdventure() {
             banshee: { f: "Flying_Hywirl", c: "fly", size: 2.5, y: 0.7, hue: [172, 0.3, 1.25] }, // 🏚️ ภูตหญิงเขียวซีด
             lichking: { f: "Big_Orc_Skull", c: "big", by: "h", size: 3.4, hue: [278, 0.6, 1.35] }, // 🏚️💀 จอมลิช — กะโหลกยักษ์ย้อมม่วงเวทมนตร์
             mechking: { f: "mech/Mech_George", c: "big", by: "h", size: 3.4, hit: "HitRecieve_2", atk: "Punch", tint: { Main: 0xe8b83a, Accent: 0xc0302a, Grey: 0x5a4a3a, LightGrey: 0xf0e0b0 } }, // 👑 ย้อมทองคำ + แดง
-            ngu: { f: "Snake", size: 1.7, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
             anaconda: { f: "Snake_angry", size: 2.6, idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
-            mangkorn: { f: "Dragon", size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
             namfish: { f: "Fish1", size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" }, // 🦈 ปลาเดิม — เหลือไว้เป็นร่างสัตว์ขี่ "ฉลามบก" (qtAs)
             piranha: { f: "Fish3", size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
             chalam: { f: "Shark", size: 2.6, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim" },
@@ -14225,8 +14239,15 @@ function CherryAdventure() {
             plerng: { f: "../higgsfield/mon_plerng", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.9, atkT: 1.05 }, // 🔥 จิ้งจอกไฟร่ายไฟ
             nam: { f: "../higgsfield/mon_nam", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.3, atkT: 1.0 }, // 🐟 ปลาปีศาจสองขาตะปบ
             goblin2d: { f: "../higgsfield/mon_goblin", by: "h", size: 2.4, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.5, atkT: 1.05 }, // 👺 ก็อบลินยักษ์ 3D (แทนสไปรต์ 2D) ทุบสองมือ
+            // 🏜️ มอนด่าน 2 (ทะเลทรายเพลิง) ชุดใหม่ — Higgsfield: คอนเซ็ปต์ → 3D (Meshy) → ใส่กระดูก + ท่าจากคลังท่า · ท่าที่ไม่ได้ใส่เองยืมจากโมจิ/ราชาเห็ด
+            ngu: { f: "../higgsfield/mon_ngu", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.4, atkT: 1.05 }, // 🐍 นาคาน้อยหงอนทอง ย่องเดิน · พุ่งพ่นพิษ
+            khiao: { f: "../higgsfield/mon_khiao", by: "h", size: 1.6, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.3, atkT: 1.05 }, // 🐺 หมาป่าผ้าพันคอแดง เดินตั้งการ์ด · ตะปบสองจังหวะ
+            saming: { f: "../higgsfield/mon_saming", by: "h", size: 1.7, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 3.5, atkT: 1.15, // 🐯 เสือสมิงหนุ่ม · กระโจนเตะลอยตัว
+                evo: { f: "../higgsfield/mon_tigerking", size: 2.0, atkTS: 2.9, atkT: 1.45, // 👑 ร่างวิวัฒน์ "เสือสมิงราชันย์" = ราชาเสือทะเลทราย (บอสด่าน 2 · stage 3) — ตะปบสามจังหวะ
+                    roar: "Roar", roarTS: 1.3, fxCol: [0xffa020, 0xff5a1a, 0xffe070] } }, // 🐯 คำรามทุบอกตอนผู้เล่นเข้าใกล้ครั้งแรก
+            mangkorn: { f: "../higgsfield/mon_mangkorn", by: "h", size: 1.6, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.8, atkT: 1.05 }, // 🐲 มังกรน้อยหางไฟ (เดินสองขา) · ร่ายไฟ
+            caveman2d: { f: "../higgsfield/mon_caveman", by: "h", size: 2.4, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.4, atkT: 1.1 }, // 🪨 หัวหน้ามนุษย์ถ้ำ 3D (แทนสไปรต์ 2D) · ทุบพื้นสองมือ
             hima: { f: "Big_Bunny", c: "big", by: "h", size: 1.6, mul: 0xcfe6ff },
-            saming: { f: "Blob_Cat", c: "blob", by: "h", size: 1.7 },
             eggchick: { f: "Blob_Chicken", c: "blob", by: "h", size: 1.4, mul: 0xffd860 },
             chickpet: { f: "Blob_Chicken", c: "blob", by: "h", size: 1.5 },
             paksi: { f: "Big_Birb", c: "big", by: "h", size: 1.9, y: 0.5 },
@@ -14243,7 +14264,7 @@ function CherryAdventure() {
             hanuman: { f: "Big_Monkroose", c: "big", by: "h", size: 2.3, mul: 0xf0f0f0 },
             amzmonkey: { f: "Big_Monkroose", c: "big", by: "h", size: 2.0 },
             kraken: { f: "Flying_Squidle", c: "fly", size: 3.0, y: 0.6, mul: 0xa070c0 },
-            khiao: { f: "Wolf", c: "ani", by: "h", size: 1.3 },
+            khiaofour: { f: "Wolf", c: "ani", by: "h", size: 1.3 }, // 🫏 หมาป่าสี่ขาเดิม — เหลือไว้เป็นร่างสัตว์ขี่ "ลาน้อย" (qtAs)
             cupcake: { f: "Blob_Mushnub", c: "blob", by: "h", size: 1.8, mul: 0xffb0d0 },
             candyking: { f: "Big_MushroomKing", c: "big", by: "h", size: 3.0, mul: 0xffa0e0 },
             egghog: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.5, mul: 0xc09060 },
@@ -14918,6 +14939,11 @@ function CherryAdventure() {
             } // 🧱 มอนสเตอร์ตัวต่อเลโก้
             g.add(node);
             g.userData.qtNode = node;
+            {
+                const Lb = g.userData.lbl;
+                if (Lb && Lb.sprite && P.by === "h" && /higgsfield/.test(P.f))
+                    Lb.sprite.position.y = Math.max(Lb.sprite.position.y, (P.y || 0) + (P.size || 1.7) + 0.18);
+            } // 🏷️ ป้ายชื่อลอยเหนือหัวโมเดลจริง (โมเดลสูงกว่าตัวปั้นเดิม ป้ายเคยจมกลางอก)
             if (P.wrap) {
                 try {
                     qtBandage(node);
@@ -38577,6 +38603,7 @@ function CherryAdventure() {
             }
             return 0.55;
         };
+        const desertCacti = [], desertDunes = [];
         const makeCactus = (x, z, kind) => {
             if (inKeepOut(x, z))
                 return; // 🌀 never block the warp/pond/portal
@@ -38585,6 +38612,7 @@ function CherryAdventure() {
             c.rotation.y = Math.random() * Math.PI * 2;
             c.position.set(x, 0, z);
             desertDecor.add(c);
+            desertCacti.push({ c, big: r < 0.5 }); // 🌵 รอสลับเป็นโมเดล Higgsfield
             return { x, z, r: rad };
         };
         // scatter cacti + small rocks
@@ -38619,6 +38647,7 @@ function CherryAdventure() {
             dune.rotation.y = Math.random() * Math.PI;
             dune.scale.set(1, rnd(0.5, 0.9), 1);
             desertDecor.add(dune);
+            desertDunes.push(dune);
         }
         // small foreground sand mounds
         for (let i = 0; i < 6; i++) {
@@ -38642,6 +38671,167 @@ function CherryAdventure() {
         G.desertDecor = desertDecor;
         G.sandParticles = sandParticles;
         G.desertColliders = desertColliders;
+        // 🏜️ ด่าน 2 รีเมค — โมเดล Higgsfield (ภาพคอนเซ็ปต์ → 3D Meshy): กระบองเพชรซากัวโร · กอกระบองเพชรถัง+ใบพาย ·
+        //    อินทผลัมริมโอเอซิส · ซากซุ้มประตูวิหารโบราณ · แท่งหินทรายแดงเป็นแนวผาขอบแมพ (แทนแท่งทรงกระบอกเดิม)
+        //    ⏳ โหลดครั้งแรกตอนเข้าแมพทะเลทราย (~1.9MB) — ระหว่างรอใช้ชุดที่ปั้นด้วยโค้ดเดิม
+        const desLib = {};
+        let desLoading = null;
+        const desDone = {};
+        const DES_HF = ["saguaro", "cluster", "palm", "ruin", "rock"];
+        G.hfDesertLoad = () => {
+            if (!desLoading && THREE.GLTFLoader) {
+                const L = new THREE.GLTFLoader();
+                desLoading = Promise.all(DES_HF.map((n) => new Promise((res) => L.load("assets/higgsfield/desert_" + n + ".glb", (gl) => {
+                    const sh = (x) => { if (x) {
+                        x.userData = x.userData || {};
+                        x.userData._shared = true;
+                    } };
+                    gl.scene.traverse((o) => {
+                        if (!o.isMesh)
+                            return;
+                        o.castShadow = n !== "rock";
+                        o.receiveShadow = n === "ruin";
+                        const m = o.material;
+                        m.metalness = 0;
+                        m.roughness = 0.9;
+                        if (m.map) {
+                            m.map.anisotropy = 4;
+                            m.emissiveMap = m.map;
+                            m.emissive = new THREE.Color(0xffffff);
+                            m.emissiveIntensity = n === "rock" || n === "ruin" ? 0.07 : 0.16;
+                        } // 🌵 ด้านเงาไม่ดำมืด
+                        m.userData.vivid = true;
+                        sh(o.geometry);
+                        sh(m);
+                        sh(m.map);
+                    });
+                    gl.scene.updateMatrixWorld(true);
+                    const b = new THREE.Box3().setFromObject(gl.scene), c = b.getCenter(new THREE.Vector3()), wrap = new THREE.Group();
+                    gl.scene.position.set(-c.x, -b.min.y, -c.z);
+                    wrap.add(gl.scene); // จุดหมุน = กลางฐาน
+                    desLib[n] = { obj: wrap, h: Math.max(0.01, b.max.y - b.min.y), w: Math.max(b.max.x - b.min.x, b.max.z - b.min.z) };
+                    res(true);
+                }, undefined, () => res(false))))).then((ok) => ok.some(Boolean));
+            }
+            if (desLoading)
+                desLoading.then(() => { try {
+                    hfDesertApply();
+                }
+                catch (e) {
+                    console.warn("hf desert", e);
+                } });
+            return desLoading;
+        };
+        const desClone = (key, h) => { const L2 = desLib[key]; if (!L2)
+            return null; const n = L2.obj.clone(); n.scale.setScalar(h / L2.h); return n; };
+        const desOcc = (g, round) => { g.userData.occRound = !!round; (G._occlExtra = G._occlExtra || []).push(g); }; // 👀 เดินผ่านแล้วจางไม่บังตัวละคร
+        const hfDesertApply = () => {
+            const here = (BIOMES[G.curBiome] || {}).id === "desert";
+            let addCol = false;
+            // 🌵 กระบองเพชรในทุ่ง → ซากัวโรสูง / ริมขอบ → กอกระบองเพชรถังออกดอก
+            desertCacti.forEach((q) => {
+                if (q.hf)
+                    return;
+                const node = q.big ? desClone("saguaro", rnd(2.7, 3.7)) : desClone("cluster", rnd(0.95, 1.4));
+                if (!node)
+                    return; // ไฟล์ไหนโหลดไม่ได้ = ต้นนั้นใช้แบบปั้นเดิม
+                q.hf = true;
+                q.c.children.forEach((ch) => { ch.visible = false; });
+                node.rotation.y = Math.random() * Math.PI * 2;
+                q.c.add(node);
+                if (q.big)
+                    desOcc(q.c, true);
+            });
+            // 🌴 อินทผลัมล้อมโอเอซิส
+            const O = FISH_SPOT.desert;
+            if (!desDone.palm && desLib.palm && O) {
+                desDone.palm = true;
+                [[0.5, 6.4], [1.75, 5.2], [3.3, 6.9], [4.6, 5.6], [5.6, 4.6]].forEach(([a, h]) => {
+                    const x = O.x + Math.cos(a) * (O.r + 1.6), z = O.z + Math.sin(a) * (O.r + 1.6); // ริมหาดโอเอซิส (เขตกันของประดับรอบบ่อใหญ่กว่านี้ — ต้นปาล์มยกเว้น)
+                    if (Math.abs(x) < 4 || Math.abs(z) < 4)
+                        return;
+                    const g = new THREE.Group(), n = desClone("palm", h);
+                    n.rotation.y = a * 2.3;
+                    g.add(n);
+                    g.position.set(x, terrainAt(x, z), z);
+                    g.userData._y0 = 0;
+                    desertDecor.add(g);
+                    desertColliders.push({ x, z, r: 0.45 });
+                    desOcc(g, true);
+                    addCol = true;
+                });
+            }
+            // 🏛️ ซากซุ้มประตูวิหารโบราณ 3 แห่ง — สุ่มแบบตายตัว (seed) บนพื้นราบ ห่างถนน/ประตู/โอเอซิส/วาร์ป · เดินลอดซุ้มได้
+            if (!desDone.ruin && desLib.ruin && here) {
+                desDone.ruin = true;
+                let sd = 20261104;
+                const sr = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+                const placed = [];
+                for (let k = 0; k < 400 && placed.length < 3; k++) {
+                    const a = sr() * Math.PI * 2, r = 16 + sr() * (FIELD_R - 30), x = Math.cos(a) * r, z = Math.sin(a) * r;
+                    if (inKeepOut(x, z) || nearWarpG(x, z) || Math.abs(x) < 8 || Math.abs(z) < 8)
+                        continue;
+                    if (Object.values(G.GATE_POS || {}).some((q) => Math.hypot(x - q.x, z - q.z) < 12))
+                        continue;
+                    if (O && Math.hypot(x - O.x, z - O.z) < O.r + 9)
+                        continue;
+                    if (placed.some((q) => Math.hypot(q.x - x, q.z - z) < 24) || desertColliders.some((q) => Math.hypot(q.x - x, q.z - z) < q.r + 5))
+                        continue;
+                    const h0 = terrainRaw(x, z);
+                    let flat = Math.abs(h0) < 1.4;
+                    for (const [dx, dz] of [[3.5, 0], [-3.5, 0], [0, 3.5], [0, -3.5]])
+                        if (Math.abs(terrainRaw(x + dx, z + dz) - h0) > 0.6)
+                            flat = false;
+                    if (!flat)
+                        continue;
+                    const yaw = Math.atan2(-x, -z) + (sr() - 0.5) * 0.8, H = 5.4 + sr() * 1.4, g = new THREE.Group(), n = desClone("ruin", H);
+                    g.add(n);
+                    g.rotation.y = yaw;
+                    g.position.set(x, terrainAt(x, z) - 0.15, z);
+                    g.userData._y0 = -0.15;
+                    desertDecor.add(g);
+                    const W = desLib.ruin.w * (H / desLib.ruin.h), cx = Math.cos(yaw), sz = -Math.sin(yaw); // แกนกว้างของซุ้ม (แกน x ของโมเดล) ในพิกัดโลก
+                    for (const [o, rr] of [[-0.3, 1.0], [0.3, 1.0], [-0.45, 0.7], [0.45, 0.7]])
+                        desertColliders.push({ x: x + cx * W * o, z: z + sz * W * o, r: rr }); // 🧱 เสาซุ้มกันทาง · ช่องกลางเดินลอดได้
+                    placed.push({ x, z });
+                    desOcc(g, false);
+                    addCol = true;
+                }
+            }
+            // 🪨 แนวผาขอบแมพ → แท่งหินทรายแดง · เนินทรายทรงกรวยเดิมซ่อน
+            if (desLib.rock) {
+                desertDunes.forEach((d) => { d.visible = false; });
+                if (here && G._borderHF !== "desert" && G.buildBorder)
+                    G.buildBorder("desert");
+            }
+            if (addCol && here && G.rebuildNav)
+                G.rebuildNav();
+        };
+        G.hfDesertBorder = (grp, R, nearGap, put) => {
+            const L2 = desLib.rock;
+            if (!L2)
+                return false;
+            let sd = 777;
+            const sr = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+            G._occlBorder = [];
+            const N = 50 * (WORLD_S / 2);
+            for (let i = 0; i < N; i++) {
+                const a = (i + (sr() - 0.5) * 0.4) / N * Math.PI * 2;
+                if (nearGap(a))
+                    continue;
+                for (const [dr, k0, k1] of i % 4 === 1 ? [[3.4, 7, 10.5], [9, 12, 16]] : [[3.4, 7, 10.5]]) { // ทุก ๆ 4 แท่งมีแท่งสูงยักษ์ซ้อนด้านหลัง · ฐานหินไม่ล้ำเข้าเขตเดิน
+                    const h = k0 + sr() * (k1 - k0), n = L2.obj.clone(), sw = 1.25 + sr() * 0.45;
+                    n.scale.set(sw * h / L2.h, h / L2.h, sw * h / L2.h);
+                    n.rotation.y = sr() * Math.PI * 2;
+                    const rr = R + dr + sr() * 1.2;
+                    put(n, Math.cos(a) * rr, Math.sin(a) * rr, -0.5);
+                    n.userData.occRound = true;
+                    G._occlBorder.push(n); // 👀 เดินชิดขอบแล้วกล้องอยู่หลังแท่งหิน → จางลง
+                }
+            }
+            G._borderHF = "desert";
+            return true;
+        };
         // ❄️ SNOW DECOR — ice mountains, snowy pines, snowmen, and falling snow (hidden unless in snow)
         const snowDecor = new THREE.Group();
         snowDecor.visible = false;
@@ -42069,7 +42259,7 @@ function CherryAdventure() {
         // 👀 ของประดับที่บังระหว่างกล้องกับตัวละคร (ต้นไม้/พุ่ม/บ้าน/ซุ้มประตู/บ่อน้ำ/ต้นซากุระใหญ่) → ค่อย ๆ จางโปร่ง แล้วคืนเมื่อพ้นแนวสายตา
         //    แนวสายตา = จากกล้องถึงหัวตัวละคร (ระนาบ XZ + ความสูงเส้นสายตา ณ จุดนั้นต่ำกว่ายอดวัตถุ) · ขนาดวัตถุวัดจากกล่องรอบตัว (วัดใหม่เมื่อโมเดลสลับ)
         //    วัสดุโปร่งใสโคลนแยกต่อชิ้นตอนเริ่มจาง (วัสดุต้นไม้ใช้ร่วมหลายต้น — ไม่ให้ต้นอื่นจางตาม)
-        const _ocV = new THREE.Vector3(), _ocB = new THREE.Box3(), _ocB2 = new THREE.Box3();
+        const _ocV = new THREE.Vector3(), _ocB = new THREE.Box3(), _ocB2 = new THREE.Box3(); // (วัดกรอบใหม่ต้อง updateWorldMatrix ก่อน — ชิ้นที่เพิ่งใส่ยังมีเมทริกซ์ว่าง ได้แต่พิกัดดิบของโมเดลบีบอัด −1..1)
         G.occlTick = (dt) => {
             const L = G.sceneryObjects || [], E = G._occlExtra || [];
             char.getWorldPosition(_ocV);
@@ -42082,13 +42272,18 @@ function CherryAdventure() {
                 let vis = g.visible;
                 for (let q = g.parent; vis && q; q = q.parent)
                     vis = q.visible;
-                const me = g.matrixWorld.elements, gx = me[12], gy = me[13], gz = me[14];
+                let me = g.matrixWorld.elements, gx = me[12], gy = me[13], gz = me[14];
                 let block = false;
                 if (vis && Math.abs(gx - hx) < Lc && Math.abs(gz - hz) < Lc) {
                     const key = (g.userData.kkNode ? g.userData.kkNode.uuid : "") + g.children.length; // ชิ้นที่แสดงเปลี่ยน (โมเดลโหลดเสร็จ) → วัดขนาดใหม่
                     if (O.key !== key) {
                         O.key = key;
                         _ocB.makeEmpty();
+                        g.updateWorldMatrix(true, true);
+                        me = g.matrixWorld.elements;
+                        gx = me[12];
+                        gy = me[13];
+                        gz = me[14];
                         g.traverse((o) => { if (o.isMesh && o.visible && o.geometry) {
                             if (!o.geometry.boundingBox)
                                 o.geometry.computeBoundingBox();
@@ -42096,7 +42291,7 @@ function CherryAdventure() {
                             if (_ocB2.max.y - _ocB2.min.y > 0.3)
                                 _ocB.union(_ocB2);
                         } }); // ข้ามชิ้นแบนบนพื้น (พรมกลีบ/เงา)
-                        const round = g.userData.kkSlot === "tree" || g.userData.kkSlot === "bush" || (G._sakura && g === G._sakura.g); // 🌳 พุ่มกลม → วงกลมแทนกล่อง (มุมกล่องไม่มีใบ)
+                        const round = g.userData.occRound || g.userData.kkSlot === "tree" || g.userData.kkSlot === "bush" || (G._sakura && g === G._sakura.g); // 🌳 พุ่มกลม → วงกลมแทนกล่อง (มุมกล่องไม่มีใบ)
                         const sx = (_ocB.max.x - _ocB.min.x) * 0.12, sz = (_ocB.max.z - _ocB.min.z) * 0.12; // หลังคา/ซุ้มไม่เต็มกล่อง → หดขอบเข้านิด
                         O.round = round;
                         O.cx = (_ocB.min.x + _ocB.max.x) / 2 - gx;
@@ -42180,6 +42375,10 @@ function CherryAdventure() {
                 one(L[i]);
             for (let i = 0; i < E.length; i++)
                 one(E[i]);
+            const B = G._occlBorder;
+            if (B)
+                for (let i = 0; i < B.length; i++)
+                    one(B[i]); // 🏜️ แท่งหินขอบแมพ
         };
         // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
         const antDecor = new THREE.Group();
@@ -44234,8 +44433,8 @@ function CherryAdventure() {
         // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
         G.rebuildTerrain = (b) => {
             if (G._groundSkin)
-                G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : b.id === "meadow" ? "meadow" : null);
-            const meadowTex = b.id === "meadow", cWhite = new THREE.Color(0xffffff); // 🌸 ลายหญ้าวาดมือมีสีเขียวในตัวแล้ว → สีจุดยอดเหลือแค่เฉดสูง-ต่ำอ่อน ๆ
+                G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : b.id === "meadow" ? "meadow" : b.id === "desert" ? "desert" : null);
+            const meadowTex = b.id === "meadow", desertTex = b.id === "desert", cWhite = new THREE.Color(0xffffff), cSandN = new THREE.Color(0xbcb4a8); // 🌸 ลายหญ้าวาดมือมีสีเขียวในตัวแล้ว → สีจุดยอดเหลือแค่เฉดสูง-ต่ำอ่อน ๆ
             TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
             TERR_FLATTEN = !!G._terrFlatMode;
             TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }], FISH_SPOT[b.id] ? [{ x: FISH_SPOT[b.id].x, z: FISH_SPOT[b.id].z, r: FISH_SPOT[b.id].r * 1.3 + 1.6 }] : []); // 🏞️ พื้นรอบทะเลสาบเรียบ   // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
@@ -44262,6 +44461,8 @@ function CherryAdventure() {
                     tmpC.lerp(cHi, u * 0.9);
                 else if (u < 0)
                     tmpC.lerp(cLo, -u * 0.9);
+                if (desertTex)
+                    tmpC.lerp(cSandN, 0.6); // 🏜️ ลายทรายมีสีทองในตัว → จุดยอดเหลือแค่เฉดสูง-ต่ำ (เทากลาง ไม่ขาวโพลน) แต่หน้าผายังเป็นหินแดง
                 tmpC.lerp(cRk, sl * rockK);
                 if (meadowTex)
                     tmpC.lerp(cWhite, 0.4);
@@ -45009,6 +45210,8 @@ function CherryAdventure() {
         // ================= 🛣️ END ROADS =================
         G.buildBorder = (bid) => {
             borderClear();
+            G._borderHF = null;
+            G._occlBorder = [];
             const B = BORDER[bid] || BORDER.meadow;
             const R = FIELD_R + 1.4;
             const gaps = borderGaps();
@@ -45204,7 +45407,8 @@ function CherryAdventure() {
             else { // ⛰️ เหว/หน้าผา — แผ่นหินสูงเอียงสลับ
                 if (bid === "snow" && G.natBorderTrees) // 🌲 ทุ่งหิมะ: ป่าสนเรียงหน้าหน้าผา (ครึ่งหนึ่งใบปกคลุมหิมะ)
                     G.natBorderTrees(borderGrp, R, nearGap, { names: NAT_PINES, fh: [5.5, 8.0], pink: 0.5, alt: natSnowy, seed: "snowBorder", rows: [[R - 0.9, 1, 54], [R + 1.4, 1.25, 40]] });
-                const N = 70 * WORLD_S;
+                const hfRock = bid === "desert" && G.hfDesertBorder && G.hfDesertBorder(borderGrp, R, nearGap, put); // 🏜️ แท่งหินทรายแดง Higgsfield
+                const N = hfRock ? 0 : 70 * WORLD_S;
                 for (let i = 0; i < N; i++) {
                     const a = (i / N) * Math.PI * 2;
                     if (nearGap(a))
@@ -45217,11 +45421,13 @@ function CherryAdventure() {
                     slab.rotation.z = (Math.random() - 0.5) * 0.14;
                     put(slab, x, z, h / 2 - 0.6);
                 }
-                // ร่องเหวมืด ๆ ด้านนอก
-                const pit = new THREE.Mesh(new THREE.RingGeometry(R + 2.2, R + 14, 64), new THREE.MeshBasicMaterial({ color: 0x0d1014, transparent: true, opacity: 0.82, side: THREE.DoubleSide }));
-                pit.rotation.x = -Math.PI / 2;
-                pit.position.y = -1.2;
-                borderGrp.add(pit);
+                // ร่องเหวมืด ๆ ด้านนอก (ทะเลทรายแบบแท่งหินไม่มีเหว — ทรายต่อเนื่องถึงเนินขอบฟ้า)
+                if (!hfRock) {
+                    const pit = new THREE.Mesh(new THREE.RingGeometry(R + 2.2, R + 14, 64), new THREE.MeshBasicMaterial({ color: 0x0d1014, transparent: true, opacity: 0.82, side: THREE.DoubleSide }));
+                    pit.rotation.x = -Math.PI / 2;
+                    pit.position.y = -1.2;
+                    borderGrp.add(pit);
+                }
             }
             borderGrp.children.forEach((o) => { o.userData.noHide = true; if (o.userData._y0 == null)
                 o.userData._y0 = o.position.y - terrainAt(o.position.x, o.position.z); });
@@ -45250,7 +45456,7 @@ function CherryAdventure() {
             G.resetAmbient((BIOMES[G.curBiome || 0] || BIOMES[0]).id, 0, 0); // ✨ ละอองบรรยากาศแมพเริ่มต้น
         {
             const b0 = BIOMES[G.curBiome || 0] || BIOMES[0];
-            const fd0 = { meadow: [64, 150] }[b0.id] || [46, 98];
+            const fd0 = { meadow: [64, 150], desert: [66, 160] }[b0.id] || [46, 98];
             G._fogBase = { near: fd0[0], far: fd0[1] };
             if (G.rollWeather)
                 G.rollWeather(b0.id, "clear");
@@ -45273,7 +45479,7 @@ function CherryAdventure() {
             if (G.rollWeather)
                 G.rollWeather(b.id); // 🌦️ สุ่มสภาพอากาศของแมพนี้
             { // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-                const FOG_D = { meadow: [64, 150], mushroom: [36, 110], pirate: [60, 180], aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+                const FOG_D = { meadow: [64, 150], desert: [66, 160], mushroom: [36, 110], pirate: [60, 180], aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
                 const fd = FOG_D[b.id] || [58, 124];
                 G._fogBase = { near: fd[0], far: fd[1] }; // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
                 if (scene.fog && !G._townFogPrev) {
@@ -45359,6 +45565,8 @@ function CherryAdventure() {
                 G.mushDecor.visible = isMush;
             if (isMush && G.mushLoad)
                 G.mushLoad(); // 🍄 สร้างป่าเห็ดครั้งแรกที่เข้าแมพ
+            if (isDesert && G.hfDesertLoad)
+                G.hfDesertLoad(); // 🏜️ โมเดล Higgsfield ของด่าน 2 (โหลดครั้งแรกที่เข้าแมพ)
             G.moonActive = b.id === "moon"; // 🌠 เปิดดาวตกบนดวงจันทร์
             if (G.refreshDecorFreeze)
                 G.refreshDecorFreeze(); // 🚀 ตรึงเมทริกซ์ฉากประกอบที่ไม่ขยับ ลดงาน CPU ต่อเฟรม
@@ -52189,7 +52397,7 @@ function CherryAdventure() {
             const mdef = MOUNTS.find((m) => m.id === id);
             if (mdef) {
                 const proxy = mdef.id === "donkey" ? "khiao" : mdef.id === "ostrich" ? "paksi" : "nam"; // ใช้โครงร่างเดิม + ย้อมสีเป็นสัตว์ขี่
-                const m = buildMonster(proxy, 1, proxy === "nam" ? "namfish" : undefined); // 🦈 ฉลามบกใช้ร่างปลาเดิม (น้ำเงี้ยวเปลี่ยนเป็นปลาปีศาจสองขาแล้ว)
+                const m = buildMonster(proxy, 1, proxy === "nam" ? "namfish" : proxy === "khiao" ? "khiaofour" : undefined); // 🫏 ลาน้อยใช้ร่างหมาป่าสี่ขาเดิม   // 🦈 ฉลามบกใช้ร่างปลาเดิม (น้ำเงี้ยวเปลี่ยนเป็นปลาปีศาจสองขาแล้ว)
                 m.traverse((o) => { if (o.isMesh && o.material && o.material.color) {
                     o.material = o.material.clone();
                     o.material.color.setHex(mdef.color);
@@ -79655,9 +79863,10 @@ function CherryAdventure() {
                     skyDome.position.copy(camera.position);
                     { // 🌅 เลือกฟ้าจริงตามช่วงเวลา · ย้อมตามบรรยากาศแมพ/อากาศเล็กน้อย · ไม่มีรูป (ยังโหลดไม่เสร็จ/ในถ้ำ) = ฟ้าวาดแบบเดิม
                         let pk = dayAmt < 0.32 ? "night" : gold > 0.45 ? "dusk" : "day";
-                        const meadowSky = G.curBiome === 0 && pk !== "night" && skyPhoto["m_" + pk]; // 🌸 ด่าน 1 ใช้ฟ้าวาดมือของตัวเอง
+                        const bidS = (BIOMES[G.curBiome] || {}).id, sPfx = bidS === "meadow" ? "m_" : bidS === "desert" ? "d_" : null;
+                        const meadowSky = sPfx && pk !== "night" && skyPhoto[sPfx + pk]; // 🌸🏜️ ด่าน 1–2 ใช้ฟ้าวาดมือของตัวเอง
                         if (meadowSky)
-                            pk = "m_" + pk;
+                            pk = sPfx + pk;
                         const ph = !G._skyIndoor && skyPhoto[pk];
                         if (ph) {
                             if (skyDome.material.map !== ph) {
@@ -79677,7 +79886,7 @@ function CherryAdventure() {
                                 scene.fog.color.lerp(_skyFog, 0.65);
                             }
                             if (meadowSky)
-                                scene.fog.color.lerp(G._mFogC || (G._mFogC = new THREE.Color(0x9cc6dc)), 0.5); // 🌸 ระยะไกลอมฟ้าใส (ไม่ขาวซีด)
+                                scene.fog.color.lerp(sPfx === "d_" ? (G._dFogC || (G._dFogC = new THREE.Color(0xe2c49a))) : (G._mFogC || (G._mFogC = new THREE.Color(0x9cc6dc))), 0.5); // 🌸 ระยะไกลอมฟ้าใส · 🏜️ ไอร้อนสีทรายอ่อน   // 🌸 ระยะไกลอมฟ้าใส (ไม่ขาวซีด)
                         }
                         else {
                             if (!G._skyIndoor && skyDome.material.map !== G._skyTex) {
