@@ -48,3 +48,27 @@ hero_assassin.glb — สกินพิเศษอาชีพนักฆ่�
 - Borrowed: Idle / Walk / Run / Attack2 (Left_Slash) / Hit / Death from hero_warrior.glb
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
+
+hero_lancer.glb — สกินพิเศษอาชีพทหารหอก "อัศวินหอกนิลมังกร" (HERO_SKINS.lancer)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 3 own clips via Meshy rigging:
+  Attack1 (#240 Thrust_Slash), Attack2 (#241 Weapon_Combo_2), Skill (#128 Heavy_Hammer_Swing)
+- Borrowed: Idle / Walk / Run / Hit / Death from hero_warrior.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.4 MB
+
+hero_boxer.glb — สกินพิเศษอาชีพนักมวย "ยอดมวยมงคลแดง" (HERO_SKINS.boxer)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 6 own clips via Meshy rigging:
+  Attack1 (#198 Punch_Combo), Attack2 (#193 Left_Hook_from_Guard), Jab (#192 Right_Jab_from_Guard),
+  Kick (#207 Roundhouse_Kick), Knee (#211 Boxing_Guard_Step_Knee_Strike), Skill (#94 Flying_Fist_Kick)
+- Idle = guard stance built from the first 0.6 s of Jab (ping-pong loop)
+- Borrowed: Walk / Run / Hit / Death from hero_warrior.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.4 MB
+
+hero_aegis.glb — สกินพิเศษอาชีพจอมพิทักษ์ "จักรกลพิทักษ์ขาวมุก" (HERO_SKINS.aegis)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 2 own clips via Meshy rigging:
+  Attack1 (#92 Double_Combo_Attack), Skill (#237 Charged_Axe_Chop)
+- Borrowed: Idle / Walk / Run / Attack2 (Left_Slash) / Hit / Death from hero_warrior.glb
+- Texture fix: dark face-like marks baked on the back of the helmet repainted helmet-white
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
