@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v744";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v745";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -9906,7 +9906,7 @@ export default function CherryAdventure() {
       ngu:        { f: "Snake",           size: 1.7,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
       anaconda:   { f: "Snake_angry",     size: 2.6,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump" },
       mangkorn:   { f: "Dragon",          size: 2.4, y: 0.55, lift: 0.55, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death" },
-      nam:        { f: "Fish1",           size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
+      namfish:    { f: "Fish1",           size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },   // 🦈 ปลาเดิม — เหลือไว้เป็นร่างสัตว์ขี่ "ฉลามบก" (qtAs)
       piranha:    { f: "Fish3",           size: 1.7, y: 0.70, idle: "Swim", walk: "Swim", run: "Swim" },
       chalam:     { f: "Shark",           size: 2.6, y: 0.85, idle: "Swim", walk: "Swim", run: "Swim" },
       eggdino:    { f: "Parasaurolophus", size: 2.5, lift: 0.62, idle: "Parasaurolophus_Idle", walk: "Parasaurolophus_Walk", run: "Parasaurolophus_Run", atk: "Parasaurolophus_Attack", die: "Parasaurolophus_Death" },
@@ -9925,7 +9925,16 @@ export default function CherryAdventure() {
                     tint: { Brown: 0x0da342, LightBrown: 0x54e38f, Black: 0x081410 } },                    // 🦖 แร็พเตอร์แก้ว — เขียวแก้ว
       // ===== Ultimate Monsters (50) + Ultimate Animals (12) — ชุด Patreon ของ Quaternius (CC0) =====
       //   c = ชุดชื่อคลิปตามกลุ่ม (QT_CLIPS) · by:"h" = ตั้งขนาดจากความสูง (กลุ่ม Big กางแขนท่ายืน กว้างเกินจริง) · mul = ย้อมทับ texture ทั้งตัว
-      mochi:      { f: "Big_Bunny",           c: "big",  by: "h", size: 1.6 },
+      // 🌸 มอนด่าน 1 (ทุ่งซากุระ) ชุดใหม่ — Higgsfield: ภาพคอนเซ็ปต์ → 3D (Meshy) → ใส่กระดูก + ท่าจากคลังท่า · ไฟล์ละตัว คลิป Idle/Walk/Attack/Hit/Die
+      //    ท่าโจมตีจากคลังยาว 1.5–3.5 วิ → atkTS เร่งให้จบในราว 1.2 วิ · atkT ค้างท่าจนจบ (คูลดาวน์ตี 1.3 วิ)
+      mochi:      { f: "../higgsfield/mon_mochi",  by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.8, atkT: 1.05 },   // 🐰 กระต่ายชมพูต่อยสองหมัด
+      baibua:     { f: "../higgsfield/mon_baibua", by: "h", size: 1.4, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.5, atkT: 1.05,   // 🍃 ต้นอ่อนใบบัวทุบพื้น
+                    evo: { f: "../higgsfield/mon_flowerqueen", size: 2.2, atkTS: 2.0, atkT: 1.2,   // 🌸 ร่างวิวัฒน์ "บัวหลวง" = ราชินีบุปผา (บอสด่าน 1 · stage 3)
+                           cast: "Cast", castTS: 1.4, castFx: 0.7, castEvery: 3, fxH: 2.25, fxCol: [0xff7ac8, 0xffb8e6, 0x8ee070] } },   // ทุกการโจมตีครั้งที่ 3 = ร่ายกลีบดอกไม้
+      mekha:      { f: "../higgsfield/mon_mekha",  by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.2, atkT: 1.05 },   // ☁️ ก้อนเมฆสายฟ้าร่ายเวท
+      plerng:     { f: "../higgsfield/mon_plerng", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.9, atkT: 1.05 },   // 🔥 จิ้งจอกไฟร่ายไฟ
+      nam:        { f: "../higgsfield/mon_nam",    by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.3, atkT: 1.0 },    // 🐟 ปลาปีศาจสองขาตะปบ
+      goblin2d:   { f: "../higgsfield/mon_goblin", by: "h", size: 2.4, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.5, atkT: 1.05 },   // 👺 ก็อบลินยักษ์ 3D (แทนสไปรต์ 2D) ทุบสองมือ
       hima:       { f: "Big_Bunny",           c: "big",  by: "h", size: 1.6, mul: 0xcfe6ff },
       saming:     { f: "Blob_Cat",            c: "blob", by: "h", size: 1.7 },
       eggchick:   { f: "Blob_Chicken",        c: "blob", by: "h", size: 1.4, mul: 0xffd860 },
@@ -9945,13 +9954,10 @@ export default function CherryAdventure() {
       amzmonkey:  { f: "Big_Monkroose",       c: "big",  by: "h", size: 2.0 },
       kraken:     { f: "Flying_Squidle",      c: "fly",           size: 3.0, y: 0.6, mul: 0xa070c0 },
       khiao:      { f: "Wolf",                c: "ani",  by: "h", size: 1.3 },
-      baibua:     { f: "Blob_GreenBlob",      c: "blob", by: "h", size: 1.5 },
-      mekha:      { f: "Flying_Glub",         c: "fly",           size: 2.0, y: 0.9, mul: 0xf4f8ff },
       cupcake:    { f: "Blob_Mushnub",        c: "blob", by: "h", size: 1.8, mul: 0xffb0d0 },
       candyking:  { f: "Big_MushroomKing",    c: "big",  by: "h", size: 3.0, mul: 0xffa0e0 },
       egghog:     { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.5, mul: 0xc09060 },
       ngueak:     { f: "Big_Fish",            c: "big",  by: "h", size: 2.2 },
-      plerng:     { f: "Fox",                 c: "ani",  by: "h", size: 1.3 },
       thewada:    { f: "Flying_Ghost",        c: "fly",           size: 2.4, y: 0.9, hue: [42, 0, 5.0, 0.94, 0, 0.16], halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } },   // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
       kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, hue: [332, 0.45, 2.4, 0.8, 0, 0.6], halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
       phothisat:  { f: "Big_Tribal",          c: "big", by: "h", size: 3.0, hue: [44, 0.85, 1.7, 0.62, 1], gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } },   // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
@@ -10050,6 +10056,7 @@ export default function CherryAdventure() {
     G.qtHueMap = qtHueMap;            // 🎨 ใช้ซ้ำกับชุดของตัวละครโมเดล 3D (ย้อมสีชุดโดยรักษาแสงเงา/ลายผ้าเดิม)
     // 🧬 ตัววิวัฒน์ (stage ≥ 2) ใช้ไฟล์/ค่าจาก evo ทับของขั้นแรก — ให้บอสวิวัฒน์ได้โมเดลคนละตัวกับลูกน้อง
     const qtP = (spId, stage) => { const P = QT_MON[spId]; return P && P.evo && (stage || 1) >= 2 ? Object.assign({}, P, P.evo) : P; };
+    const qtId = (g) => g.userData.qtAs || g.userData.spId;   // 🐎 qtAs = ใช้โมเดลของอีกรายการ (สัตว์ขี่ที่ยืมร่างมอน)
     G.qtP = qtP;
     G.qtLoad = (spId, stage) => {
       const P = qtP(spId, stage);
@@ -10131,7 +10138,7 @@ export default function CherryAdventure() {
             max: Math.max(0.01, Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z)) };
           // สลับทุกตัวที่รอไฟล์นี้อยู่ — เทียบด้วยชื่อไฟล์ ไม่ใช่สายพันธุ์ (Dragon.glb ใช้ร่วมกัน 2 สายพันธุ์
           //  ตัวที่เกิดระหว่างโหลดจะได้ promise เดิมคืนไปเฉย ๆ ถ้าเทียบสายพันธุ์จะค้างเป็นตัวปั้นเอง)
-          (G._qtMons || []).forEach((g) => { const Q = g && g.parent && qtP(g.userData.spId, g.userData.stage); if (Q && Q.f === P.f) G.qtSwap(g); });
+          (G._qtMons || []).forEach((g) => { const Q = g && g.parent && qtP(qtId(g), g.userData.stage); if (Q && Q.f === P.f) G.qtSwap(g); });
           res(true);
         }, undefined, () => res(false));
       });
@@ -10301,7 +10308,7 @@ export default function CherryAdventure() {
     };
     G.qtSwap = (g) => {
       if (!g || !g.userData || !G.kkOn) return false;
-      const P = qtP(g.userData.spId, g.userData.stage);
+      const P = qtP(qtId(g), g.userData.stage);
       const src = P && qtLib[P.f];
       if (!src) return false;
       const body = g.userData.body;
@@ -10404,7 +10411,7 @@ export default function CherryAdventure() {
       let n = 0;
       G._qtMons = (G._qtMons || []).filter((g) => g && g.parent);
       G._qtMons.forEach((g) => {
-        if (on) { if (G.qtSwap(g)) n++; else G.qtLoad(g.userData.spId, g.userData.stage); }
+        if (on) { if (G.qtSwap(g)) n++; else G.qtLoad(qtId(g), g.userData.stage); }
         else { if (g.userData.qtNode) g.userData.qtNode.visible = false; if (g.userData.body) g.userData.body.visible = true; n++; }
       });
       return n;
@@ -10415,7 +10422,7 @@ export default function CherryAdventure() {
       { const now = performance.now(); g.userData._regAt = now; G._qtMons = (G._qtMons || []).filter((x) => x && (x.parent || now - (x.userData._regAt || 0) < 15000)); }
       G._qtMons.push(g);
       if (!G.kkOn) return;
-      if (!G.qtSwap(g)) G.qtLoad(g.userData.spId, g.userData.stage);
+      if (!G.qtSwap(g)) G.qtLoad(qtId(g), g.userData.stage);
     };
     // ✨ เอฟเฟกต์ท่าพิเศษของบอส (คำราม / ร่ายสปอร์) — วงคลื่นบนพื้น + สปอร์พุ่ง/ระเบิด · สร้างเมื่อใช้ ลบทิ้งเมื่อจบ (นาน ๆ เกิดที)
     const bfx = [];
@@ -10518,7 +10525,7 @@ export default function CherryAdventure() {
           if (P.cast && e.acts[P.cast] && u._atkN % (P.castEvery || 3) === 0) {
             want = P.cast; const cd = e.acts[P.cast].getClip().duration / (P.castTS || 1);
             u.kkAtk = Math.max(u.kkAtk, cd); e.castFx = cd * (P.castFx || 0.7);
-            if (P.fxCol) { e.g.getWorldPosition(_bfV); bfxOrb(_bfV.clone().setY(_bfV.y + 3.9 * (e.g.scale.y || 1)), P.fxCol[1], e.castFx); }
+            if (P.fxCol) { e.g.getWorldPosition(_bfV); bfxOrb(_bfV.clone().setY(_bfV.y + (P.fxH || 3.9) * (e.g.scale.y || 1)), P.fxCol[1], e.castFx); }
           } else if (P.atkT) u.kkAtk = Math.max(u.kkAtk, P.atkT);   // ท่าโจมตียาว (บอส) — ค้างให้เล่นจนจบท่า
         }
         // ✨ จังหวะเอฟเฟกต์ระหว่างท่า
@@ -10537,7 +10544,7 @@ export default function CherryAdventure() {
           if (e.castFx <= 0) {   // 🍄 ปล่อยสปอร์จากมือที่ชูขึ้น พุ่งโค้งไปหาผู้เล่น
             e.g.getWorldPosition(_bfV); char.getWorldPosition(_bfH);
             const sc = e.g.scale.y || 1;
-            bfxSpores(_bfV.clone().setY(_bfV.y + 3.9 * sc), _bfH.clone().setY(_bfH.y + 1.2), P.fxCol, 90, 0.8, 1.6 * sc);
+            bfxSpores(_bfV.clone().setY(_bfV.y + (P.fxH || 3.9) * sc), _bfH.clone().setY(_bfH.y + 1.2), P.fxCol, 90, 0.8, 1.6 * sc);
             bfxRing(_bfV.x, _bfV.y, _bfV.z, P.fxCol[1], 5, 0.6);
             if (G.sfx && G.sfx.skill) G.sfx.skill();
           }
@@ -20811,7 +20818,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         S.setFrame(R[0], fi);
       }
     };
-    const buildMonster = (spId, stage = 1) => {
+    const buildMonster = (spId, stage = 1, qtAs) => {
       const sp = SPECIES[spId];
       const g = new THREE.Group();
       const shape = MON_SHAPE[spId] || MON_SHAPE_EXTRA[spId] || "slime";
@@ -22411,6 +22418,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       g.userData.body = body;
       g.userData.spId = spId;
+      if (qtAs) g.userData.qtAs = qtAs;
       g.userData.stage = stage;
       // 🏷️ floating level label (color set later in updateMonsterLabel)
       const lblCanvas = document.createElement("canvas");
@@ -22457,8 +22465,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       // 💀 มอนอันเดด (วิญญาณ/ปีศาจ/ยมทูต) — สลับเป็นโมเดลโครงกระดูกมีอนิเมชันถ้าโหลดแล้ว
       if (G.kkSkelHas && G.kkSkelHas(spId) && G.kkSkelRegister) G.kkSkelRegister(g);
-      if (G.qtHas && G.qtHas(spId) && G.qtRegister) G.qtRegister(g);   // 🐾 มอนที่มีโมเดล Quaternius
-      if (sp && sp.sprite2d && SPR2D[sp.sprite2d]) { try { spr2dAttach(g, sp.sprite2d); } catch (_) {} }   // 🗡️ มอน 2D สี่ทิศ
+      const qtOn = !!(G.qtHas && G.qtHas(qtAs || spId));
+      if (qtOn && G.qtRegister) G.qtRegister(g);   // 🐾 มอนที่มีโมเดล Quaternius
+      if (!qtOn && sp && sp.sprite2d && SPR2D[sp.sprite2d]) { try { spr2dAttach(g, sp.sprite2d); } catch (_) {} }   // 🗡️ มอน 2D สี่ทิศ
       return g;
     };
 
@@ -30815,7 +30824,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const mdef = MOUNTS.find((m) => m.id === id);
       if (mdef) {
         const proxy = mdef.id === "donkey" ? "khiao" : mdef.id === "ostrich" ? "paksi" : "nam"; // ใช้โครงร่างเดิม + ย้อมสีเป็นสัตว์ขี่
-        const m = buildMonster(proxy, 1);
+        const m = buildMonster(proxy, 1, proxy === "nam" ? "namfish" : undefined);   // 🦈 ฉลามบกใช้ร่างปลาเดิม (น้ำเงี้ยวเปลี่ยนเป็นปลาปีศาจสองขาแล้ว)
         m.traverse((o) => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.setHex(mdef.color); } });
         m.scale.setScalar(mdef.scale || 1.55); // 🐘 ตัวใหญ่กว่าตัวละคร
         m.position.set(0, 0, 0.05);

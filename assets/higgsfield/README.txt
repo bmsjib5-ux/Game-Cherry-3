@@ -110,3 +110,18 @@ Stage 1 (meadow / ทุ่งซากุระ) remake — 2026-11-04
   simplified (oak 2.9k, fruit tree 1.9k, sakura 7.4k triangles), 512 JPEG, quantized
 - meadow_house.glb (timber-frame cottage, red roof) / meadow_loghouse.glb (log house, green roof):
   concept GPT Image 2.5 → Meshy 7, ~10k triangles, 1024 JPEG, quantized
+
+Stage 1 monsters remake — 2026-11-04
+- Concepts: Higgsfield (GPT Image 2.5), cute stylized A-pose characters · Image-to-3D: Meshy 7 · auto-rig via Meshy rigging
+- mon_mochi.glb (โมจิ, pink bunny): 5 own clips — Idle (#11 Idle_02), Walk (#668 Skip_Forward_inplace),
+  Attack (#214 Punch_Forward_with_Both_Fists), Hit (#178 Hit_Reaction), Die (#8 Dead)
+- mon_baibua.glb (ใบบัว, lotus-leaf sprout) — Attack #127 Charged_Ground_Slam
+- mon_mekha.glb (เมฆา, cloud puff) — Attack #136 mage_soell_cast_7
+- mon_plerng.glb (เพลิง, fire fox) — Attack #129 mage_soell_cast
+- mon_nam.glb (น้ำเงี้ยว, river fish-goblin) — Attack #219 Right_Hand_Sword_Slash
+  (these four borrow Idle / Walk / Hit / Die from mon_mochi by bone name, hips rescaled)
+- mon_goblin.glb (ก็อบลินยักษ์) — Attack #128 Heavy_Hammer_Swing; Idle / Walk / Hit / Die borrowed from mush_king.glb
+- mon_flowerqueen.glb (ราชินีบุปผา — evolved บัวหลวง / stage 1 boss) — Attack #125 Charged_Spell_Cast;
+  Idle / Hit / Die from hero_warrior, Walk (Walking_Woman) from hero_mage, Cast (#136) from mush_king
+- Merged per monster, skinned mesh moved to scene root, root motion stripped (except Die),
+  small monsters 10k -> 7k triangles, goblin / queen 14k -> 12k, 1024 JPEG, normals/UVs/weights quantized
