@@ -125,3 +125,21 @@ Stage 1 monsters remake — 2026-11-04
   Idle / Hit / Die from hero_warrior, Walk (Walking_Woman) from hero_mage, Cast (#136) from mush_king
 - Merged per monster, skinned mesh moved to scene root, root motion stripped (except Die),
   small monsters 10k -> 7k triangles, goblin / queen 14k -> 12k, 1024 JPEG, normals/UVs/weights quantized
+
+Stage 2 (desert / ทะเลทรายเพลิง) remake — 2026-11-04
+- sky_desert_day.jpg / sky_desert_dusk.jpg: Higgsfield (GPT Image 2.5) 21:9 sky panoramas → 2048x1024 equirect
+  (picture spans 10° below to ~46-50° above the horizon so the blue sits low enough for the gameplay camera)
+- ground_desert.jpg: Higgsfield (GPT Image 2.5) seamless wind-rippled sand texture, 1024 JPEG (saturation toned down)
+- desert_saguaro.glb / desert_cluster.glb (barrel + prickly-pear cacti) / desert_palm.glb (date palm) /
+  desert_rock.glb (layered red sandstone butte, used for the map border) / desert_ruin.glb (temple arch ruin):
+  concept GPT Image 2.5 → Meshy 7 image-to-3D, simplified to 3-6.7k triangles, 512 JPEG (ruin 1024), quantized
+- Monsters (concept → Meshy 7 → Meshy rigging + library clips, merged per monster, root motion stripped,
+  7-12k triangles, 1024 JPEG, quantized):
+  mon_ngu.glb (นาคาน้อย) — Attack #131 mage_soell_cast_2 (trimmed 1.3-3.03 s), Walk #671 Sneaky_Walk_inplace
+  mon_khiao.glb (เขี้ยวป่า) — Attack #92 Double_Combo_Attack, Walk #689 Walk_Fight_Forward_inplace
+  mon_saming.glb (เสือสมิง) — Attack #94 Flying_Fist_Kick, Walk borrowed from mon_khiao
+  mon_mangkorn.glb (มังกรเยาว์) — Attack #130 mage_soell_cast_1, Walk borrowed from mon_mochi
+  mon_caveman.glb (หัวหน้ามนุษย์ถ้ำ) — Attack #127 Charged_Ground_Slam, Walk #112 Monster_Walk; Idle/Hit/Die from mush_king
+  mon_tigerking.glb (ราชาเสือทะเลทราย — evolved เสือสมิง / stage 2 boss) — Attack #105 Triple_Combo_Attack,
+    Walk from mon_caveman, Idle/Hit/Die/Roar from mush_king
+  (the small ones borrow Idle / Hit / Die from mon_mochi by bone name, hips rescaled)
