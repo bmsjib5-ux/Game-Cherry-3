@@ -72,3 +72,24 @@ hero_aegis.glb — สกินพิเศษอาชีพจอมพิท�
 - Texture fix: dark face-like marks baked on the back of the helmet repainted helmet-white
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
+
+hero_office.glb — สกินพิเศษอาชีพพนักงานออฟฟิศ "ซูเปอร์มนุษย์เงินเดือน" (HERO_SKINS.office)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 3 own clips via Meshy rigging:
+  Attack1 (#393 baseball_pitching), Attack2 (#421 Over_Shoulder_Throw), Skill (#135 mage_soell_cast_6)
+- Borrowed: Idle / Walk / Run / Hit / Death from hero_warrior.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.2 MB
+
+hero_coder.glb — สกินพิเศษอาชีพโปรแกรมเมอร์ "แฮกเกอร์สายนีออน" (HERO_SKINS.coder)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 3 own clips via Meshy rigging:
+  Attack1 (#136 mage_soell_cast_7), Attack2 (#132 mage_soell_cast_3), Skill (#17 Skill_01)
+- Borrowed: Idle / Run / Hit / Death from hero_warrior.glb, Walk (Walking_Woman) from hero_mage.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.2 MB
+
+hero_tamer.glb — สกินพิเศษอาชีพผู้ฝึกสัตว์ "พรานสัตว์ป่าเขียวมอส" (HERO_SKINS.tamer)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 2 own clips via Meshy rigging:
+  Attack1 (#389 Grip_and_Throw_Down), Attack2 (#126 Charged_Spell_Cast_1)
+- Borrowed: Idle / Run / Hit / Death from hero_warrior.glb, Walk (Walking_Woman) + Skill (Charged_Spell_Cast) from hero_mage.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.2 MB
