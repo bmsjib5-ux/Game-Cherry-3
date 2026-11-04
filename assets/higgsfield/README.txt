@@ -93,3 +93,11 @@ hero_tamer.glb — สกินพิเศษอาชีพผู้ฝึก�
 - Borrowed: Idle / Run / Hit / Death from hero_warrior.glb, Walk (Walking_Woman) + Skill (Charged_Spell_Cast) from hero_mage.glb
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.2 MB
+
+All 11 hero_*.glb skins (2026-11-04 update):
+- Jump / dash clips added to every skin, rigged once on the warrior model via Meshy rigging and borrowed by bone name:
+  JumpStart / JumpAir (ping-pong) / JumpLand cut from #466 Regular_Jump, Flip (double jump) from #463 Run_and_Jump,
+  Roll (dash) from #159 Roll_Dodge_1, Slide (sprint dash) from #516 slide_light — hips rise and horizontal root motion removed
+  (the game moves the body)
+- Finger joints added (Right/LeftFingers1 + Fingers2 under each hand; the Meshy rig has none) with the finger vertices
+  re-weighted onto them, so the game can curl a fist around the held weapon
