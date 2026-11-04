@@ -34,3 +34,17 @@ hero_archer.glb — สกินพิเศษอาชีพนักธนู
 - Borrowed: Idle / Run / Hit / Death from hero_warrior.glb, Walk (Walking_Woman) from hero_mage.glb
 - Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
   20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
+
+hero_samurai.glb — สกินพิเศษอาชีพซามูไร "ซามูไรเกราะชาด" (HERO_SKINS.samurai)
+- Concept image: Higgsfield (GPT Image 2.5), 2026-11-04 · Image-to-3D: Meshy 7 · auto-rig + 2 own clips via Meshy rigging:
+  Attack1 (#219 Right_Hand_Sword_Slash), Skill (#102 Sword_Judgment)
+- Borrowed: Idle / Walk / Run / Attack2 (Left_Slash) / Hit / Death from hero_warrior.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 15.6k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.6 MB
+
+hero_assassin.glb — สกินพิเศษอาชีพนักฆ่า "เงาราตรีนักฆ่า" (HERO_SKINS.assassin)
+- Concept image: Higgsfield (GPT Image 2.5, then edited to remove loose scarf tails), 2026-11-04 · Image-to-3D: Meshy 7
+- auto-rig + 2 own clips via Meshy rigging: Attack1 (#240 Thrust_Slash), Skill (#91 Double_Blade_Spin)
+- Borrowed: Idle / Walk / Run / Attack2 (Left_Slash) / Hit / Death from hero_warrior.glb
+- Merged into one skin, skinned mesh moved to scene root, root motion stripped (except Death),
+  20k -> 14k triangles, 1024 JPEG, normals/UVs/weights quantized — 1.3 MB
