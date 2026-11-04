@@ -229,7 +229,7 @@ const AMBIENT = {
 };
 // 🌿 ของประดับพื้นประจำแมพ — กอหญ้า/พุ่มเล็ก และก้อนกรวด กระจายเต็มสนามให้พื้นไม่โล่ง
 const DETAIL = {
-  meadow:  { g: 2300, gc: [0x74a047, 0x8cb857, 0xa6cd6c, 0xd8e07a], gs: 1.0, r: 220, rc: 0x8e9484 },
+  meadow:  { g: 2300, gc: [0x4d8a2c, 0x5e9c34, 0x72ad3e, 0x8cbd4a], gs: 1.0, r: 220, rc: 0x8e9484 },   // 🌿 เขียวสดเข้ากับลายหญ้าวาดมือ (ไม่ซีดขาวกลางแดด)
   desert:  { g: 260,  gc: [0x9aa060, 0xb0b070], gs: 0.85, r: 420, rc: 0xb08c5c },
   snow:    { g: 160,  gc: [0xe4eef6, 0xf6faff], gs: 0.8, r: 70, rc: 0xb8c6d4 },   // ❄️ พื้นหิมะเรียบ — กรวดน้อยลง สีอ่อน
   cave:    { g: 50,   gc: [0x4a5a40, 0x5a6a48], gs: 0.7, r: 560, rc: 0x5a5046 },   // ⛏️ พื้นเหมืองหินดินแห้ง — หญ้าแทบไม่มี กรวดเยอะ
@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v743";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v744";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -4578,7 +4578,8 @@ export default function CherryAdventure() {
     //    เก็บสีเฉลี่ยแถบขอบฟ้าไว้ด้วย เพื่อย้อมหมอกให้กลืนกับฟ้า (ไม่เห็นรอยต่อตรงเส้นขอบฟ้า)
     const skyPhoto = {}, skyHz = {};
     try {
-      const SKY_IMG = { day: "assets/sky/day.jpg", dusk: "assets/sky/dusk.jpg", night: "assets/sky/night.jpg" };
+      const SKY_IMG = { day: "assets/sky/day.jpg", dusk: "assets/sky/dusk.jpg", night: "assets/sky/night.jpg",
+                        m_day: "assets/higgsfield/sky_meadow_day.jpg", m_dusk: "assets/higgsfield/sky_meadow_dusk.jpg" };   // 🌸 ด่าน 1 ทุ่งซากุระ: ฟ้าวาดมือ Higgsfield (กลางวัน/เย็น)
       const tl = new THREE.TextureLoader();
       Object.keys(SKY_IMG).forEach((k) => tl.load(SKY_IMG[k], (t) => {
         t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.minFilter = THREE.LinearFilter;
@@ -4963,10 +4964,17 @@ export default function CherryAdventure() {
       const tx = new THREE.CanvasTexture(cv); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.anisotropy = 4; tx.encoding = THREE.sRGBEncoding;
       return tx;
     })();
-    G._groundSkin = (kind) => {                                      // สลับลายพื้น ดิน ↔ หิมะ ↔ เมฆ ↔ เหล็ก
-      const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : kind === "metal" ? metalGroundTex : groundTex;
+    // 🌸 ด่าน 1 ทุ่งซากุระ: ลายหญ้าวาดมือ (Higgsfield · ต่อลายได้) — โหลดเสร็จค่อยสลับ ระหว่างนั้นใช้ลายดินเดิม
+    let meadowGroundTex = null;
+    try { new THREE.TextureLoader().load("assets/higgsfield/ground_meadow.jpg", (t) => {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(0.55, 0.55); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
+      meadowGroundTex = t; if (G._groundKind === "meadow") { G._groundKind = null; G._groundSkin("meadow"); }
+    }); } catch (e) {}
+    G._groundSkin = (kind) => {                                      // สลับลายพื้น ดิน ↔ หิมะ ↔ เมฆ ↔ เหล็ก ↔ หญ้าทุ่งซากุระ
+      G._groundKind = kind;
+      const m = ground.material, want = kind === "snow" ? snowGroundTex : kind === "cloud" ? cloudGroundTex : kind === "metal" ? metalGroundTex : kind === "meadow" && meadowGroundTex ? meadowGroundTex : groundTex;
       if (m.map === want) return;
-      m.map = want; m.bumpMap = want; m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : kind === "metal" ? 0.12 : 0.16;
+      m.map = want; m.bumpMap = want; m.bumpScale = kind === "snow" ? 0.05 : kind === "cloud" ? 0.09 : kind === "metal" ? 0.12 : want === meadowGroundTex ? 0.05 : 0.16;
       m.emissive.setHex(kind === "snow" ? 0x2a3440 : kind === "cloud" ? 0x3c4658 : kind === "metal" ? 0x14181e : 0x000000);   // หิมะ/เมฆสะท้อนแสง — ไม่ดูเทาหม่นตอนแสงน้อย
       m.needsUpdate = true;
     };
@@ -5331,7 +5339,7 @@ export default function CherryAdventure() {
       sceneryObjects.push(g);
       colliders.push({ x, z, r: 0.32 });
     };
-    const addHouse = (x, z, rotY = 0) => {
+    const addHouse = (x, z, rotY = 0, hfHouse = null) => {
       const g = new THREE.Group();
       const body = new THREE.Mesh(
         new THREE.BoxGeometry(2.6, 1.7, 2.0),
@@ -5366,10 +5374,11 @@ export default function CherryAdventure() {
       scene.add(g);
       const col = { x, z, r: 2.0 };
       colliders.push(col);
-      (G._vilQ = G._vilQ || []).push({ g, kind: "Cottage", sc: 1.1, col, colR: 2.7 });   // 🏡 บ้านยุคกลาง (Medieval Village MegaKit) มาแทนเมื่อโหลดเสร็จ
+      (G._vilQ = G._vilQ || []).push({ g, kind: "Cottage", sc: 1.1, col, colR: 2.7, hf: hfHouse || "house", hfH: hfHouse === "loghouse" ? 5.6 : 6.2 });
+      (G._occlExtra = G._occlExtra || []).push(g);   // 👀 บังตัวละคร → จางโปร่ง   // 🏡 บ้าน Higgsfield (ไม่มีไฟล์ = บ้านยุคกลาง Quaternius)
     };
     const addWell = (x, z) => {
-      const g = new THREE.Group();
+      const g = new THREE.Group(); (G._occlExtra = G._occlExtra || []).push(g);
       const stone = new THREE.Mesh(
         new THREE.CylinderGeometry(0.6, 0.66, 0.7, 12),
         new THREE.MeshStandardMaterial({ color: 0x8a8a88, roughness: 0.95 })
@@ -5399,7 +5408,7 @@ export default function CherryAdventure() {
       colliders.push({ x, z, r: 0.95 });
     };
     const addRuin = (x, z) => {
-      const g = new THREE.Group();
+      const g = new THREE.Group(); (G._occlExtra = G._occlExtra || []).push(g);
       const mat = new THREE.MeshStandardMaterial({ color: 0xa8a8a0, roughness: 0.95 });
       for (let i = 0; i < 5; i++) {
         const h = rnd(0.4, 1.7);
@@ -5449,6 +5458,7 @@ export default function CherryAdventure() {
 
     // ----- place everything (center stays clear for spawning) -----
     addHouse(-10.5, -8, 0.5); // cottage in the northwest
+    addHouse(12.5, 6.2, Math.PI - 0.35, "loghouse"); // 🪵 บ้านไม้ซุงหลังคาเขียว (Higgsfield) ฝั่งตะวันออก หันหน้าเข้าถนน
     // 🛣️ DIRT ROAD WITH STONE PAVING (meadow only)
     // Built as ONE ribbon mesh (not hundreds of discs) so it costs a single draw call.
     // Purely decorative — no colliders — it links the cottage, the house portal and the warp pad.
@@ -9258,6 +9268,8 @@ export default function CherryAdventure() {
       } catch (e) { return null; }
     };
     // 🔁 สลับชิ้นฉาก 1 ชิ้นระหว่าง "โมเดล KayKit" กับ "ทรงกลมแบบเดิม"
+    // 🌸 ด่าน 1 ทุ่งซากุระ — ต้นไม้/บ้านโมเดล Higgsfield (Meshy 7 · ภาพคอนเซ็ปต์ GPT Image) มาก่อนชุด Quaternius เมื่อโหลดเสร็จ
+    const hfLib = {}, HF_TREE_FH = { oak: [4.4, 5.8], round: [3.5, 4.5], sakura: [4.3, 5.5] };
     G.kkForestSwap = (g, on) => {
       if (!g || !g.userData || !g.userData.kkSlot) return false;
       const proc = g.userData.kkProc || [];
@@ -9275,14 +9287,19 @@ export default function CherryAdventure() {
       const NS0 = NAT_SLOT[g.userData.kkSlot], NS = NS0 && (G.powerSave && g.userData.kkSlot === "tree" ? ["CommonTree_3", "CommonTree_4"] : NS0);   // 🔋 โหมดประหยัด (มือถือเปิดเป็นค่าเริ่มต้น) = ใช้ 2 ต้นที่เบาที่สุด
       const nat = NS && NS.map((n) => natLib[n]).filter(Boolean);   // 🌳 Stylized Nature MegaKit มาก่อน (ถ้าโหลดแล้ว)
       const names = KK_FOREST[g.userData.kkSlot] || [];
-      const src = nat && nat.length ? nat[Math.floor(seed * nat.length) % nat.length] : kkForest[names[Math.floor(seed * names.length) % names.length]];
+      const pinkHF = g.userData.kkPink && !(G.powerSave && natPink && nat && nat.length);   // 🔋 ประหยัดแรง: ซากุระ Higgsfield ละเอียดสูง → ใช้ชุดเดิมย้อมชมพู
+      const hfT = g.userData.kkSlot === "tree" && hfLib.oak && hfLib.round && hfLib.sakura && (pinkHF || !g.userData.kkPink)
+        ? (g.userData.kkPink ? hfLib.sakura : (G.powerSave || (seed * 3.7) % 1 >= 0.6) ? hfLib.round : hfLib.oak) : null;   // 🌳 โอ๊ก 60% · ต้นผลกลม 40%
+      const src = hfT || (nat && nat.length ? nat[Math.floor(seed * nat.length) % nat.length] : kkForest[names[Math.floor(seed * names.length) % names.length]]);
       if (!src) return false;
       const node = src.obj.clone();                                   // geometry/วัสดุใช้ร่วมกัน (clone ไม่ก๊อปข้อมูลจริง)
-      const R = (nat && nat.length ? NAT_FH : KK_FH)[g.userData.kkSlot] || [3, 4];
+      const R = hfT ? HF_TREE_FH[hfT.key] : (nat && nat.length ? NAT_FH : KK_FH)[g.userData.kkSlot] || [3, 4];
+      g.userData.kkHF = !!hfT;
       const sc = (R[0] + (R[1] - R[0]) * ((seed * 7.3) % 1)) / (src.h || 1);
       node.scale.setScalar(sc);
       node.rotation.y = seed * Math.PI * 2;                           // หมุนสุ่มกันซ้ำหน้า
-      if (g.userData.kkPink && src.nat) node.traverse((o) => { if (o.isMesh && natPink[o.material.uuid]) o.material = natPink[o.material.uuid]; });   // 🌸 ซากุระ (ใบย้อมชมพู)
+      if (hfT) {}                                                     // 🌸 ต้นซากุระ Higgsfield ชมพูในตัวแล้ว
+      else if (g.userData.kkPink && src.nat) node.traverse((o) => { if (o.isMesh && natPink[o.material.uuid]) o.material = natPink[o.material.uuid]; });   // 🌸 ซากุระ (ใบย้อมชมพู)
       else if (g.userData.kkPink && kkPinkMat) node.traverse((o) => { if (o.isMesh) o.material = kkPinkMat; });   // 🌸 ซากุระ
       g.add(node);
       g.userData.kkNode = node;
@@ -9488,6 +9505,7 @@ export default function CherryAdventure() {
       return (vilRuinCache[m.uuid] = r);
     };
     const vilApply = (it) => {
+      if (it.hf) return;                                              // 🌸 รอโมเดล Higgsfield (hfMeadowApply)
       const L2 = vilLib[it.kind]; if (!L2 || !it.g || it.done) return;
       it.done = true;
       const node = L2.clone();
@@ -9542,6 +9560,50 @@ export default function CherryAdventure() {
       let n = 0;
       (G.sceneryObjects || []).forEach((g) => { if (G.kkForestSwap(g, on)) n++; });
       return n;
+    };
+    let hfLoading = null;
+    const HF_MEADOW = ["oak", "round", "sakura", "house", "loghouse"];
+    G.hfMeadowLoad = () => {
+      if (hfLoading || !THREE.GLTFLoader) return hfLoading;
+      const L = new THREE.GLTFLoader();
+      hfLoading = Promise.all(HF_MEADOW.map((n) => new Promise((res) => L.load("assets/higgsfield/meadow_" + n + ".glb", (gl) => {
+        const sh = (x) => { if (x) { x.userData = x.userData || {}; x.userData._shared = true; } };
+        gl.scene.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = !/oak|round|sakura/.test(n);
+          const m = o.material; m.metalness = 0; m.roughness = 0.9; if (m.map) { m.map.anisotropy = 4; m.emissiveMap = m.map; m.emissive = new THREE.Color(0xffffff); m.emissiveIntensity = /house/.test(n) ? 0.08 : 0.22; }   // 🍃 พุ่มใบไม่ดำมืดในเงาตัวเอง
+          m.userData.vivid = true; sh(o.geometry); sh(m); sh(m.map); });
+        gl.scene.updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(gl.scene), c = b.getCenter(new THREE.Vector3()), wrap = new THREE.Group();
+        gl.scene.position.set(-c.x, -b.min.y, -c.z); wrap.add(gl.scene);                     // จุดหมุน = กลางฐาน
+        hfLib[n] = { obj: wrap, key: n, h: Math.max(0.01, b.max.y - b.min.y), w: Math.max(b.max.x - b.min.x, b.max.z - b.min.z), hf: true }; res(true);
+      }, undefined, () => res(false))))).then(() => { try { hfMeadowApply(); } catch (e) { console.warn("hf meadow", e); } return true; });
+      return hfLoading;
+    };
+    const hfMeadowApply = () => {
+      // 🌳 ต้นไม้ในทุ่ง → โมเดล Higgsfield (ถอดชุดเดิมที่สลับไว้แล้ว)
+      if (hfLib.oak && hfLib.round && hfLib.sakura && G.kkOn) (G.sceneryObjects || []).forEach((g) => {
+        if (!g.userData || g.userData.kkSlot !== "tree" || g.userData.kkHF) return;
+        if (g.userData.kkNode) { g.remove(g.userData.kkNode); g.userData.kkNode = null; }
+        G.kkForestSwap(g, true);
+      });
+      // 🌸 ต้นซากุระใหญ่กลางลาน → โมเดลซากุระ Higgsfield (เก็บพรมกลีบ/กลีบร่วง/แสงกลางคืนไว้)
+      const S = G._sakura;
+      if (S && hfLib.sakura && !S.hf) {
+        const node = hfLib.sakura.obj.clone(); node.scale.setScalar(9.4 / hfLib.sakura.h); node.rotation.y = 0.6;
+        const mats = []; node.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.userData = {}; mats.push(o); } });
+        S.blooms.forEach((m) => { m.visible = false; }); S.g.children.forEach((c) => { if (c.isMesh && c !== S.carpet) c.visible = false; });
+        S.g.add(node); S.hf = node; S.blooms = mats; S.na = -1; S.g.userData._frz = 0;   // แสงชมพูกลางคืนย้อมโมเดลใหม่แทน
+      }
+      // 🏡 บ้านในหมู่บ้านเริ่มต้น → บ้านโครงไม้หลังคาแดง (Higgsfield) · ไม่มีไฟล์ = ใช้บ้าน Quaternius ตามเดิม
+      (G._vilQ || []).forEach((it) => {
+        if (!it.hf || it.done) return;
+        const L2 = hfLib[it.hf];
+        if (!L2) { it.hf = null; if (vilLib[it.kind]) vilApply(it); return; }
+        it.done = true;
+        const node = L2.obj.clone(); node.scale.setScalar((it.hfH || 6.2) / L2.h); node.rotation.y = it.hfRot || 0;
+        it.g.children.forEach((c) => { c.visible = false; }); it.g.add(node);
+        if (it.col && it.colR) it.col.r = it.colR;
+        it.g.userData._frz = 0;
+      });
     };
     G.kkForestLoad = () => {
       if (kkFLoading || !THREE.GLTFLoader) return kkFLoading;
@@ -10499,7 +10561,7 @@ export default function CherryAdventure() {
     G.toggleKayKit = () => {
       G.kkOn = !G.kkOn;
       try { window.localStorage.setItem("cherry-kaykit", G.kkOn ? "1" : "0"); } catch (e) {}
-      if (G.kkOn) { G.kkLoad(); G.kkForestLoad(); if (G.natLoad) G.natLoad(); if (G.vilLoad) G.vilLoad(); if ((G._kkMons || []).length) G.kkSkelLoad(); }
+      if (G.kkOn) { G.kkLoad(); G.kkForestLoad(); if (G.natLoad) G.natLoad(); if (G.vilLoad) G.vilLoad(); if (G.hfMeadowLoad) G.hfMeadowLoad(); if ((G._kkMons || []).length) G.kkSkelLoad(); }
       if (G.kkForestReady) G.kkForestApply(G.kkOn);
       G.kkSkelShow(G.kkOn);
       G.qtShow(G.kkOn);   // 🐾 มอนสัตว์ Quaternius สลับตามสวิตช์เดียวกัน
@@ -10508,7 +10570,8 @@ export default function CherryAdventure() {
     };
     if (kkOn) setTimeout(() => { try { G.kkLoad(); G.kkForestLoad(); } catch (e) {} }, 1500);
     if (kkOn) setTimeout(() => { try { G.natLoad(); } catch (e) {} }, 2600);
-    if (kkOn) setTimeout(() => { try { G.vilLoad(); } catch (e) {} }, 3400);   // 🏘️ บ้านยุคกลาง (~2MB) โหลดต่อจากชุดธรรมชาติ   // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
+    if (kkOn) setTimeout(() => { try { G.vilLoad(); } catch (e) {} }, 3400);
+    if (kkOn) setTimeout(() => { try { G.hfMeadowLoad(); } catch (e) {} }, 2000);   // 🌸 ต้นไม้/บ้าน Higgsfield ของด่าน 1 (~2.2MB)   // 🏘️ บ้านยุคกลาง (~2MB) โหลดต่อจากชุดธรรมชาติ   // 🌿 ชุดธรรมชาติทุ่งซากุระ (~2.9MB) โหลดตามหลังเล็กน้อย // โหลดหลังฉากพร้อม (ไฟล์เล็ก ~490KB รวม)
     // ⚔️ ลงทะเบียนอาวุธประจำตัวฮีโร่ที่ถูกสร้างทีหลัง (ชุดฮีโร่สร้างหลังกองอาวุธ) — ผูกเข้ามือขวาให้เรียบร้อย
     // 🦸 ฮีโร่ที่มีอาวุธประจำตัว — ใช้ทั้งตัวเราเองและผู้เล่นออนไลน์คนอื่น
     const HERO_WEAPON = { haru: "haruStaff", luna: "lunaStaff", celestia: "celStaff", yuki: "yukiBow", rose: "roseSword", kentaro: "kenKatana", kotaro: "kotDaggerR", kairi: "kairiBlade", aurelius: "aurSword", ragnar: "ragAxe", khaosai: "khGlove", fenrir: "fenClaw", neko: "nekoPaw", usagi: "usaCarrot", hanuman: "hanTriW", yaksa: "yakClubW", thunder: "thdHammerW", mermaid: "merTriW", lich: "licStaffW", swimM: "swimBoard", swimF: "swimBoard" };
@@ -24606,6 +24669,51 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
       }
     };
+    // 👀 ของประดับที่บังระหว่างกล้องกับตัวละคร (ต้นไม้/พุ่ม/บ้าน/ซุ้มประตู/บ่อน้ำ/ต้นซากุระใหญ่) → ค่อย ๆ จางโปร่ง แล้วคืนเมื่อพ้นแนวสายตา
+    //    แนวสายตา = จากกล้องถึงหัวตัวละคร (ระนาบ XZ + ความสูงเส้นสายตา ณ จุดนั้นต่ำกว่ายอดวัตถุ) · ขนาดวัตถุวัดจากกล่องรอบตัว (วัดใหม่เมื่อโมเดลสลับ)
+    //    วัสดุโปร่งใสโคลนแยกต่อชิ้นตอนเริ่มจาง (วัสดุต้นไม้ใช้ร่วมหลายต้น — ไม่ให้ต้นอื่นจางตาม)
+    const _ocV = new THREE.Vector3(), _ocB = new THREE.Box3(), _ocB2 = new THREE.Box3();
+    G.occlTick = (dt) => {
+      const L = G.sceneryObjects || [], E = G._occlExtra || [];
+      char.getWorldPosition(_ocV);
+      const hx = _ocV.x, hy = _ocV.y + 2.0, hz = _ocV.z, cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+      const dx = cx - hx, dz = cz - hz, L2 = dx * dx + dz * dz || 1, Lc = Math.sqrt(L2) + 9, k = Math.min(1, (dt || 0.016) * 9);
+      const one = (g) => {
+        if (!g || !g.parent || !g.userData) return;
+        const O = g.userData.occ || (g.userData.occ = { op: 1, fade: false, key: null });
+        let vis = g.visible; for (let q = g.parent; vis && q; q = q.parent) vis = q.visible;
+        const me = g.matrixWorld.elements, gx = me[12], gy = me[13], gz = me[14];
+        let block = false;
+        if (vis && Math.abs(gx - hx) < Lc && Math.abs(gz - hz) < Lc) {
+          const key = (g.userData.kkNode ? g.userData.kkNode.uuid : "") + g.children.length;   // ชิ้นที่แสดงเปลี่ยน (โมเดลโหลดเสร็จ) → วัดขนาดใหม่
+          if (O.key !== key) { O.key = key; _ocB.makeEmpty(); g.traverse((o) => { if (o.isMesh && o.visible && o.geometry) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); _ocB2.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld); if (_ocB2.max.y - _ocB2.min.y > 0.3) _ocB.union(_ocB2); } });   // ข้ามชิ้นแบนบนพื้น (พรมกลีบ/เงา)
+            const round = g.userData.kkSlot === "tree" || g.userData.kkSlot === "bush" || (G._sakura && g === G._sakura.g);   // 🌳 พุ่มกลม → วงกลมแทนกล่อง (มุมกล่องไม่มีใบ)
+            const sx = (_ocB.max.x - _ocB.min.x) * 0.12, sz = (_ocB.max.z - _ocB.min.z) * 0.12;   // หลังคา/ซุ้มไม่เต็มกล่อง → หดขอบเข้านิด
+            O.round = round; O.cx = (_ocB.min.x + _ocB.max.x) / 2 - gx; O.cz = (_ocB.min.z + _ocB.max.z) / 2 - gz; O.rr = Math.max(_ocB.max.x - _ocB.min.x, _ocB.max.z - _ocB.min.z) * 0.36;
+            O.x0 = _ocB.min.x + sx - gx; O.x1 = _ocB.max.x - sx - gx; O.z0 = _ocB.min.z + sz - gz; O.z1 = _ocB.max.z - sz - gz; O.top = _ocB.isEmpty() ? 0 : _ocB.max.y - gy; O.meshes = null; }
+          if (O.top > 1.2 && O.round) {   // วงกลม: ระยะจากกลางพุ่มถึงเส้นสายตา
+            const ox = gx + O.cx, oz = gz + O.cz, u = ((ox - hx) * dx + (oz - hz) * dz) / L2;
+            if (u > 0.03 && u < 1.25) { const uu = Math.min(1, u), dd = Math.hypot(ox - (hx + dx * uu), oz - (hz + dz * uu)); block = dd < O.rr && hy + (cy - hy) * uu - gy < O.top + 0.3; }
+          } else if (O.top > 1.2) {   // เส้นสายตา (หัว → กล้อง) ตัดกล่องรอบวัตถุบนระนาบ XZ ไหม · ความสูงเส้นสายตา ณ จุดเข้ากล่องต่ำกว่ายอดวัตถุไหม
+            let t0 = 0.02, t1 = 1.25;
+            const ax = [[hx - gx, dx, O.x0, O.x1], [hz - gz, dz, O.z0, O.z1]];
+            for (let a = 0; a < 2 && t0 <= t1; a++) { const [p0, d, lo, hi] = ax[a];
+              if (Math.abs(d) < 1e-6) { if (p0 < lo || p0 > hi) t0 = 2; } else { let ta = (lo - p0) / d, tb = (hi - p0) / d; if (ta > tb) { const q = ta; ta = tb; tb = q; } t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); } }
+            if (t0 <= t1) block = hy + (cy - hy) * Math.min(1, t0) - gy < O.top + 0.3;
+          }
+        }
+        if (!block && !O.fade) return;
+        if (!O.meshes) { O.meshes = []; g.traverse((o) => { if (o.isMesh && o.material && !Array.isArray(o.material)) O.meshes.push(o); }); }
+        if (!O.fade) { O.fade = true; for (const m of O.meshes) { const om = m.userData._ocOrig || m.material;
+            if (!m.userData._ocFm || m.userData._ocOrig !== om) { const fm = om.clone(); fm.transparent = true; fm.depthWrite = false; fm.userData = Object.assign({}, om.userData); m.userData._ocOrig = om; m.userData._ocFm = fm; }
+            m.material = m.userData._ocFm; } }
+        O.op += ((block ? 0.22 : 1) - O.op) * k;
+        for (const m of O.meshes) { const fm = m.userData._ocFm, om = m.userData._ocOrig; if (fm && om) fm.opacity = O.op * (om.transparent ? om.opacity : 1); }
+        if (!block && O.op > 0.97) { O.fade = false; O.op = 1; for (const m of O.meshes) if (m.userData._ocOrig) m.material = m.userData._ocOrig; }
+      };
+      for (let i = 0; i < L.length; i++) one(L[i]);
+      for (let i = 0; i < E.length; i++) one(E[i]);
+    };
     // 🏝️ ANT ISLAND DECOR — ตึกคอนกรีตพังทลาย (หน้าต่างโหว่ เหล็กเส้นโผล่ บางหลังเอียงทรุด) · เสาหักล้ม · กองซาก · จอมปลวกยักษ์ · กองไข่มด · ต้นมะพร้าว
     const antDecor = new THREE.Group(); antDecor.visible = false; scene.add(antDecor);
     const antColliders = [];
@@ -25479,7 +25587,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ---------- 🗼 ประตูหอคอย — ซากหอคอยหินเก่าพังทลาย มีช่องประตูให้วาปเข้า ----------
     //   วางให้ "ช่องประตู" อยู่ที่ portal.position เป๊ะ ๆ (โค้ดอื่นวัดระยะจากจุดนี้)
     //   ตัวหอคอยจึงถอยไปข้างหลังประตูในแกน local +Z เพื่อไม่ให้ขวางทางเดินที่วิ่งเข้ามาจากด้านหน้า
-    const portal = new THREE.Group();
+    const portal = new THREE.Group(); (G._occlExtra = G._occlExtra || []).push(portal);   // 👀 ซากหอคอยบังตัวละคร → จางโปร่ง
     const gateStone = new THREE.MeshStandardMaterial({ color: 0x3a2a5a, roughness: 0.85, metalness: 0.1 });
     const stoneA = new THREE.MeshStandardMaterial({ color: 0x4a3a66, roughness: 0.92, metalness: 0.05 });
     const stoneB = new THREE.MeshStandardMaterial({ color: 0x33264f, roughness: 0.95, metalness: 0.05 });
@@ -25688,7 +25796,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     // 🏔️ ปั้นพื้นใหม่ตามภูมิประเทศของแมพ — ดันความสูงทุกจุด แล้วระบายสีตามความสูง/ความชัน
     G.rebuildTerrain = (b) => {
-      if (G._groundSkin) G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : null);
+      if (G._groundSkin) G._groundSkin(b.id === "snow" ? "snow" : b.id === "sky" ? "cloud" : b.id === "robot" ? "metal" : b.id === "meadow" ? "meadow" : null);
+      const meadowTex = b.id === "meadow", cWhite = new THREE.Color(0xffffff);   // 🌸 ลายหญ้าวาดมือมีสีเขียวในตัวแล้ว → สีจุดยอดเหลือแค่เฉดสูง-ต่ำอ่อน ๆ
       TERR_CUR = TERRAIN[b.id] || TERRAIN.meadow;
       TERR_FLATTEN = !!G._terrFlatMode;
       TERR_SAFE = (G._safePts || []).concat([{ x: -13, z: -8.2, r: 2.2 }], FISH_SPOT[b.id] ? [{ x: FISH_SPOT[b.id].x, z: FISH_SPOT[b.id].z, r: FISH_SPOT[b.id].r * 1.3 + 1.6 }] : []);   // 🏞️ พื้นรอบทะเลสาบเรียบ   // 🏰 แท่นวาร์ปเมืองต้องอยู่บนพื้นเรียบ
@@ -25712,6 +25821,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         tmpC.copy(cMid);
         if (u > 0) tmpC.lerp(cHi, u * 0.9); else if (u < 0) tmpC.lerp(cLo, -u * 0.9);
         tmpC.lerp(cRk, sl * rockK);
+        if (meadowTex) tmpC.lerp(cWhite, 0.4);
         ca[i0] = ca[i1] = ca[i2] = tmpC.r;
         ca[i0 + 1] = ca[i1 + 1] = ca[i2 + 1] = tmpC.g;
         ca[i0 + 2] = ca[i1 + 2] = ca[i2 + 2] = tmpC.b;
@@ -26406,7 +26516,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G.rebuildTerrain(BIOMES[G.curBiome || 0] || BIOMES[0]);   // 🏔️ ปั้นภูมิประเทศแมพเริ่มต้น
     G.buildBorder((BIOMES[G.curBiome || 0] || BIOMES[0]).id);   // 🧱 แนวกั้นขอบแมพเริ่มต้น
     if (G.resetAmbient) G.resetAmbient((BIOMES[G.curBiome || 0] || BIOMES[0]).id, 0, 0);   // ✨ ละอองบรรยากาศแมพเริ่มต้น
-    { const b0 = BIOMES[G.curBiome || 0] || BIOMES[0]; const fd0 = { meadow: [46, 98] }[b0.id] || [46, 98]; G._fogBase = { near: fd0[0], far: fd0[1] }; if (G.rollWeather) G.rollWeather(b0.id, "clear"); }   // 🌦️ เริ่มเกมด้วยฟ้าโปร่ง
+    { const b0 = BIOMES[G.curBiome || 0] || BIOMES[0]; const fd0 = { meadow: [64, 150] }[b0.id] || [46, 98]; G._fogBase = { near: fd0[0], far: fd0[1] }; if (G.rollWeather) G.rollWeather(b0.id, "clear"); }   // 🌦️ เริ่มเกมด้วยฟ้าโปร่ง
 
     // decorations we can toggle per biome (trees/bushes already added get a tag)
     const switchBiome = (idx, quiet) => {
@@ -26418,7 +26528,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (G.resetAmbient) G.resetAmbient(b.id, char.position.x, char.position.z);   // ✨ ละอองบรรยากาศชุดใหม่ของแมพนี้
       if (G.rollWeather) G.rollWeather(b.id);   // 🌦️ สุ่มสภาพอากาศของแมพนี้
       {   // 🌫️ ความลึกหมอก + หน้าตาท้องฟ้าประจำแมพ
-        const FOG_D = { mushroom: [36, 110], pirate: [60, 180], aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
+        const FOG_D = { meadow: [64, 150], mushroom: [36, 110], pirate: [60, 180], aicity: [40, 128], legotown: [52, 140], antisle: [44, 130], ghosttown: [22, 78], robot: [44, 124], cave: [14, 60], hell: [32, 98], amazon: [28, 84], volcano: [48, 160], snow: [50, 120], moon: [50, 122] };
         const fd = FOG_D[b.id] || [58, 124];
         G._fogBase = { near: fd[0], far: fd[1] };   // 🌫️ ระยะหมอกฐานของแมพ — อากาศจะคูณจากค่านี้
         if (scene.fog && !G._townFogPrev) { scene.fog.near = fd[0]; scene.fog.far = fd[1]; }
@@ -27404,7 +27514,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
     // 🚪 ประตูโซน — ซุ้มหินสองเสา + ม่านมิติเรืองแสง วางไว้ริมแมพคนละมุม (แทนแท่นวงกลมกลางแมพ)
     const makeZoneGate = (stoneCol, glowCol, capCol, text) => {
-      const g = new THREE.Group();
+      const g = new THREE.Group(); (G._occlExtra = G._occlExtra || []).push(g);   // 👀 ซุ้มประตูบังตัวละคร → จางโปร่ง
       const stone = new THREE.MeshLambertMaterial({ color: stoneCol, flatShading: true });
       const cap = new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.55, metalness: 0.15 });
       // เสาสองข้าง (ก้อนหินซ้อนกัน ดูเป็นซุ้มโบราณ)
@@ -49164,7 +49274,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
 
       // ---------- 🌗 day/night update ----------
       {
-        const dayT = (t % DAY_CYCLE) / DAY_CYCLE;
+        let dayT = (t % DAY_CYCLE) / DAY_CYCLE;
         const sunA = dayT * Math.PI * 2 + 0.7; // start mid-morning
         const sunH = Math.sin(sunA);
         let dayAmt = Math.min(1, Math.max(0, (sunH + 0.25) / 0.9)); // 0 = night, 1 = day
@@ -49199,17 +49309,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         skyDome.position.copy(camera.position);
         {   // 🌅 เลือกฟ้าจริงตามช่วงเวลา · ย้อมตามบรรยากาศแมพ/อากาศเล็กน้อย · ไม่มีรูป (ยังโหลดไม่เสร็จ/ในถ้ำ) = ฟ้าวาดแบบเดิม
-          const pk = dayAmt < 0.32 ? "night" : gold > 0.45 ? "dusk" : "day";
+          let pk = dayAmt < 0.32 ? "night" : gold > 0.45 ? "dusk" : "day";
+          const meadowSky = G.curBiome === 0 && pk !== "night" && skyPhoto["m_" + pk];   // 🌸 ด่าน 1 ใช้ฟ้าวาดมือของตัวเอง
+          if (meadowSky) pk = "m_" + pk;
           const ph = !G._skyIndoor && skyPhoto[pk];
           if (ph) {
             if (skyDome.material.map !== ph) { skyDome.material.map = ph; skyDome.material.needsUpdate = true; }
             const cb = BIOMES[G.curBiome] || {};
             const lum = pk === "night" ? 0.55 + dayAmt * 0.9 : 0.8 + dayAmt * 0.2;
-            const tintK = cb.night || G.curBiome == null ? 0.55 : (cb.id === "candy" || cb.id === "volcano" || cb.id === "robot") ? 0.4 : 0.18;   // 🔥 นรก/แมพพิเศษ ย้อมสีแมพแรงกว่า
+            const tintK = meadowSky ? 0.05 : cb.night || G.curBiome == null ? 0.55 : (cb.id === "candy" || cb.id === "volcano" || cb.id === "robot") ? 0.4 : 0.18;   // 🔥 นรก/แมพพิเศษ ย้อมสีแมพแรงกว่า · 🌸 ฟ้าวาดมือคงสีสด
             if (pk === "night") _skyCol.setRGB(0.36 * lum * 1.6, 0.44 * lum * 1.6, 0.66 * lum * 1.6).lerp(skyTmp, tintK * 0.6);   // 🌌 กลางคืนอมน้ำเงินเข้ม ดาวเด่น
             else _skyCol.setRGB(lum, lum, lum).lerp(skyTmp, tintK);
             skyDome.material.color.copy(_skyCol);
             if (skyHz[pk]) { _skyFog.copy(skyHz[pk]).multiply(_skyCol); scene.fog.color.lerp(_skyFog, 0.65); }
+            if (meadowSky) scene.fog.color.lerp(G._mFogC || (G._mFogC = new THREE.Color(0x9cc6dc)), 0.5);   // 🌸 ระยะไกลอมฟ้าใส (ไม่ขาวซีด)
           } else {
             if (!G._skyIndoor && skyDome.material.map !== G._skyTex) { skyDome.material.map = G._skyTex; skyDome.material.needsUpdate = true; }
             skyDome.material.color.copy(skyTmp);
@@ -62096,6 +62209,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._twoHandGrip(0);
         } catch (_) {}
       }
+      if (G.mode === "explore" && G.occlTick) { try { G.occlTick(dt); } catch (eOc) {} }   // 👀 ของที่บังตัวละครจางโปร่ง
       if (dtForce == null) {   // ข้ามการวาดตอนซิมพื้นหลัง
         const _bl = !G._bloomOff && !!(BIOMES[G.curBiome] || {}).bloom && !G.equipScreen && G.mode !== "create" && G.mode !== "class";   // ✨ แสงเรืองฟุ้ง เฉพาะแมพที่ตั้งไว้
         G._bloomOn = _bl;
