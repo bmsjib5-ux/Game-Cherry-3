@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v739";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v740";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -3799,6 +3799,12 @@ const HERO_SKINS = {
   mage:    { name: "จอมเวทย์ดาราม่วง", emoji: "🔮", file: "assets/higgsfield/hero_mage.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
              grip: "staff", alt: 1,   // คทาตั้งตรง (ร่ายเวท = เอนปลายคทาไปหน้า) · โจมตีปกติสลับท่าร่าย 2 แบบ
              clip: { Attack1: { from: 0.12, spd: 2.2 }, Attack2: { from: 0.15, spd: 2.4 }, Skill: { from: 0.05, spd: 1.9 }, Hit: { spd: 1.6 }, Walk: { spd: 0.95 } } },   // ยืน/วิ่ง/โดนตี/ตาย ยืมท่าจากสกินนักรบ (โครงกระดูก Meshy ชื่อเดียวกัน)
+  samurai: { name: "ซามูไรเกราะชาด", emoji: "⚔️", file: "assets/higgsfield/hero_samurai.glb", h: 3.95, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+             grip: "sword",   // คาตานะมือขวา (วัดแกนดาบจริง) · ฟันขวาเต็มวง + ท่าสกินพิพากษาดาบ
+             clip: { Attack1: { from: 0.1, spd: 1.6 }, Attack2: { from: 0.15, spd: 2.0 }, Skill: { from: 0.04, spd: 2.6 }, Hit: { spd: 1.6 }, Walk: { spd: 1.1 } } },   // ยืน/เดิน/วิ่ง/ฟันซ้าย/โดนตี/ตาย ยืมจากนักรบ
+  assassin: { name: "เงาราตรีนักฆ่า", emoji: "🥷", file: "assets/higgsfield/hero_assassin.glb", h: 3.85, hand: "RightHand", arm: "RightForeArm", handL: "LeftHand", armL: "LeftForeArm",
+             grip: "sword",   // มีดสั้นมือขวา (แกนใบมีดวัดจากตัวมีด) · แทงพุ่ง + หมุนตัวคู่ใบมีด
+             clip: { Attack1: { from: 0.1, spd: 1.8 }, Attack2: { from: 0.15, spd: 2.2 }, Skill: { from: 0.05, spd: 2.4 }, Hit: { spd: 1.6 }, Walk: { spd: 1.15 } } },   // ยืน/เดิน/วิ่ง/ฟันซ้าย/โดนตี/ตาย ยืมจากนักรบ
 };
 // 🦸👗 ธีมชุดฮีโร่บนโมเดล 3D — แต่ละฮีโร่ได้ลุคตามคาแรกเตอร์: เพศ · แบบชุด (Peasant ผ้า/Ranger เกราะหนัง) · สีย้อม · ทรงผม/สีผม · โทนผิว
 //    + ของสวม (ใช้ตัวปั้นหมวก/หน้ากาก/ถุงมือ/กางเกง/รองเท้าเดิม) + ของประดับเฉพาะตัว fx (หู หาง เขา ปีก มงกุฎ/ชฎา รัศมี ผ้าคลุม ฯลฯ)
