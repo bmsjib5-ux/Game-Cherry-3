@@ -176,3 +176,8 @@ HUD icons (ไอคอนหน้าจอ) — 2026-11-05 · folder ui/
   friends, hp / mp potions, paw (pets), scroll (quests), gear (settings), profile, robot (auto-battle), gather (auto-gather),
   dash, jump, run, star, crown, bolt, fire, coins, gem, sword, shield
 - Generated: Higgsfield (GPT Image 2.5, transparent background) · processed: faint glow halo suppressed, trimmed, 128px WebP
+
+App icon (ไอคอนแอป PWA / desktop) — 2026-11-05 · repo root icon-*.png
+- Cute glossy cherry pair with a kawaii face and a small golden sword, sakura petals, pastel pink glow
+- Generated: Higgsfield (GPT Image 2.5), chosen from 4 variants · processed: rounded "any" icons with transparent corners
+  (512 / 192 / 32), opaque 180 apple-touch icon, maskable 512 with the subject inside the 80% safe zone
