@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v747"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v748"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -13550,8 +13550,8 @@ function CherryAdventure() {
             return (vilRuinCache[m.uuid] = r);
         };
         const vilApply = (it) => {
-            if (it.hf)
-                return; // 🌸 รอโมเดล Higgsfield (hfMeadowApply)
+            if (it.hf || (it.thf && !it.thfFail))
+                return; // 🌸 รอโมเดล Higgsfield (hfMeadowApply / บ้านในเมือง hfTownApply)
             const L2 = vilLib[it.kind];
             if (!L2 || !it.g || it.done)
                 return;
@@ -42310,6 +42310,8 @@ function CherryAdventure() {
                             const uu = Math.min(1, u), dd = Math.hypot(ox - (hx + dx * uu), oz - (hz + dz * uu));
                             block = dd < O.rr && hy + (cy - hy) * uu - gy < O.top + 0.3;
                         }
+                        if (!block && Math.hypot(cx - ox, cz - oz) < O.rr * 1.15 && cy - gy < O.top + 0.6)
+                            block = true; // 📷 กล้องจมอยู่ในพุ่ม → จางด้วย (เดิมบังครึ่งจอ)
                     }
                     else if (O.top > 1.2) { // เส้นสายตา (หัว → กล้อง) ตัดกล่องรอบวัตถุบนระนาบ XZ ไหม · ความสูงเส้นสายตา ณ จุดเข้ากล่องต่ำกว่ายอดวัตถุไหม
                         let t0 = 0.02, t1 = 1.25;
@@ -42333,6 +42335,16 @@ function CherryAdventure() {
                         }
                         if (t0 <= t1)
                             block = hy + (cy - hy) * Math.min(1, t0) - gy < O.top + 0.3;
+                        if (!block && cx - gx > O.x0 && cx - gx < O.x1 && cz - gz > O.z0 && cz - gz < O.z1 && cy - gy < O.top + 0.4)
+                            block = true; // 📷 กล้องอยู่ในกรอบตัวบ้าน/ซุ้ม
+                    }
+                    if (!block && O.top > 1.2) { // 📷 ของสูงที่อยู่ครึ่งทางฝั่งกล้องใกล้แนวสายตา (ต้นไม้/บ้านหน้ากล้อง) → จาง ไม่บังครึ่งจอ
+                        const ox2 = gx + O.cx, oz2 = gz + O.cz, u2 = ((ox2 - hx) * dx + (oz2 - hz) * dz) / L2;
+                        if (u2 > 0.45 && u2 < 1.3) {
+                            const q = Math.min(1, u2);
+                            if (Math.hypot(ox2 - (hx + dx * q), oz2 - (hz + dz * q)) < O.rr + 2.2)
+                                block = true;
+                        }
                     }
                 }
                 if (!block && !O.fade)
@@ -47984,6 +47996,8 @@ function CherryAdventure() {
         const tWoodD2 = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 });
         const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
         const TR = 38; // 📏 รัศมีลานเมือง (เดิม 17 → พื้นที่กว้างขึ้น ~5 เท่า)
+        const tOcc = (o, round) => { if (!o)
+            return o; o.userData.occRound = !!round; (G._occlExtra = G._occlExtra || []).push(o); return o; }; // 👀 ของในเมืองที่บังระหว่างกล้องกับตัวละคร → จางโปร่ง (occlTick)
         { // 🧱 ลานหินกลางเมือง + ขอบลาน
             // 🪨 หินปูถนนโทนอุ่น ก้อนไม่เท่ากัน สลับสี + ร่องปูนเข้ม (เดิมเป็นตารางเทาเรียบ)
             const cv = document.createElement("canvas");
@@ -48025,12 +48039,14 @@ function CherryAdventure() {
             plaza.rotation.x = -Math.PI / 2;
             plaza.position.y = 0.03;
             townZone.add(plaza);
+            G._townPlaza = plaza;
             const rim = new THREE.Mesh(new THREE.TorusGeometry(TR, 0.34, 8, 64), tStoneD);
             rim.rotation.x = Math.PI / 2;
             rim.position.y = 0.08;
             townZone.add(rim);
             // 🛣️ ถนนหินไล่จากน้ำพุออกไป 8 ทิศ — ช่วยให้ลานกว้างไม่โล่งเวิ้งว้าง
             const roadMat = new THREE.MeshStandardMaterial({ color: 0xbdb5a6, roughness: 0.95 });
+            G._townRoadMat = roadMat;
             for (let k = 0; k < 8; k++) {
                 const a = k * Math.PI / 4;
                 const road = new THREE.Mesh(new THREE.PlaneGeometry(3.2, TR - 7), roadMat);
@@ -48041,31 +48057,36 @@ function CherryAdventure() {
             }
         }
         { // ⛲ น้ำพุใหญ่กลางเมือง + ม้านั่งรอบ
+            const fountG = new THREE.Group();
+            townZone.add(fountG);
+            tOcc(fountG, true);
+            G._townFount = fountG; // ⛲ รวมเป็นก้อนเดียว — โมเดลน้ำพุ Higgsfield มาแทนทั้งก้อน
             const base = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.8, 0.95, 28), tStone);
             base.position.y = 0.5;
-            townZone.add(base);
+            fountG.add(base);
             const rim2 = new THREE.Mesh(new THREE.TorusGeometry(4.4, 0.3, 10, 34), tStoneD);
             rim2.rotation.x = Math.PI / 2;
             rim2.position.y = 1.05;
-            townZone.add(rim2);
+            fountG.add(rim2);
             const water = new THREE.Mesh(new THREE.CircleGeometry(4.1, 30), new THREE.MeshStandardMaterial({ color: 0x8fd0f0, emissive: 0x4a9ad0, emissiveIntensity: 0.35, roughness: 0.25, transparent: true, opacity: 0.9 }));
             water.rotation.x = -Math.PI / 2;
             water.position.y = 0.98;
-            townZone.add(water);
+            fountG.add(water);
             G._townWater = water;
             const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.82, 2.5, 14), tStone);
             pillar.position.y = 2.2;
-            townZone.add(pillar);
+            fountG.add(pillar);
             const bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.35, 0.58, 18), tStoneD);
             bowl.position.y = 3.5;
-            townZone.add(bowl);
+            fountG.add(bowl);
             const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 14), new THREE.MeshStandardMaterial({ color: 0xe86a8a, emissive: 0xb03050, emissiveIntensity: 0.4, roughness: 0.4 }));
             cherry.position.y = 4.5;
-            townZone.add(cherry);
+            fountG.add(cherry);
             const tLab = ranchLabel(5.0, 1.6);
             tLab.draw("🏰 เมืองเชอร์รี่", "#fff0f5");
             tLab.sprite.position.set(0, 6.4, 0);
             townZone.add(tLab.sprite);
+            G._townFountLab = tLab.sprite;
             for (let k = 0; k < 8; k++) {
                 const a = k * Math.PI / 4 + Math.PI / 8;
                 const bench = new THREE.Group();
@@ -48133,7 +48154,9 @@ function CherryAdventure() {
                 g.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(g);
-                (G._vilQ = G._vilQ || []).push({ g, kind: big ? "Manor" : (rr >= 40 && (townHouseN % 3 === 1) ? "Cottage" : "House2"), sc: big ? 1.2 : 1.25, tint: hue, roof: townHouseN % 3 === 2 ? 0x9fb4d8 : big ? 0xc8d4e8 : null, chim }); // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
+                tOcc(g);
+                (G._vilQ = G._vilQ || []).push({ g, kind: big ? "Manor" : (rr >= 40 && (townHouseN % 3 === 1) ? "Cottage" : "House2"), sc: big ? 1.2 : 1.25, tint: hue, roof: townHouseN % 3 === 2 ? 0x9fb4d8 : big ? 0xc8d4e8 : null, chim,
+                    thf: ["A", "B", "C"][(townHouseN * 7 + (big ? 1 : 0)) % 3], thfH: big ? 8.6 : 7.4 }); // 🏡 บ้านในเมือง Higgsfield 3 แบบสลับกัน (หลังคาชมพู/ฟ้า/ร้านขนมปังหลังคามิ้นต์)   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
                 townHouseN++;
             };
             // วงนอก — บ้านเรียงรอบเมือง (เว้นช่องประตูทิศใต้)
@@ -48229,6 +48252,7 @@ function CherryAdventure() {
                 st.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(st);
+                tOcc(st);
                 // 🛒 แผงร้านค้ายุคกลาง (เสาไม้ + หลังคากระเบื้อง + ลังไม้) มาแทนเมื่อโหลดเสร็จ — คงสินค้าสีประจำร้าน + ผ้าลายทางคาดหน้าแผง
                 (G._vilQ = G._vilQ || []).push({ g: st, kind: "Stall", sc: 1.15, roof: new THREE.Color(0xffffff).lerp(new THREE.Color(awnAcc), 0.55).getHex(), keep: boxes, after: (node) => {
                         boxes.forEach((b, gi) => { b.position.set(-1.25 + gi * 1.25, 1.47, 0.63); b.updateMatrix(); });
@@ -48245,6 +48269,7 @@ function CherryAdventure() {
                 wg.position.set(Math.cos(wa) * wr, 0, Math.sin(wa) * wr);
                 wg.rotation.y = wy;
                 townZone.add(wg);
+                tOcc(wg);
                 (G._vilQ = G._vilQ || []).push({ g: wg, kind: "Wagon", sc: 1.15 });
             }
             mkStall(2.1, 15.5, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
@@ -48268,6 +48293,7 @@ function CherryAdventure() {
             bb.position.set(7.6, 0, 16);
             bb.rotation.y = Math.PI + 0.5;
             townZone.add(bb);
+            tOcc(bb);
             // 🏘️ NPC อาชีพรองประจำเมือง — ยืนรอบลานที่รัศมี 12 (เว้นทางประตูทิศใต้) · ร่างปั้นเองถูกแทนด้วยโมเดล 3D (npcModelSet) เหลือป้ายชื่อ + ของถือ
             const TOWN_NPCS = [
                 { key: "chef", a: 0.30, name: "พ่อครัวอิ่ม", emoji: "🍳", label: "🍳 พ่อครัว", col: "#e08a5a", body: 0xf4f0e8, prop: "ladle" },
@@ -48352,20 +48378,23 @@ function CherryAdventure() {
         }
         { // 🌸 ซุ้มประตูออกผจญภัย (ทิศใต้) + แท่นวาร์ปออก
             const GZ = 33; // ระยะประตูเมืองทิศใต้
+            const exitG = new THREE.Group();
+            townZone.add(exitG);
+            tOcc(exitG); // 🌸 ซุ้มประตูออกรวมเป็นก้อนเดียว → จางทั้งซุ้มเมื่อบังตัวละคร
             for (const sx of [-1, 1]) {
                 const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 7.2, 12), tStone);
                 pil.position.set(sx * 4.4, 3.6, GZ);
-                townZone.add(pil);
+                exitG.add(pil);
                 const cap = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.6, 2.1), tStoneD);
                 cap.position.set(sx * 4.4, 7.5, GZ);
-                townZone.add(cap);
+                exitG.add(cap);
                 const orb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), new THREE.MeshStandardMaterial({ color: 0xffe9b0, emissive: 0xe0a840, emissiveIntensity: 0.9 }));
                 orb.position.set(sx * 4.4, 8.1, GZ);
-                townZone.add(orb);
+                exitG.add(orb);
             }
             const beam = new THREE.Mesh(new THREE.BoxGeometry(11.2, 1.0, 1.6), tStoneD);
             beam.position.set(0, 8.2, GZ);
-            townZone.add(beam);
+            exitG.add(beam);
             const gLab = ranchLabel(5.0, 1.6);
             gLab.draw("🌸 ออกผจญภัย", "#ffe9d0");
             gLab.sprite.position.set(0, 10.0, GZ);
@@ -48469,7 +48498,11 @@ function CherryAdventure() {
             const LSC = { smith: 7.2, tavern: 6.6, church: 6.4 };
             const LAND = [["castle", -Math.PI / 2, 50, 6.4], ["windmill", -0.62, 80, 13], ["towerA", 2.42, 52, 5.6], ["towerB", 0.72, 52, 5.4], ["towerA", -2.3, 52, 5.0], ["towerB", 3.9, 53, 5.0]]
                 .concat((G._townLandSlots || []).map((L) => [L.k, L.a, L.r, LSC[L.k]]));
-            LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = one(k, x, z, faceIn(a), sc); if (k === "windmill" && g)
+            LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = tOcc(one(k, x, z, faceIn(a), sc)); if (k === "castle" && g) {
+                G._townCastleKit = g;
+                if (G._townHFCastle)
+                    g.visible = false;
+            } if (k === "windmill" && g)
                 G._townFan = g.getObjectByName("building_windmill_top_fan_yellow"); });
             // 🧱 กำแพงเมืองวงรอบ + ประตูใหญ่ทิศใต้ + ป้อมทุกช่วง 3 ท่อน
             const NSEG = 36, dA = Math.PI * 2 / NSEG, segL = 2 * Math.PI * TOWN_WALL_R / NSEG;
@@ -48554,7 +48587,7 @@ function CherryAdventure() {
             Object.keys(props).forEach((k) => many(k, props[k]));
             {
                 const [x, z] = P(3.95, 23.5);
-                one("well", x, z, faceIn(3.95), 3.6);
+                tOcc(one("well", x, z, faceIn(3.95), 3.6), true);
             }
             G.freezeStatic && G.freezeStatic(townKitG, 1);
             if (G._townFan) {
@@ -48582,6 +48615,157 @@ function CherryAdventure() {
                 res(true);
             }, undefined, () => res(false)));
             return townKitLoading;
+        };
+        // 🏰🌸 รีเมคเมืองเชอร์รี่ — Higgsfield (คอนเซ็ปต์ → 3D Meshy): บ้าน 3 แบบ (โครงไม้หลังคาชมพู · บ้านหินหลังคาฟ้า · ร้านขนมปังหลังคามิ้นต์)
+        //    · พระราชวังซากุระ (แทนปราสาทหินเทา KayKit) · น้ำพุซากุระ · ลายพื้นหินปูถนนโทนอุ่น · ต้นซากุระ 8 ต้นรอบลาน (โมเดลจากด่าน 1)
+        //    ⏳ โหลดครั้งแรกที่เข้าเมือง (~3MB) — ระหว่างรอใช้ของเดิม · ทุกชิ้นจางโปร่งเมื่อบังตัวละคร (tOcc)
+        const TOWN_HF = { A: "town_house_a", B: "town_house_b", C: "town_house_c", castle: "town_castle", fountain: "town_fountain", sakura: "meadow_sakura" };
+        const TOWN_HOUSE_CFG = { A: { yaw: 0, chim: [0.05, 0.98, -0.42] }, B: { yaw: 0, chim: [-0.44, 0.98, 0.0] }, C: { yaw: 0, chim: [0.3, 0.98, -0.12] } }; // yaw = หมุนให้ประตูหันเข้าลาน · chim = ตำแหน่งปล่องควัน (สัดส่วนกรอบโมเดล)
+        const townLib = {};
+        let townHFLoading = null;
+        const hfTownApply = () => {
+            (G._vilQ || []).forEach((it) => {
+                if (!it.thf || it.thfDone)
+                    return;
+                const L = townLib[it.thf];
+                if (!L) {
+                    it.thfFail = true;
+                    if (!it.done && vilLib[it.kind])
+                        vilApply(it);
+                    return;
+                } // ไฟล์โหลดไม่ได้ → บ้าน Quaternius เดิม
+                if (it.done)
+                    return;
+                it.done = true;
+                it.thfDone = true;
+                const C = TOWN_HOUSE_CFG[it.thf] || {}, sc = it.thfH / L.h, node = L.obj.clone();
+                node.scale.setScalar(sc);
+                node.rotation.y = C.yaw || 0;
+                it.g.children.forEach((c) => { c.visible = false; });
+                it.g.add(node);
+                if (it.chim) { // 💨 ควันออกจากปล่องของบ้านใหม่ (ไม่มีปล่อง = ไม่มีควัน)
+                    if (C.chim) {
+                        const cx = C.chim[0] * L.w * sc, cy = C.chim[1] * L.h * sc - 2.6, cz = C.chim[2] * L.d * sc, cs = Math.cos(C.yaw || 0), sn = Math.sin(C.yaw || 0);
+                        it.chim.position.set(cx * cs + cz * sn, cy, -cx * sn + cz * cs);
+                        it.chim.updateMatrix();
+                    }
+                    else {
+                        const i = (G._townChims || []).indexOf(it.chim);
+                        if (i >= 0)
+                            G._townChims.splice(i, 1);
+                    }
+                }
+                it.g.userData._frz = 0;
+                it.g.userData.occ = null;
+            });
+            const F = G._townFount; // ⛲ น้ำพุซากุระ
+            if (townLib.fountain && F && !F.userData.hf) {
+                const L = townLib.fountain, node = L.obj.clone(), sc = 10.6 / L.w;
+                node.scale.setScalar(sc);
+                F.children.forEach((c) => { c.visible = false; });
+                F.add(node);
+                F.userData.hf = node;
+                F.userData._frz = 0;
+                F.userData.occ = null;
+                if (G._townFountLab) {
+                    G._townFountLab.position.y = L.h * sc + 1.1;
+                    G._townFountLab.updateMatrix();
+                }
+            }
+            if (townLib.castle && !G._townHFCastle) { // 🏰 พระราชวังซากุระสุดถนนทิศเหนือ (หน้า +Z หันเข้าน้ำพุ)
+                const L = townLib.castle, node = L.obj.clone();
+                node.scale.setScalar(18 / L.h);
+                const g = new THREE.Group();
+                g.position.set(0, 0, -50);
+                g.add(node);
+                townZone.add(g);
+                tOcc(g);
+                G._townHFCastle = g;
+                if (G._townCastleKit)
+                    G._townCastleKit.visible = false;
+            }
+            if (townLib.sakura && !G._townSakura) { // 🌸 ต้นซากุระระหว่างถนนทั้ง 8 สาย
+                G._townSakura = [];
+                for (let k = 0; k < 8; k++) {
+                    const a = k * Math.PI / 4 + Math.PI / 8, g = new THREE.Group(), n = townLib.sakura.obj.clone();
+                    g.position.set(Math.cos(a) * 24, 0, Math.sin(a) * 24);
+                    n.scale.setScalar((5.4 + (k % 3) * 0.6) / townLib.sakura.h);
+                    n.rotation.y = k * 1.3;
+                    g.add(n);
+                    townZone.add(g);
+                    tOcc(g, true);
+                    G._townSakura.push(g);
+                }
+            }
+        };
+        G.hfTownLoad = () => {
+            if (townHFLoading || !THREE.GLTFLoader)
+                return townHFLoading;
+            try {
+                new THREE.TextureLoader().load("assets/higgsfield/town_plaza.jpg", (t) => {
+                    const pl = G._townPlaza;
+                    if (!pl)
+                        return;
+                    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                    t.repeat.set(13, 13);
+                    t.anisotropy = 8;
+                    t.encoding = THREE.sRGBEncoding;
+                    const old = pl.material.map;
+                    pl.material.map = t;
+                    pl.material.color.setHex(0xe4d8c8);
+                    pl.material.needsUpdate = true;
+                    if (old && old.dispose)
+                        old.dispose();
+                    const rm = G._townRoadMat; // 🛣️ ถนน 8 สายจากน้ำพุ = หินลายเดียวกันแต่สว่างกว่าลาน (เดิมเป็นแถบเทาเรียบ)
+                    if (rm) {
+                        const t2 = t.clone();
+                        t2.needsUpdate = true;
+                        t2.repeat.set(1.1, 10);
+                        rm.map = t2;
+                        rm.color.setHex(0xfff8ee);
+                        rm.needsUpdate = true;
+                    }
+                });
+            }
+            catch (e) { }
+            const L = new THREE.GLTFLoader();
+            townHFLoading = Promise.all(Object.keys(TOWN_HF).map((k) => new Promise((res) => L.load("assets/higgsfield/" + TOWN_HF[k] + ".glb", (gl) => {
+                const sh = (x) => { if (x) {
+                    x.userData = x.userData || {};
+                    x.userData._shared = true;
+                } };
+                gl.scene.traverse((o) => {
+                    if (!o.isMesh)
+                        return;
+                    o.castShadow = true;
+                    o.receiveShadow = k !== "sakura";
+                    const m = o.material;
+                    m.metalness = 0;
+                    m.roughness = 0.85;
+                    if (m.map) {
+                        m.map.anisotropy = 4;
+                        m.emissiveMap = m.map;
+                        m.emissive = new THREE.Color(0xffffff);
+                        m.emissiveIntensity = k === "sakura" ? 0.22 : 0.1;
+                    }
+                    m.userData.vivid = true;
+                    sh(o.geometry);
+                    sh(m);
+                    sh(m.map);
+                });
+                gl.scene.updateMatrixWorld(true);
+                const b = new THREE.Box3().setFromObject(gl.scene), c = b.getCenter(new THREE.Vector3()), wrap = new THREE.Group();
+                gl.scene.position.set(-c.x, -b.min.y, -c.z);
+                wrap.add(gl.scene);
+                townLib[k] = { obj: wrap, h: Math.max(0.01, b.max.y - b.min.y), w: b.max.x - b.min.x, d: b.max.z - b.min.z };
+                res(true);
+            }, undefined, () => res(false))))).then(() => { try {
+                hfTownApply();
+            }
+            catch (e) {
+                console.warn("hf town", e);
+            } return true; });
+            return townHFLoading;
         };
         if (G.freezeStatic) {
             try {
@@ -48734,6 +48918,8 @@ function CherryAdventure() {
                 G._ground.visible = false; // 🌿 ใช้พื้นหญ้าของเมืองเอง (ภูมิประเทศด่านอาจนูนทะลุลาน)
             if (G.townKitLoad)
                 G.townKitLoad();
+            if (G.hfTownLoad)
+                G.hfTownLoad(); // 🏰🌸 บ้าน/พระราชวัง/น้ำพุ/พื้นลาน Higgsfield
             G.refreshTownFolk();
             if (G.sfx && G.sfx.warp)
                 G.sfx.warp();
