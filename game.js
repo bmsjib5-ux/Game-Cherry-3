@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v748"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v749"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -6162,7 +6162,7 @@ function CherryAdventure() {
         const rnd = (a, b) => a + Math.random() * (b - a);
         // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
         G.biomeColliders = [];
-        const activeColliders = () => (G.dungeon && G.dungeon.cave) ? (G._mazeCols || []) : (G.inHomeZone || G.inTownZone) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
+        const activeColliders = () => (G.dungeon && G.dungeon.cave) ? (G._mazeCols || []) : G.inHomeZone ? [] : G.inTownZone ? (G._townCols || []) : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
         G.activeColliders = activeColliders;
         // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
         // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -47996,6 +47996,8 @@ function CherryAdventure() {
         const tWoodD2 = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 });
         const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
         const TR = 38; // 📏 รัศมีลานเมือง (เดิม 17 → พื้นที่กว้างขึ้น ~5 เท่า)
+        G._townCols = []; // 🧱 ตัวกันชนในเมือง (วงกลม x,z,r) — activeColliders ใช้ชุดนี้ตอนอยู่ในเมือง (เดิมเดินทะลุทุกอย่าง)
+        const tCol = (x, z, r) => { const c = { x, z, r }; G._townCols.push(c); return c; };
         const tOcc = (o, round) => { if (!o)
             return o; o.userData.occRound = !!round; (G._occlExtra = G._occlExtra || []).push(o); return o; }; // 👀 ของในเมืองที่บังระหว่างกล้องกับตัวละคร → จางโปร่ง (occlTick)
         { // 🧱 ลานหินกลางเมือง + ขอบลาน
@@ -48104,6 +48106,7 @@ function CherryAdventure() {
                 bench.position.set(Math.cos(a) * 7.2, 0, Math.sin(a) * 7.2);
                 bench.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(bench);
+                tCol(Math.cos(a) * 7.3, Math.sin(a) * 7.3, 0.8);
             }
         }
         { // 🏘️ บ้านเรือนรอบเมือง (หันหน้าเข้าลาน)
@@ -48156,7 +48159,7 @@ function CherryAdventure() {
                 townZone.add(g);
                 tOcc(g);
                 (G._vilQ = G._vilQ || []).push({ g, kind: big ? "Manor" : (rr >= 40 && (townHouseN % 3 === 1) ? "Cottage" : "House2"), sc: big ? 1.2 : 1.25, tint: hue, roof: townHouseN % 3 === 2 ? 0x9fb4d8 : big ? 0xc8d4e8 : null, chim,
-                    thf: ["A", "B", "C"][(townHouseN * 7 + (big ? 1 : 0)) % 3], thfH: big ? 8.6 : 7.4 }); // 🏡 บ้านในเมือง Higgsfield 3 แบบสลับกัน (หลังคาชมพู/ฟ้า/ร้านขนมปังหลังคามิ้นต์)   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
+                    thf: ["A", "B", "C"][(townHouseN * 7 + (big ? 1 : 0)) % 3], thfH: big ? 8.6 : 7.4, tcol: tCol(g.position.x, g.position.z, Math.min(w, d) * 0.5 + 0.35) }); // 🏡 บ้านในเมือง Higgsfield 3 แบบสลับกัน (หลังคาชมพู/ฟ้า/ร้านขนมปังหลังคามิ้นต์)   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
                 townHouseN++;
             };
             // วงนอก — บ้านเรียงรอบเมือง (เว้นช่องประตูทิศใต้)
@@ -48209,6 +48212,7 @@ function CherryAdventure() {
                 }
                 pl.position.set(px, 0, pz);
                 townZone.add(pl);
+                tCol(px, pz, 0.85);
             };
             for (let k = 0; k < 14; k++) {
                 const a = (k / 14) * Math.PI * 2 + 0.22;
@@ -48233,6 +48237,7 @@ function CherryAdventure() {
                 lp.add(head);
                 lp.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
                 townZone.add(lp);
+                tCol(Math.cos(a) * rr, Math.sin(a) * rr, 0.3);
             }
             const mkStall = (a, rr, awnBase, awnAcc, goods) => {
                 const st = new THREE.Group();
@@ -48253,6 +48258,7 @@ function CherryAdventure() {
                 st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
                 townZone.add(st);
                 tOcc(st);
+                tCol(st.position.x, st.position.z, 2.1);
                 // 🛒 แผงร้านค้ายุคกลาง (เสาไม้ + หลังคากระเบื้อง + ลังไม้) มาแทนเมื่อโหลดเสร็จ — คงสินค้าสีประจำร้าน + ผ้าลายทางคาดหน้าแผง
                 (G._vilQ = G._vilQ || []).push({ g: st, kind: "Stall", sc: 1.15, roof: new THREE.Color(0xffffff).lerp(new THREE.Color(awnAcc), 0.55).getHex(), keep: boxes, after: (node) => {
                         boxes.forEach((b, gi) => { b.position.set(-1.25 + gi * 1.25, 1.47, 0.63); b.updateMatrix(); });
@@ -48270,6 +48276,7 @@ function CherryAdventure() {
                 wg.rotation.y = wy;
                 townZone.add(wg);
                 tOcc(wg);
+                tCol(wg.position.x, wg.position.z, 1.5);
                 (G._vilQ = G._vilQ || []).push({ g: wg, kind: "Wagon", sc: 1.15 });
             }
             mkStall(2.1, 15.5, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
@@ -48294,6 +48301,7 @@ function CherryAdventure() {
             bb.rotation.y = Math.PI + 0.5;
             townZone.add(bb);
             tOcc(bb);
+            tCol(7.6, 16, 1.2);
             // 🏘️ NPC อาชีพรองประจำเมือง — ยืนรอบลานที่รัศมี 12 (เว้นทางประตูทิศใต้) · ร่างปั้นเองถูกแทนด้วยโมเดล 3D (npcModelSet) เหลือป้ายชื่อ + ของถือ
             const TOWN_NPCS = [
                 { key: "chef", a: 0.30, name: "พ่อครัวอิ่ม", emoji: "🍳", label: "🍳 พ่อครัว", col: "#e08a5a", body: 0xf4f0e8, prop: "ladle" },
@@ -48498,7 +48506,8 @@ function CherryAdventure() {
             const LSC = { smith: 7.2, tavern: 6.6, church: 6.4 };
             const LAND = [["castle", -Math.PI / 2, 50, 6.4], ["windmill", -0.62, 80, 13], ["towerA", 2.42, 52, 5.6], ["towerB", 0.72, 52, 5.4], ["towerA", -2.3, 52, 5.0], ["towerB", 3.9, 53, 5.0]]
                 .concat((G._townLandSlots || []).map((L) => [L.k, L.a, L.r, LSC[L.k]]));
-            LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = tOcc(one(k, x, z, faceIn(a), sc)); if (k === "castle" && g) {
+            LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = tOcc(one(k, x, z, faceIn(a), sc)); if (g && LSC[k])
+                tCol(x, z, 3.6); if (k === "castle" && g) {
                 G._townCastleKit = g;
                 if (G._townHFCastle)
                     g.visible = false;
@@ -48560,6 +48569,7 @@ function CherryAdventure() {
             const props = { barrel: [], crateA: [], crateL: [], sack: [], bucket: [], lumber: [], barrow: [], rack: [], target: [] };
             const pile = (a, r, kind) => {
                 const [x, z] = P(a, r), ry = faceIn(a), ca = Math.cos(ry), sa = Math.sin(ry);
+                tCol(x, z, 1.7); // 🛢️ กองถัง/ลังกันชน
                 const at = (lx, lz, y) => ({ x: x + lx * ca + lz * sa, z: z - lx * sa + lz * ca, y: y || 0, ry: ry + (lx * 7 % 1), s: 5 });
                 if (kind === 0) {
                     props.barrel.push(at(-0.9, 0), at(-0.2, -0.5), at(-0.55, -0.15, 1.05));
@@ -48583,12 +48593,17 @@ function CherryAdventure() {
                 props.rack.push({ x, z, ry, s: 5 });
                 const [x2, z2] = P(-0.42, 29.5);
                 props.target.push({ x: x2, z: z2, ry, s: 5 });
+                tCol(x, z, 0.9);
+                tCol(x2, z2, 0.9);
             }
             Object.keys(props).forEach((k) => many(k, props[k]));
             {
                 const [x, z] = P(3.95, 23.5);
                 tOcc(one("well", x, z, faceIn(3.95), 3.6), true);
+                tCol(x, z, 1.7);
             }
+            if (G.inTownZone && G.rebuildNav)
+                G.rebuildNav(); // 🧱 ตัวกันชนชุดใหม่จากชุดอาคาร
             G.freezeStatic && G.freezeStatic(townKitG, 1);
             if (G._townFan) {
                 let o = G._townFan;
@@ -48643,6 +48658,8 @@ function CherryAdventure() {
                 node.rotation.y = C.yaw || 0;
                 it.g.children.forEach((c) => { c.visible = false; });
                 it.g.add(node);
+                if (it.tcol)
+                    it.tcol.r = Math.min(L.w, L.d) * sc * 0.5 + 0.3; // 🧱 กันชนตามขนาดบ้านใหม่
                 if (it.chim) { // 💨 ควันออกจากปล่องของบ้านใหม่ (ไม่มีปล่อง = ไม่มีควัน)
                     if (C.chim) {
                         const cx = C.chim[0] * L.w * sc, cy = C.chim[1] * L.h * sc - 2.6, cz = C.chim[2] * L.d * sc, cs = Math.cos(C.yaw || 0), sn = Math.sin(C.yaw || 0);
@@ -48667,6 +48684,7 @@ function CherryAdventure() {
                 F.userData.hf = node;
                 F.userData._frz = 0;
                 F.userData.occ = null;
+                G._townFountR = L.w * sc * 0.5 + 0.55; // ⛲ ขอบวงดอกไม้รอบอ่างกว้างกว่าน้ำพุเดิม → เดินชิดได้ถึงแค่ขอบ
                 if (G._townFountLab) {
                     G._townFountLab.position.y = L.h * sc + 1.1;
                     G._townFountLab.updateMatrix();
@@ -48695,8 +48713,11 @@ function CherryAdventure() {
                     townZone.add(g);
                     tOcc(g, true);
                     G._townSakura.push(g);
+                    tCol(g.position.x, g.position.z, 0.7);
                 }
             }
+            if (G.inTownZone && G.rebuildNav)
+                G.rebuildNav();
         };
         G.hfTownLoad = () => {
             if (townHFLoading || !THREE.GLTFLoader)
@@ -48914,6 +48935,8 @@ function CherryAdventure() {
                 scene.fog.far = 210;
             } // 🌫️ เมืองกว้าง — ดันหมอกออกไป ให้เห็นทั่วทั้งเมือง
             townZone.visible = true;
+            if (G.rebuildNav)
+                G.rebuildNav(); // 🧱 กริดเดินอ้อมใช้ตัวกันชนของเมือง (ไม่ใช่ของแมพข้างนอก)
             if (G._ground)
                 G._ground.visible = false; // 🌿 ใช้พื้นหญ้าของเมืองเอง (ภูมิประเทศด่านอาจนูนทะลุลาน)
             if (G.townKitLoad)
@@ -48931,6 +48954,8 @@ function CherryAdventure() {
                 return;
             G.inTownZone = false;
             townZone.visible = false;
+            if (G.rebuildNav)
+                G.rebuildNav(); // 🧱 กลับไปใช้ตัวกันชนของแมพ
             if (G._ground)
                 G._ground.visible = true;
             townWorldShow(); // 🌳 คืนต้นไม้/อาคารของโลกภายนอก
@@ -82811,9 +82836,12 @@ function CherryAdventure() {
                             char.position.x *= 31 / rr;
                             char.position.z *= 31 / rr;
                         }
-                        else if (rr < 5.4 && rr > 0.001) {
-                            char.position.x *= 5.4 / rr;
-                            char.position.z *= 5.4 / rr;
+                        else {
+                            const fr = G._townFountR || 5.4;
+                            if (rr < fr && rr > 0.001) {
+                                char.position.x *= fr / rr;
+                                char.position.z *= fr / rr;
+                            }
                         }
                     }
                     else {

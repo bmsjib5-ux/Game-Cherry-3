@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v748";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v749";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -5072,7 +5072,7 @@ export default function CherryAdventure() {
     const rnd = (a, b) => a + Math.random() * (b - a);
     // 🧭 all obstacles in play right now = fixed scenery + the current biome's decor
     G.biomeColliders = [];
-    const activeColliders = () => (G.dungeon && G.dungeon.cave) ? (G._mazeCols || []) : (G.inHomeZone || G.inTownZone) ? [] : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
+    const activeColliders = () => (G.dungeon && G.dungeon.cave) ? (G._mazeCols || []) : G.inHomeZone ? [] : G.inTownZone ? (G._townCols || []) : G.inRanchZone ? colliders : (G.biomeColliders && G.biomeColliders.length ? colliders.concat(G.biomeColliders) : colliders); // 🏠🏰 ในบ้าน/เมืองพื้นเรียบโล่ง · 🏡 ในฟาร์มไม่เอาสิ่งกีดขวางประจำด่านอื่นมาปน
     G.activeColliders = activeColliders;
     // 🌀 shared keep-out zones — nothing may be built here or the player gets blocked/stuck.
     // Enforced INSIDE each builder (not by callers) so a new spawner can't forget it.
@@ -28208,6 +28208,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     const tWoodD2 = new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.85 });
     const tLeafP = new THREE.MeshStandardMaterial({ color: 0xf2b8d0, roughness: 0.8 }); // 🌸 พุ่มซากุระ
     const TR = 38; // 📏 รัศมีลานเมือง (เดิม 17 → พื้นที่กว้างขึ้น ~5 เท่า)
+    G._townCols = [];   // 🧱 ตัวกันชนในเมือง (วงกลม x,z,r) — activeColliders ใช้ชุดนี้ตอนอยู่ในเมือง (เดิมเดินทะลุทุกอย่าง)
+    const tCol = (x, z, r) => { const c = { x, z, r }; G._townCols.push(c); return c; };
     const tOcc = (o, round) => { if (!o) return o; o.userData.occRound = !!round; (G._occlExtra = G._occlExtra || []).push(o); return o; };   // 👀 ของในเมืองที่บังระหว่างกล้องกับตัวละคร → จางโปร่ง (occlTick)
     { // 🧱 ลานหินกลางเมือง + ขอบลาน
       // 🪨 หินปูถนนโทนอุ่น ก้อนไม่เท่ากัน สลับสี + ร่องปูนเข้ม (เดิมเป็นตารางเทาเรียบ)
@@ -28246,7 +28248,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.35, 0.58, 18), tStoneD); bowl.position.y = 3.5; fountG.add(bowl);
       const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 14), new THREE.MeshStandardMaterial({ color: 0xe86a8a, emissive: 0xb03050, emissiveIntensity: 0.4, roughness: 0.4 })); cherry.position.y = 4.5; fountG.add(cherry);
       const tLab = ranchLabel(5.0, 1.6); tLab.draw("🏰 เมืองเชอร์รี่", "#fff0f5"); tLab.sprite.position.set(0, 6.4, 0); townZone.add(tLab.sprite); G._townFountLab = tLab.sprite;
-      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4 + Math.PI / 8; const bench = new THREE.Group(); const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.7), tWood); seat.position.y = 0.62; bench.add(seat); for (const lx of [-1.0, 1.0]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.62, 0.7), tWoodD2); leg.position.set(lx, 0.31, 0); bench.add(leg); } const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.66, 0.13), tWood); back.position.set(0, 1.05, -0.3); bench.add(back); bench.position.set(Math.cos(a) * 7.2, 0, Math.sin(a) * 7.2); bench.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a)); townZone.add(bench); }
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4 + Math.PI / 8; const bench = new THREE.Group(); const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.7), tWood); seat.position.y = 0.62; bench.add(seat); for (const lx of [-1.0, 1.0]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.62, 0.7), tWoodD2); leg.position.set(lx, 0.31, 0); bench.add(leg); } const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.66, 0.13), tWood); back.position.set(0, 1.05, -0.3); bench.add(back); bench.position.set(Math.cos(a) * 7.2, 0, Math.sin(a) * 7.2); bench.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a)); townZone.add(bench); tCol(Math.cos(a) * 7.3, Math.sin(a) * 7.3, 0.8); }
     }
     { // 🏘️ บ้านเรือนรอบเมือง (หันหน้าเข้าลาน)
       // 🏠 บ้านหลังใหญ่ — สูงราว 6.4 หน่วย ≈ 2.5 เท่าของตัวละคร (ตัวละครสูง ~2.5 หน่วย)
@@ -28274,7 +28276,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
         townZone.add(g); tOcc(g);
         (G._vilQ = G._vilQ || []).push({ g, kind: big ? "Manor" : (rr >= 40 && (townHouseN % 3 === 1) ? "Cottage" : "House2"), sc: big ? 1.2 : 1.25, tint: hue, roof: townHouseN % 3 === 2 ? 0x9fb4d8 : big ? 0xc8d4e8 : null, chim,
-          thf: ["A", "B", "C"][(townHouseN * 7 + (big ? 1 : 0)) % 3], thfH: big ? 8.6 : 7.4 });   // 🏡 บ้านในเมือง Higgsfield 3 แบบสลับกัน (หลังคาชมพู/ฟ้า/ร้านขนมปังหลังคามิ้นต์)   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
+          thf: ["A", "B", "C"][(townHouseN * 7 + (big ? 1 : 0)) % 3], thfH: big ? 8.6 : 7.4, tcol: tCol(g.position.x, g.position.z, Math.min(w, d) * 0.5 + 0.35) });   // 🏡 บ้านในเมือง Higgsfield 3 แบบสลับกัน (หลังคาชมพู/ฟ้า/ร้านขนมปังหลังคามิ้นต์)   // 🏘️ บ้านยุคกลางมาแทนเมื่อโหลดเสร็จ
         townHouseN++;
       };
       // วงนอก — บ้านเรียงรอบเมือง (เว้นช่องประตูทิศใต้)
@@ -28305,11 +28307,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const lip = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.07, 6, 18), tStone); lip.rotation.x = Math.PI / 2; lip.position.y = 0.66; pl.add(lip);
         const soil = new THREE.Mesh(new THREE.CircleGeometry(0.72, 14), new THREE.MeshStandardMaterial({ color: 0x5a4530, roughness: 0.95 })); soil.rotation.x = -Math.PI / 2; soil.position.y = 0.69; pl.add(soil);
         for (let f = 0; f < 6; f++) { const fa = f / 6 * Math.PI * 2; const bud = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), f % 2 ? tLeafP : tBud); bud.position.set(Math.cos(fa) * 0.4, 0.9, Math.sin(fa) * 0.4); pl.add(bud); }
-        pl.position.set(px, 0, pz); townZone.add(pl);
+        pl.position.set(px, 0, pz); townZone.add(pl); tCol(px, pz, 0.85);
       };
       for (let k = 0; k < 14; k++) { const a = (k / 14) * Math.PI * 2 + 0.22; mkPlanter(Math.cos(a) * 19.5, Math.sin(a) * 19.5); }
       for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; mkPlanter(Math.cos(a) * 9.5, Math.sin(a) * 9.5); }
-      for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6 + Math.PI / 12; const rr = k % 2 ? 28 : 15; const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 4.2, 8), tStoneD); pole.position.y = 2.1; lp.add(pole); const arm = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 6, 12, Math.PI), tStoneD); arm.position.y = 4.2; lp.add(arm); const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 })); head.position.y = 4.35; lp.add(head); lp.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr); townZone.add(lp); }
+      for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6 + Math.PI / 12; const rr = k % 2 ? 28 : 15; const lp = new THREE.Group(); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 4.2, 8), tStoneD); pole.position.y = 2.1; lp.add(pole); const arm = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.05, 6, 12, Math.PI), tStoneD); arm.position.y = 4.2; lp.add(arm); const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), new THREE.MeshStandardMaterial({ color: 0xfff2c0, emissive: 0xe8c060, emissiveIntensity: 0.9 })); head.position.y = 4.35; lp.add(head); lp.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr); townZone.add(lp); tCol(Math.cos(a) * rr, Math.sin(a) * rr, 0.3); }
       const mkStall = (a, rr, awnBase, awnAcc, goods) => {
         const st = new THREE.Group();
         for (const [px, pz] of [[-1.9, -1.4], [1.9, -1.4], [-1.9, 1.4], [1.9, 1.4]]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 3.4, 8), tWoodD2); post.position.set(px, 1.7, pz); st.add(post); }
@@ -28318,7 +28320,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const boxes = goods.map((gc, gi) => { const box = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.5, 0.66), new THREE.MeshStandardMaterial({ color: gc, roughness: 0.8 })); box.position.set(-1.2 + gi * 1.2, 1.67, 0); st.add(box); return box; });
         st.position.set(Math.cos(a) * rr, 0, Math.sin(a) * rr);
         st.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
-        townZone.add(st); tOcc(st);
+        townZone.add(st); tOcc(st); tCol(st.position.x, st.position.z, 2.1);
         // 🛒 แผงร้านค้ายุคกลาง (เสาไม้ + หลังคากระเบื้อง + ลังไม้) มาแทนเมื่อโหลดเสร็จ — คงสินค้าสีประจำร้าน + ผ้าลายทางคาดหน้าแผง
         (G._vilQ = G._vilQ || []).push({ g: st, kind: "Stall", sc: 1.15, roof: new THREE.Color(0xffffff).lerp(new THREE.Color(awnAcc), 0.55).getHex(), keep: boxes, after: (node) => {
           boxes.forEach((b, gi) => { b.position.set(-1.25 + gi * 1.25, 1.47, 0.63); b.updateMatrix(); });
@@ -28328,7 +28330,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         } });
       };
       for (const [wa, wr, wy] of [[1.55, 17.5, 0.4], [-0.45, 17.5, -0.3], [-2.05, 17.2, 2.4]]) {   // 🛞 เกวียนบรรทุกลังสินค้าข้างตลาด
-        const wg = new THREE.Group(); wg.position.set(Math.cos(wa) * wr, 0, Math.sin(wa) * wr); wg.rotation.y = wy; townZone.add(wg); tOcc(wg);
+        const wg = new THREE.Group(); wg.position.set(Math.cos(wa) * wr, 0, Math.sin(wa) * wr); wg.rotation.y = wy; townZone.add(wg); tOcc(wg); tCol(wg.position.x, wg.position.z, 1.5);
         (G._vilQ = G._vilQ || []).push({ g: wg, kind: "Wagon", sc: 1.15 });
       }
       mkStall(2.1, 15.5, "#fdf0e2", "#e8797a", [0xe86a6a, 0xf2b83a, 0x8ac06a]);
@@ -28340,7 +28342,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (const px of [-1.1, 1.1]) { const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.0, 8), tWoodD2); post.position.set(px, 1.5, 0); bb.add(post); }
       const panel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.7, 0.16), tWood); panel.position.y = 2.4; bb.add(panel);
       const bLab = ranchLabel(5.0, 1.4); bLab.draw("🏰 เมืองเชอร์รี่ · เขตปลอดภัย 100%", "#fff4e0"); bLab.sprite.position.set(0, 4.2, 0); bb.add(bLab.sprite);
-      bb.position.set(7.6, 0, 16); bb.rotation.y = Math.PI + 0.5; townZone.add(bb); tOcc(bb);
+      bb.position.set(7.6, 0, 16); bb.rotation.y = Math.PI + 0.5; townZone.add(bb); tOcc(bb); tCol(7.6, 16, 1.2);
       // 🏘️ NPC อาชีพรองประจำเมือง — ยืนรอบลานที่รัศมี 12 (เว้นทางประตูทิศใต้) · ร่างปั้นเองถูกแทนด้วยโมเดล 3D (npcModelSet) เหลือป้ายชื่อ + ของถือ
       const TOWN_NPCS = [
         { key: "chef",      a: 0.30, name: "พ่อครัวอิ่ม",    emoji: "🍳", label: "🍳 พ่อครัว",     col: "#e08a5a", body: 0xf4f0e8, prop: "ladle" },
@@ -28437,7 +28439,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const LSC = { smith: 7.2, tavern: 6.6, church: 6.4 };
       const LAND = [["castle", -Math.PI / 2, 50, 6.4], ["windmill", -0.62, 80, 13], ["towerA", 2.42, 52, 5.6], ["towerB", 0.72, 52, 5.4], ["towerA", -2.3, 52, 5.0], ["towerB", 3.9, 53, 5.0]]
         .concat((G._townLandSlots || []).map((L) => [L.k, L.a, L.r, LSC[L.k]]));
-      LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = tOcc(one(k, x, z, faceIn(a), sc)); if (k === "castle" && g) { G._townCastleKit = g; if (G._townHFCastle) g.visible = false; } if (k === "windmill" && g) G._townFan = g.getObjectByName("building_windmill_top_fan_yellow"); });
+      LAND.forEach(([k, a, r, sc]) => { const [x, z] = P(a, r); const g = tOcc(one(k, x, z, faceIn(a), sc)); if (g && LSC[k]) tCol(x, z, 3.6); if (k === "castle" && g) { G._townCastleKit = g; if (G._townHFCastle) g.visible = false; } if (k === "windmill" && g) G._townFan = g.getObjectByName("building_windmill_top_fan_yellow"); });
       // 🧱 กำแพงเมืองวงรอบ + ประตูใหญ่ทิศใต้ + ป้อมทุกช่วง 3 ท่อน
       const NSEG = 36, dA = Math.PI * 2 / NSEG, segL = 2 * Math.PI * TOWN_WALL_R / NSEG;
       const walls = [], gates = [], towers = [], flags = [];
@@ -28472,16 +28474,17 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🛢️ ของตกแต่งในลาน — กองถังไม้/ลังสินค้า/กระสอบข้างบ้าน · บ่อน้ำ · ชั้นวางอาวุธ (เดินผ่านได้ ไม่กั้นทาง)
       const props = { barrel: [], crateA: [], crateL: [], sack: [], bucket: [], lumber: [], barrow: [], rack: [], target: [] };
       const pile = (a, r, kind) => {
-        const [x, z] = P(a, r), ry = faceIn(a), ca = Math.cos(ry), sa = Math.sin(ry);
+        const [x, z] = P(a, r), ry = faceIn(a), ca = Math.cos(ry), sa = Math.sin(ry); tCol(x, z, 1.7);   // 🛢️ กองถัง/ลังกันชน
         const at = (lx, lz, y) => ({ x: x + lx * ca + lz * sa, z: z - lx * sa + lz * ca, y: y || 0, ry: ry + (lx * 7 % 1), s: 5 });
         if (kind === 0) { props.barrel.push(at(-0.9, 0), at(-0.2, -0.5), at(-0.55, -0.15, 1.05)); props.crateA.push(at(0.8, 0)); props.sack.push(at(0.3, 0.6), at(0.8, 0.8)); }
         else if (kind === 1) { props.crateA.push(at(-0.6, 0), at(0.5, -0.2), at(-0.05, -0.1, 1.05)); props.crateL.push(at(0.2, 0.9)); props.bucket.push(at(1.3, 0.4)); }
         else { props.lumber.push(at(0, 0)); props.barrow.push(at(1.6, 0.6)); props.barrel.push(at(-1.4, 0.2)); }
       };
       [[0.62, 27.5, 0], [1.38, 27, 1], [2.55, 27.5, 2], [3.6, 27, 0], [4.2, 27.5, 1], [5.25, 27, 2], [5.85, 27.5, 0], [2.95, 26.5, 1]].forEach(([a, r, k]) => pile(a, r, k));
-      { const [x, z] = P(-0.3, 29), ry = faceIn(-0.3); props.rack.push({ x, z, ry, s: 5 }); const [x2, z2] = P(-0.42, 29.5); props.target.push({ x: x2, z: z2, ry, s: 5 }); }
+      { const [x, z] = P(-0.3, 29), ry = faceIn(-0.3); props.rack.push({ x, z, ry, s: 5 }); const [x2, z2] = P(-0.42, 29.5); props.target.push({ x: x2, z: z2, ry, s: 5 }); tCol(x, z, 0.9); tCol(x2, z2, 0.9); }
       Object.keys(props).forEach((k) => many(k, props[k]));
-      { const [x, z] = P(3.95, 23.5); tOcc(one("well", x, z, faceIn(3.95), 3.6), true); }
+      { const [x, z] = P(3.95, 23.5); tOcc(one("well", x, z, faceIn(3.95), 3.6), true); tCol(x, z, 1.7); }
+      if (G.inTownZone && G.rebuildNav) G.rebuildNav();   // 🧱 ตัวกันชนชุดใหม่จากชุดอาคาร
       G.freezeStatic && G.freezeStatic(townKitG, 1);
       if (G._townFan) { let o = G._townFan; while (o && o !== townKitG) { o.matrixAutoUpdate = true; o = o.parent; } }
       townKitG.userData.ok = true;
@@ -28511,6 +28514,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         node.scale.setScalar(sc); node.rotation.y = C.yaw || 0;
         it.g.children.forEach((c) => { c.visible = false; });
         it.g.add(node);
+        if (it.tcol) it.tcol.r = Math.min(L.w, L.d) * sc * 0.5 + 0.3;   // 🧱 กันชนตามขนาดบ้านใหม่
         if (it.chim) {   // 💨 ควันออกจากปล่องของบ้านใหม่ (ไม่มีปล่อง = ไม่มีควัน)
           if (C.chim) { const cx = C.chim[0] * L.w * sc, cy = C.chim[1] * L.h * sc - 2.6, cz = C.chim[2] * L.d * sc, cs = Math.cos(C.yaw || 0), sn = Math.sin(C.yaw || 0); it.chim.position.set(cx * cs + cz * sn, cy, -cx * sn + cz * cs); it.chim.updateMatrix(); }
           else { const i = (G._townChims || []).indexOf(it.chim); if (i >= 0) G._townChims.splice(i, 1); }
@@ -28521,6 +28525,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (townLib.fountain && F && !F.userData.hf) {
         const L = townLib.fountain, node = L.obj.clone(), sc = 10.6 / L.w; node.scale.setScalar(sc);
         F.children.forEach((c) => { c.visible = false; }); F.add(node); F.userData.hf = node; F.userData._frz = 0; F.userData.occ = null;
+        G._townFountR = L.w * sc * 0.5 + 0.55;   // ⛲ ขอบวงดอกไม้รอบอ่างกว้างกว่าน้ำพุเดิม → เดินชิดได้ถึงแค่ขอบ
         if (G._townFountLab) { G._townFountLab.position.y = L.h * sc + 1.1; G._townFountLab.updateMatrix(); }
       }
       if (townLib.castle && !G._townHFCastle) {   // 🏰 พระราชวังซากุระสุดถนนทิศเหนือ (หน้า +Z หันเข้าน้ำพุ)
@@ -28533,9 +28538,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         for (let k = 0; k < 8; k++) {
           const a = k * Math.PI / 4 + Math.PI / 8, g = new THREE.Group(), n = townLib.sakura.obj.clone();
           g.position.set(Math.cos(a) * 24, 0, Math.sin(a) * 24); n.scale.setScalar((5.4 + (k % 3) * 0.6) / townLib.sakura.h); n.rotation.y = k * 1.3;
-          g.add(n); townZone.add(g); tOcc(g, true); G._townSakura.push(g);
+          g.add(n); townZone.add(g); tOcc(g, true); G._townSakura.push(g); tCol(g.position.x, g.position.z, 0.7);
         }
       }
+      if (G.inTownZone && G.rebuildNav) G.rebuildNav();
     };
     G.hfTownLoad = () => {
       if (townHFLoading || !THREE.GLTFLoader) return townHFLoading;
@@ -28638,6 +28644,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       townWorldHide(); // 🌳 เก็บของสูงรอบเมืองให้หมด ลานเมืองโล่งสะอาด
       if (scene.fog) { G._townFogPrev = { near: scene.fog.near, far: scene.fog.far }; scene.fog.near = 78; scene.fog.far = 210; } // 🌫️ เมืองกว้าง — ดันหมอกออกไป ให้เห็นทั่วทั้งเมือง
       townZone.visible = true;
+      if (G.rebuildNav) G.rebuildNav();   // 🧱 กริดเดินอ้อมใช้ตัวกันชนของเมือง (ไม่ใช่ของแมพข้างนอก)
       if (G._ground) G._ground.visible = false;   // 🌿 ใช้พื้นหญ้าของเมืองเอง (ภูมิประเทศด่านอาจนูนทะลุลาน)
       if (G.townKitLoad) G.townKitLoad();
       if (G.hfTownLoad) G.hfTownLoad();   // 🏰🌸 บ้าน/พระราชวัง/น้ำพุ/พื้นลาน Higgsfield
@@ -28650,6 +28657,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!G.inTownZone) return;
       G.inTownZone = false;
       townZone.visible = false;
+      if (G.rebuildNav) G.rebuildNav();   // 🧱 กลับไปใช้ตัวกันชนของแมพ
       if (G._ground) G._ground.visible = true;
       townWorldShow(); // 🌳 คืนต้นไม้/อาคารของโลกภายนอก
       if (scene.fog && G._townFogPrev) { scene.fog.near = G._townFogPrev.near; scene.fog.far = G._townFogPrev.far; G._townFogPrev = null; } // 🌫️ คืนหมอกปกติ
@@ -51205,7 +51213,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         } else if (G.inTownZone) { // 🏰 เดินในลานเมืองกว้าง + กันทะลุน้ำพุกลาง
           const rr = Math.hypot(char.position.x, char.position.z);
           if (rr > 31) { char.position.x *= 31 / rr; char.position.z *= 31 / rr; }
-          else if (rr < 5.4 && rr > 0.001) { char.position.x *= 5.4 / rr; char.position.z *= 5.4 / rr; }
+          else { const fr = G._townFountR || 5.4; if (rr < fr && rr > 0.001) { char.position.x *= fr / rr; char.position.z *= fr / rr; } }
         } else {
           // 🛣️ ปากทางดิน = ช่องเดียวที่เดินทะลุขอบแมพออกไปด่านถัดไปได้ (เปิดได้ทั้ง 4 ทิศ)
           const cx = char.position.x, cz = char.position.z;
