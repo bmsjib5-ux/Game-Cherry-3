@@ -160,3 +160,13 @@ Cherry Town (เมืองเชอร์รี่) remake — 2026-11-05
 - town_plaza.jpg: seamless warm cobblestone (cream / peach / rose) with cherry petals — plaza + the 8 lighter stone roads
 - 8 sakura trees around the plaza reuse meadow_sakura.glb
 - Concept: Higgsfield (GPT Image 2.5) · Image-to-3D: Meshy 7 · simplified (7-11.6k triangles), 1024 JPEG, quantized
+
+Skill VFX pack (เอฟเฟกต์สกิล) — 2026-11-05 · folder fx/
+- hf_slash (blue crescent sword arc) / hf_slashw (white, tinted per skill) — melee slash, Cleave, Cross Slash, Bleed Stab, Knee Burst, Spear Sweep
+- hf_fire (fireball burst) + hf_explode (4×4 16-frame fire-explosion flipbook) — fire / Hellfire / War Frenzy / fire arrow
+- hf_bolt (forked lightning) — bolt / Thunderstorm · hf_ice (ice-shard burst) — ice / Ice Spear
+- hf_heal (holy green-gold light) + hf_circle (gold rune circle) — Heal Blessing / potion heal / evolve
+- hf_shadow (violet vortex) — shadow / Shadow Dance · hf_poison (toxic cloud) — poison / Poison Knives / poison arrow
+- hf_impactw (white hit star) / hf_ringw (white shockwave ring) / hf_circlew (white rune circle) — tinted per skill colour
+- hf_crack (molten ground cracks) — quake / Earth Split / fire impacts
+- Generated: Higgsfield (GPT Image 2.5) on pure black · processed: black crush + edge vignette, straight alpha from brightness, WebP
