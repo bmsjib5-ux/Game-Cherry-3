@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v746";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v747";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -5057,8 +5057,8 @@ export default function CherryAdventure() {
     // 🚪 ประตูโซนกระจายคนละมุมของแมพ (หันหน้าเข้ากลางแมพ) — ไม่กระจุกอยู่กลางแมพแล้ว
     const GATE_POS = {
       town:  { x: 19.5 * WORLD_S,  z: -19.5 * WORLD_S, ry: -Math.PI * 0.25 },  // 🏰 ตะวันออกเฉียงเหนือ — ถนนวิ่งตามแกน N/S/E/W เท่านั้น ประตูจึงอยู่แนวทแยงไม่ทับถนน (เดิมอยู่เหนือพอดี ทับถนนทิศเหนือในถ้ำ/นรก/ขนมหวาน/ไททัน)
-      home:  { x: -19.5 * WORLD_S, z: 19.5 * WORLD_S,  ry: -Math.PI * 0.75 }, // 🏠 ตะวันตกเฉียงใต้
-      ranch: { x: 19.5 * WORLD_S,  z: 19.5 * WORLD_S,  ry: Math.PI * 0.75 },  // 🐄 ตะวันออกเฉียงใต้
+      home:  { x: -19.5 * WORLD_S, z: 19.5 * WORLD_S,  ry: Math.PI * 0.75 },  // 🏠 ตะวันตกเฉียงใต้ (หน้าประตู +Z หันเข้ากลางแมพ — เดิมเอียง 90° ไม่มีใครเห็นเพราะซุ้มหินสมมาตร)
+      ranch: { x: 19.5 * WORLD_S,  z: 19.5 * WORLD_S,  ry: -Math.PI * 0.75 }, // 🐄 ตะวันออกเฉียงใต้
     };
     G.GATE_POS = GATE_POS;
     const FIELD_R = 34 * WORLD_S; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
@@ -25807,7 +25807,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     scene.add(portal);
     // 🚧 ตัวหอคอยกันเดินทะลุ — วางที่ศูนย์กลางหอ (ถอยหลังจากประตูไปตามแกน local +Z)
     //    รัศมีเล็กกว่าตัวหอเล็กน้อย เพื่อให้ยังเดินเข้าไปแตะช่องประตูได้
-    colliders.push({ x: -6.6 + Math.sin(0.8) * TWR_BACK, z: 7.0 + Math.cos(0.8) * TWR_BACK, r: TWR_R - 0.45 });
+    const twrCol = { x: -6.6 + Math.sin(0.8) * TWR_BACK, z: 7.0 + Math.cos(0.8) * TWR_BACK, r: TWR_R - 0.45 };
+    colliders.push(twrCol);
 
     // ---------- 🌀 Dimension rifts: LEFT = back a stage · RIGHT = forward a stage ----------
     G.curBiome = 0;
@@ -27638,6 +27639,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const g = new THREE.Group(); (G._occlExtra = G._occlExtra || []).push(g);   // 👀 ซุ้มประตูบังตัวละคร → จางโปร่ง
       const stone = new THREE.MeshLambertMaterial({ color: stoneCol, flatShading: true });
       const cap = new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.55, metalness: 0.15 });
+      const old = []; g.userData.hfOld = old;   // 🧱 ชิ้นซุ้มหินเดิม — ซ่อนเมื่อโมเดล Higgsfield ของประตูนี้โหลดเสร็จ
       // เสาสองข้าง (ก้อนหินซ้อนกัน ดูเป็นซุ้มโบราณ)
       for (const sx of [-1.55, 1.55]) {
         for (let k = 0; k < 4; k++) {
@@ -27646,16 +27648,16 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           blk.position.set(sx + (k % 2 ? 0.05 : -0.04), 0.43 + k * 0.86, 0);
           blk.rotation.y = (k % 2 ? 0.08 : -0.06);
           blk.castShadow = true;
-          g.add(blk);
+          g.add(blk); old.push(blk);
         }
         const top = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.3, 1.12), cap);
-        top.position.set(sx, 3.62, 0); g.add(top);
+        top.position.set(sx, 3.62, 0); g.add(top); old.push(top);
       }
       // คานบน + ยอดแหลม
       const lintel = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.5, 1.0), stone);
       lintel.position.y = 4.02; lintel.castShadow = true; g.add(lintel);
       const crown = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.8, 6), cap);
-      crown.position.y = 4.66; g.add(crown);
+      crown.position.y = 4.66; g.add(crown); old.push(lintel, crown);
       // 🌀 ม่านมิติตรงกลาง — เรืองแสง โปร่งแสง หมุนวนได้
       const veil = new THREE.Mesh(
         new THREE.PlaneGeometry(2.5, 3.5, 1, 1),
@@ -27678,7 +27680,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       lab.draw(text, "#fff8f2");
       lab.sprite.position.y = 5.5;
       g.add(lab.sprite);
-      g.userData.veil = veil; g.userData.pool = pool;
+      g.userData.veil = veil; g.userData.pool = pool; g.userData.ring = ring; g.userData.lab = lab;
       return { group: g, ring, veil };
     };
     // 🐄 ประตูเข้าฟาร์ม — ริมแมพฝั่งตะวันออกเฉียงใต้
@@ -28599,6 +28601,66 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     townPad.rotation.y = GATE_POS.town.ry;
     scene.add(townPad);
     G._townPad = townPad; G._townPadRing = tpRing;
+    // 🏰🏠🐄🗼 ประตูโซน 3 แห่ง + หอคอยมิติ → โมเดล Higgsfield คนละแบบ (เดิมเป็นซุ้มหินแบบเดียวกันต่างแค่สี)
+    //    เมือง = ป้อมปราสาทหลังคาชมพู · บ้าน = ซุ้มไม้หลังคากระเบื้อง+รั้วขาว · ฟาร์ม = ซุ้มซุงหลังคาโรงนา+ทานตะวัน · หอคอย = หอเวทคริสตัลม่วง
+    //    วงแหวนชาร์จ/ม่านเรืองแสง/แสงพื้นยังอยู่ตรงช่องประตูเหมือนเดิม · ⏳ โหลดหลังเริ่มเกม ~5 วิ — ระหว่างรอใช้ซุ้มหินเดิม
+    const GATE_HF = {
+      town: { pad: townPad,  f: "gate_town", h: 7.4, ox: 0,    ringY: 1.95, veil: [2.3, 3.6], lab: 8.2 },   // ox = เลื่อนโมเดลให้ช่องประตูตรงกลางแท่น (สัดส่วนความกว้าง)
+      home: { pad: homePad,  f: "gate_home", h: 5.4, ox: 0.11, ringY: 1.85, veil: [2.5, 3.2], lab: 6.1 },   // 🏠 รั้ว/ตู้จดหมายอยู่ด้านขวา → ช่องซุ้มเยื้องซ้ายของกรอบโมเดล
+      farm: { pad: ranchPad, f: "gate_farm", h: 5.8, ox: 0,    ringY: 1.6,  veil: [2.6, 2.9], lab: 6.5 },
+    };
+    const TOWER_HF = { f: "tower_dim", h: 14.5, front: 0.16, bodyR: 0.36, door: null, doorY: 0 };   // front = สัดส่วนความลึกจากหน้าสุด (บันได) ถึงผิวประตู · bodyR = รัศมีตัวหอ (สัดส่วนความกว้าง)
+    let gateLoading = null;
+    const gateLib = {};
+    const gateApply = () => {
+      Object.keys(GATE_HF).forEach((k) => {
+        const C = GATE_HF[k], L = gateLib[k], pad = C.pad;
+        if (!L || !pad || pad.userData.hfNode) return;
+        const node = L.obj.clone(), sc = C.h / L.h; node.scale.setScalar(sc);   // หน้าโมเดล (+Z) หันเข้ากลางแมพตามการหมุนของแท่นอยู่แล้ว
+        node.position.x = (C.ox || 0) * L.w * sc;
+        (pad.userData.hfOld || []).forEach((o) => { o.visible = false; });
+        pad.add(node); pad.userData.hfNode = node;
+        const U = pad.userData;
+        if (U.ring) U.ring.position.y = C.ringY;
+        if (U.veil) { U.veil.position.y = C.veil[1] / 2 + 0.05; U.veil.scale.set(C.veil[0] / 2.5, C.veil[1] / 3.5, 1); }
+        if (U.lab) U.lab.sprite.position.y = C.lab;
+        pad.userData.occ = null;   // 👀 วัดกรอบบังกล้องใหม่
+      });
+      const T = gateLib.tower;
+      if (T && portal && !portal.userData.hfNode) {
+        const node = T.obj.clone(), sc = TOWER_HF.h / T.h; node.scale.setScalar(sc);
+        node.rotation.y = Math.PI;                                  // ประตูหอ (+Z ของโมเดล) หันออกด้านหน้าแท่น (−Z)
+        node.position.z = T.d * sc * (0.5 - TOWER_HF.front);         // ผิวหน้าประตูอยู่ที่จุดวาร์ปพอดี ตัวหอถอยไปด้านหลัง
+        portal.children.forEach((o) => { if (o !== pDisc && o !== pSwirl) o.visible = false; });
+        portal.add(node); portal.userData.hfNode = node; portal.userData.occ = null;
+        if (TOWER_HF.bodyR) {   // 🚧 ตัวกันชนตามขนาดหอใหม่ (ศูนย์กลางหอถอยหลังประตูเท่ารัศมีหอ — ยังเดินแตะช่องประตูได้)
+          const R = TOWER_HF.bodyR * T.w * sc, back = R + 0.15;
+          twrCol.x = portal.position.x + Math.sin(portal.rotation.y) * back; twrCol.z = portal.position.z + Math.cos(portal.rotation.y) * back; twrCol.r = R - 0.4;
+          if (G.rebuildNav) G.rebuildNav();
+        }
+        if (TOWER_HF.door) {   // 🌀 ผิวพอร์ทัลวนอยู่ในช่องประตูของโมเดล
+          const [dw, dh, dz] = TOWER_HF.door;
+          for (const pl of [pDisc, pSwirl]) { pl.scale.set(dw / (DW - TH), dh / (DH - TH), 1); pl.position.set(0, dh / 2 + TOWER_HF.doorY, dz + (pl === pSwirl ? -0.02 : 0)); }
+        } else { pDisc.visible = false; pSwirl.visible = false; }
+      }
+    };
+    G.hfGateLoad = () => {
+      if (gateLoading || !THREE.GLTFLoader) return gateLoading;
+      const L = new THREE.GLTFLoader(), keys = Object.keys(GATE_HF).concat(["tower"]);
+      gateLoading = Promise.all(keys.map((k) => new Promise((res) => L.load("assets/higgsfield/" + (k === "tower" ? TOWER_HF.f : GATE_HF[k].f) + ".glb", (gl) => {
+        const sh = (x) => { if (x) { x.userData = x.userData || {}; x.userData._shared = true; } };
+        gl.scene.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.receiveShadow = true;
+          const m = o.material; m.metalness = 0; m.roughness = 0.85;
+          if (m.map) { m.map.anisotropy = 4; m.emissiveMap = m.map; m.emissive = new THREE.Color(0xffffff); m.emissiveIntensity = k === "tower" ? 0.16 : 0.1; }   // ด้านเงาไม่ดำมืด · หอคอยเรืองนิด ๆ ให้รูน/คริสตัลเด่น
+          m.userData.vivid = true; sh(o.geometry); sh(m); sh(m.map); });
+        gl.scene.updateMatrixWorld(true);
+        const b = new THREE.Box3().setFromObject(gl.scene), c = b.getCenter(new THREE.Vector3()), wrap = new THREE.Group();
+        gl.scene.position.set(-c.x, -b.min.y, -c.z); wrap.add(gl.scene);
+        gateLib[k] = { obj: wrap, h: Math.max(0.01, b.max.y - b.min.y), w: b.max.x - b.min.x, d: b.max.z - b.min.z }; res(true);
+      }, undefined, () => res(false))))).then(() => { try { gateApply(); } catch (e) { console.warn("hf gates", e); } return true; });
+      return gateLoading;
+    };
+    setTimeout(() => { try { G.hfGateLoad(); } catch (e) {} }, 5000);   // ~2.8MB — รอให้ของจำเป็นตอนเปิดเกมโหลดก่อน
     // ⛏️⚰️ ปากทางดันเจี้ยนประจำด่าน (ถ้ำโจรก็อบลิน = ทุ่งซากุระ · สุสานไวกิ้ง = ทุ่งหิมะ) — ซุ้มประตู + ของประดับ · ยืนในวง 2 วิ = เข้า
     G._caveGates = [];
     Object.entries(G.CAVE_DEF || {}).forEach(([type, C]) => {

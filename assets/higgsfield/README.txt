@@ -143,3 +143,11 @@ Stage 2 (desert / ทะเลทรายเพลิง) remake — 2026-11-04
   mon_tigerking.glb (ราชาเสือทะเลทราย — evolved เสือสมิง / stage 2 boss) — Attack #105 Triple_Combo_Attack,
     Walk from mon_caveman, Idle/Hit/Die/Roar from mush_king
   (the small ones borrow Idle / Hit / Die from mon_mochi by bone name, hips rescaled)
+
+Zone gates + Dimension Tower remake — 2026-11-05
+- gate_town.glb (🏰 เมืองเชอร์รี่): fairytale gatehouse — cream stone towers, pink cone roofs, cherry-blossom crest and banners
+- gate_home.glb (🏠 บ้านของฉัน): wooden arbor gate with a red-tile roof, paper lantern, white picket fence, mailbox, flower pots
+- gate_farm.glb (🐄 ฟาร์มของฉัน): rustic log ranch gate with a red barn roof, sunflower vines, hay bales, pumpkin, wagon wheel
+- tower_dim.glb (🗼 หอคอยมิติ): slender magic tower, violet spire + crystal, glowing rune bands, portal doorway
+- Concept: Higgsfield (GPT Image 2.5) · Image-to-3D: Meshy 7 · simplified, JPEG textures, quantized
+  (the gates keep the game's charge ring / glowing veil / ground glow inside the opening)
