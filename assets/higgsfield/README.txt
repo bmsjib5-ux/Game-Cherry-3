@@ -185,3 +185,11 @@ App icon (ไอคอนแอป PWA / desktop) — 2026-11-05 · repo root ic
 Loading screen (หน้าโหลดเกม) — 2026-11-05 · ui/load_land.webp (desktop) · ui/load_port.webp (phone)
 - Cherry-blossom fantasy kingdom at sunrise: sakura trees, rose-pink castle, floating islands with waterfalls; calm sky in the middle for the logo and progress card
 - Generated: Higgsfield (GPT Image 2.5), 16:9 and 9:16 · WebP q76
+
+Skill icons (ไอคอนสกิลทุกอาชีพ) — 2026-11-05 · folder skills/
+- 256 painted skill icons, one per skill id: every class skill (49), class-path skill (23), advanced-path skill (137),
+  class ultimate ult_<class> (11) + alternate ultimates ultalt_samurai / ultalt_lancer, and advanced ultimate advult_<path> (34)
+- Extras: _lock (locked skill), _ult (generic ultimate star crown), _fallback (golden star orb for unknown skills)
+- Style: cute glossy 3D cartoon mobile RPG icons with magical glow and dark plum outline; ultimates are grander with a golden aura
+- Generated: Higgsfield (GPT Image 2.5, transparent background) as 17 sprite sheets of 15 (5x3) + 1 sheet of 4 (2x2)
+- Processed: split on the grid, faint glow halos suppressed, stray fragments from neighbouring cells removed, trimmed, 128px WebP

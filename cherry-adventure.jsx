@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v757";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v758";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -1010,6 +1010,30 @@ const HIco = ({ n, size = 22, dim, style }) => {
   const src = HUI(n); if (!src) return null;
   return <img src={src} alt="" draggable={false} width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, objectFit: "contain", pointerEvents: "none", userSelect: "none", WebkitUserDrag: "none",
     filter: dim ? "grayscale(0.85) opacity(0.6)" : "drop-shadow(0 1px 1.5px rgba(60,20,50,0.32))", ...(style || {}) }} />;
+};
+// 🎴 painted skill icons (Higgsfield · assets/higgsfield/skills/<id>.webp) — every class skill, path skill, advanced skill and ultimate
+const SKI_SET = new Set("a_multi a_poison a_power a_snipe a_weak advult_a_gun advult_a_range advult_a_sharp advult_b_king advult_b_muay advult_b_wch advult_c_ai advult_c_bot advult_c_hacker advult_g_kil advult_g_nova advult_g_titan advult_k_iai advult_k_kensei advult_k_twn advult_l_dragoon advult_l_frost advult_l_guard advult_l_thn advult_m_arc advult_m_elem advult_m_priest advult_o_ceo advult_o_chf advult_o_work advult_s_rea advult_s_shade advult_s_venom advult_t_beast advult_t_div advult_t_druid advult_w_ber advult_w_pal advult_w_war b_combo b_iron b_jab b_kick b_knee c_crash c_drone c_inject c_matrix c_wall g_dash g_drone g_grav g_over k_double k_iai k_moon k_slash l_charge l_quake l_sweep l_thrust m_bolt m_fire m_heal m_ice o_ceo o_coffee o_deadline o_paper o_smash p_alpha p_bless p_bulwark p_burnout p_dive p_execute p_flash p_fortress p_frenzy p_frostpierce p_grove p_ironfist p_koblow p_merger p_nova p_pierce p_plague p_railgun p_singularity p_thousand p_tiger p_volley p_zeroday s_double s_evade s_poison s_shadow t_bite t_bond t_roar t_stampede t_wild ult_aegis ult_archer ult_assassin ult_boxer ult_coder ult_lancer ult_mage ult_office ult_samurai ult_tamer ult_warrior ultalt_lancer ultalt_samurai w_bash w_cleave w_quake w_rage x_ai_1 x_ai_2 x_ai_3 x_ai_4 x_arc_1 x_arc_2 x_arc_3 x_arc_4 x_ber_1 x_ber_2 x_ber_3 x_ber_4 x_bot_1 x_bot_2 x_bot_3 x_bot_4 x_box_1 x_box_2 x_box_3 x_box_4 x_bst_1 x_bst_2 x_bst_3 x_bst_4 x_ceo_1 x_ceo_2 x_ceo_3 x_ceo_4 x_chf_1 x_chf_2 x_chf_3 x_chf_4 x_div_1 x_div_2 x_div_3 x_div_4 x_drg_1 x_drg_2 x_drg_3 x_drg_4 x_elm_1 x_elm_2 x_elm_3 x_elm_4 x_frz_1 x_frz_2 x_frz_3 x_frz_4 x_grd_1 x_grd_2 x_grd_3 x_grd_4 x_grv_1 x_grv_2 x_grv_3 x_grv_4 x_grv_5 x_gun_1 x_gun_2 x_gun_3 x_gun_4 x_hck_1 x_hck_2 x_hck_3 x_hck_4 x_iai_1 x_iai_2 x_iai_3 x_iai_4 x_ken_1 x_ken_2 x_ken_3 x_ken_4 x_kil_1 x_kil_2 x_kil_3 x_kil_4 x_mua_1 x_mua_2 x_mua_3 x_mua_4 x_nov_1 x_nov_2 x_nov_3 x_nov_4 x_pal_1 x_pal_2 x_pal_3 x_pal_4 x_pri_1 x_pri_2 x_pri_3 x_pri_4 x_rea_1 x_rea_2 x_rea_3 x_rea_4 x_rng_1 x_rng_2 x_rng_3 x_rng_4 x_shd_1 x_shd_2 x_shd_3 x_shd_4 x_shp_1 x_shp_2 x_shp_3 x_shp_4 x_thn_1 x_thn_2 x_thn_3 x_thn_4 x_ttn_1 x_ttn_2 x_ttn_3 x_ttn_4 x_twn_1 x_twn_2 x_twn_3 x_twn_4 x_vnm_1 x_vnm_2 x_vnm_3 x_vnm_4 x_war_1 x_war_2 x_war_3 x_war_4 x_wch_1 x_wch_2 x_wch_3 x_wch_4 x_wrk_1 x_wrk_2 x_wrk_3 x_wrk_4".split(" "));
+let _skiUlt = null;
+const skIcoId = (sk) => {
+  if (!sk) return null;
+  if (typeof sk === "string") return SKI_SET.has(sk) ? sk : null;
+  if (sk.id && SKI_SET.has(sk.id)) return sk.id;
+  if (!_skiUlt) { _skiUlt = new Map(); try {   // ultimates are plain objects (no id) — map by identity and by name
+    for (const c in ULTS) { _skiUlt.set(ULTS[c], "ult_" + c); _skiUlt.set(ULTS[c].name, "ult_" + c); }
+    for (const c in ULT_ALT) { _skiUlt.set(ULT_ALT[c], "ultalt_" + c); _skiUlt.set(ULT_ALT[c].name, "ultalt_" + c); }
+    for (const p in PATH_ADV) { const u = PATH_ADV[p].ult; if (u) { _skiUlt.set(u, "advult_" + p); _skiUlt.set(u.name, "advult_" + p); } }
+  } catch (e) {} }
+  const r = _skiUlt.get(sk) || _skiUlt.get(String(sk.name || "").replace(/^🌟\s*/, ""));
+  return r && SKI_SET.has(r) ? r : null;
+};
+const SKI_SRC = (id) => "assets/higgsfield/skills/" + id + ".webp";
+const SkIco = ({ sk, size = 28, fb, dim, lock, style }) => {
+  const id = lock ? "_lock" : skIcoId(sk);
+  if (!id) return fb !== undefined ? fb : <span style={{ fontSize: Math.round(size * 0.72), lineHeight: 1 }}>{(sk && sk.emoji) || "✨"}</span>;
+  return <img src={SKI_SRC(id)} alt="" draggable={false} width={size} height={size}
+    onError={(e) => { const t = e.currentTarget; if (t.dataset.fb) return; t.dataset.fb = 1; t.src = SKI_SRC("_fallback"); }}
+    style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, objectFit: "contain", pointerEvents: "none", userSelect: "none", WebkitUserDrag: "none",
+      filter: dim ? "grayscale(0.85) brightness(0.8) opacity(0.75)" : "drop-shadow(0 1px 2px rgba(40,10,40,0.35))", ...(style || {}) }} />;
 };
 const Ico = ({ n, size = 22, color = "currentColor", style, flat }) => {
   if (!flat && HUI_SET[n]) return <HIco n={n} size={Math.round(size * (size < 16 ? 1.38 : 1.22))} dim={color === "#f4ece4"} style={style} />;   // ปุ่มใช้แล้ว (สีจาง) = ภาพเทาจาง
@@ -63973,7 +63997,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                                 <div style={{ width: 46, height: 46, margin: "6px auto 3px", borderRadius: "50%", padding: 3, boxSizing: "border-box",
                                   background: c.open && DD ? `conic-gradient(${DD.maxed ? "#ffd24a" : TC[0]} ${Math.round((DD.rank / Math.max(1, DD.maxR)) * 100)}%, rgba(255,255,255,0.12) 0)` : "rgba(255,255,255,0.08)" }}>
                                   <div style={{ width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
-                                    background: c.open ? `radial-gradient(circle at 35% 30%, #fff, ${TC[0]}cc 70%)` : "radial-gradient(circle, #3a3656, #1c1a30)", filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? c.sk.emoji : "🔒"}</div>
+                                    background: c.open ? `radial-gradient(circle at 35% 30%, #fff, ${TC[0]}cc 70%)` : "radial-gradient(circle, #3a3656, #1c1a30)", filter: c.open ? "none" : "grayscale(1)" }}>{c.open ? <SkIco sk={c.sk} size={42} /> : <SkIco lock size={30} />}</div>
                                 </div>
                                 <div style={{ fontSize: 9.5, fontWeight: 900, color: c.open ? "#fff" : "#8a86a6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px", textShadow: c.open ? "0 1px 2px rgba(0,0,0,0.6)" : "none" }}>{c.sk.name}</div>
                                 {/* 🔢 ปลดแล้วโชว์เลเวลท่า · ยังไม่ปลดโชว์เลเวลที่ต้องมี */}
@@ -64010,7 +64034,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   ) : (
                     <>
                       <div style={{ textAlign: "center", marginBottom: 8, margin: "-10px -11px 8px", padding: "12px 10px 9px", borderRadius: "14px 14px 0 0", background: "radial-gradient(90% 100% at 50% 0%, rgba(245,197,66,0.35), transparent 75%)" }}>
-                        <div style={{ width: 58, height: 58, margin: "0 auto 4px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, background: D.open ? "radial-gradient(circle at 35% 30%, #fff, #f5c542 72%)" : "radial-gradient(circle,#3a3656,#1c1a30)", boxShadow: D.open ? "0 0 18px rgba(245,197,66,0.8)" : "none", border: "2px solid rgba(255,255,255,0.7)" }}>{D.open ? D.emoji : "🔒"}</div>
+                        <div style={{ width: 58, height: 58, margin: "0 auto 4px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, background: D.open ? "radial-gradient(circle at 35% 30%, #fff, #f5c542 72%)" : "radial-gradient(circle,#3a3656,#1c1a30)", boxShadow: D.open ? "0 0 18px rgba(245,197,66,0.8)" : "none", border: "2px solid rgba(255,255,255,0.7)" }}>{D.open ? <SkIco sk={{ id: D.id, name: D.name, emoji: D.emoji }} size={60} /> : <SkIco lock size={42} />}</div>
                         <div style={{ fontSize: 14, fontWeight: 900, color: "#fff4d0", textShadow: "0 0 8px rgba(255,210,120,0.6)" }}>{D.name}</div>
                         <div style={{ fontSize: 9.5, fontWeight: 800, color: "#7fae97" }}>{D.tierEmoji} ขั้น {D.tier} · {D.tierName}</div>
                       </div>
@@ -68367,7 +68391,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       background: `#${(sk.color || 0xffd24a).toString(16).padStart(6, "0")}`, opacity: ready ? 1 : 0.45,
                       boxShadow: "0 3px 9px rgba(0,0,0,0.32)", fontSize: SKB * 0.44, color: "#fff", fontFamily: font,
                     }}>
-                      {sk.emoji || "✨"}
+                      <SkIco sk={sk} size={Math.round(SKB * 0.9)} style={{ marginTop: -1 }} />
                       {cdLeft > 0 && <span style={{ position: "absolute", inset: 0, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,12,20,0.62)", color: "#fff", fontSize: 13, fontWeight: 800 }}>{cdLeft.toFixed(1)}</span>}
                       <span style={{ position: "absolute", bottom: -3, right: -4, background: "rgba(20,20,30,0.88)", color: afford ? "#8ecbff" : "#e08a8a", fontSize: 8.5, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>{cost}</span>
                       {aoe && <span style={{ position: "absolute", top: -6, left: -4, background: "#f5a623", color: "#fff", fontSize: 8, fontWeight: 800, borderRadius: 999, padding: "0 4px" }}>หมู่</span>}
@@ -68981,7 +69005,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           <div key={p.id} style={{ background: "#fff", borderRadius: 10, padding: "7px 9px", marginBottom: 5, border: "1px solid #e8e0d0", opacity: canPick ? 1 : 0.55 }}>
                             <div style={{ fontSize: 12, fontWeight: 800, color: "#7a5a2a" }}>{p.emoji} {p.name}</div>
                             <div style={{ fontSize: 9.5, color: "#8a8a7a", margin: "2px 0 3px" }}>{p.desc}</div>
-                            <div style={{ fontSize: 9.5, color: "#5a7a4a", fontWeight: 700, marginBottom: 4 }}>✨ {p.perk} · 🌟 {p.skill.emoji} {p.skill.name}</div>
+                            <div style={{ fontSize: 9.5, color: "#5a7a4a", fontWeight: 700, marginBottom: 4 }}>✨ {p.perk} · <SkIco sk={p.skill} size={16} /> {p.skill.name}</div>
                             <button onClick={() => { if (!canPick) { G.toast(`🔒 ต้องถึง Lv.${PATH_LV} ก่อน`); return; } setUi((u) => ({ ...u, pathConfirm: p.id })); }} style={{
                               width: "100%", padding: "6px 0", borderRadius: 8, border: "none", fontFamily: font,
                               fontSize: 11, fontWeight: 800, color: "#fff", cursor: canPick ? "pointer" : "not-allowed",
@@ -69029,7 +69053,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           border: on ? "2px solid #e0a020" : "2px solid transparent",
                           background: on ? "#fff" : "#f3ede4", fontFamily: font,
                           fontSize: 11, fontWeight: 800, color: on ? "#c07a10" : "#a3907a",
-                        }}>{u2.emoji} {u2.name}{on ? " ✓" : ""}</button>
+                        }}><SkIco sk={u2} size={22} style={{ marginTop: -2 }} /> {u2.name}{on ? " ✓" : ""}</button>
                       );
                     })}
                   </div>
@@ -72527,7 +72551,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           border: "none", position: "relative", cursor: "pointer", textAlign: "left",
                           background: "#e8e8e0", fontFamily: font, opacity: 0.85,
                         }}>
-                          <div style={{ fontSize: 12, fontWeight: 800, color: "#8a8a7a" }}>🔒 {sk.emoji} {sk.name}</div>
+                          <div style={{ fontSize: 12, fontWeight: 800, color: "#8a8a7a" }}><SkIco lock size={16} /> <SkIco sk={sk} size={20} dim /> {sk.name}</div>
                           {gate.reasons.map((r, i2) => (
                             <div key={i2} style={{ fontSize: 8.5, color: r.ok ? "#5aa06a" : "#c04a4a", fontWeight: 700 }}>
                               {r.ok ? "✓" : "✗"} {r.text}
@@ -72552,7 +72576,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           }}>⚡ ได้เปรียบ!</span>
                         )}
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: "#5a5a4a" }}>
-                          {sk.emoji} {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}</span>
+                          <SkIco sk={sk} size={22} style={{ marginTop: -2 }} /> {sk.name} <span style={{ color: "#e0a020" }}>Lv.{rank}</span>
                           {slot < 5 && <span style={{ marginLeft: 5, fontSize: 9, fontWeight: 900, color: "#fff", background: "#5a6a8a", borderRadius: 5, padding: "1px 5px" }}>⌨️{(G.SKILL_KEYS || ["1","2","3","4","5","6","7","8"])[slot]}</span>}
                         </div>
                         <div style={{ fontSize: 11, fontWeight: 800, color: "#d9536b" }}>
@@ -72617,12 +72641,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   <div style={cornerStyle("right")}>
                     {iconBtn(<Ico n="swords" size={28} color="#fff" />, "#d9536b", () => G.act("attack"), null, { title: "โจมตี" })}
                     {/* 🌟 ท่าไม้ตายทั่วไป — โชว์เฉพาะโหมดสกิลพื้นฐาน (หรือยังไม่มีสายขั้นสูง) */}
-                    {!(advUiPid(ui) && advUltOf(advUiPid(ui))) && iconBtn(<Ico n="star" size={29} color={ui.ultUsed ? "#f4ece4" : "#fff"} />,
+                    {!(advUiPid(ui) && advUltOf(advUiPid(ui))) && iconBtn(<SkIco sk={ui.cls ? ultOf(ui.cls, ui.ultAlt) : null} size={46} dim={ui.ultUsed} fb={<Ico n="star" size={29} color={ui.ultUsed ? "#f4ece4" : "#fff"} />} />,
                       ui.ultUsed ? "#b0a396" : "linear-gradient(135deg,#f5c542,#e0788a)",
                       () => G.act("ult"), null,
                       { title: ui.cls ? `${ultOf(ui.cls, ui.ultAlt).name} — ${ultOf(ui.cls, ui.ultAlt).desc}` : "ท่าไม้ตายทั่วไป" })}
                     {/* 👑 ท่าไม้ตายขั้นสูง — โชว์เฉพาะเมื่อสลับเป็นโหมดสกิลขั้นสูง */}
-                    {advUiPid(ui) && advUltOf(advUiPid(ui)) && iconBtn(<Ico n="crown" size={28} color={ui.advUltUsed ? "#f4ece4" : "#fff"} />,
+                    {advUiPid(ui) && advUltOf(advUiPid(ui)) && iconBtn(<SkIco sk={advUltOf(advUiPid(ui))} size={46} dim={ui.advUltUsed} fb={<Ico n="crown" size={28} color={ui.advUltUsed ? "#f4ece4" : "#fff"} />} />,
                       ui.advUltUsed ? "#b0a396" : "linear-gradient(135deg,#9a6ad0,#d07ae0)",
                       () => G.act("advUlt"), null,
                       { key: "advult", title: `👑 ${advUltOf(advUiPid(ui)).name} — ${advUltOf(advUiPid(ui)).desc} (ท่าไม้ตายขั้นสูง)` })}
@@ -72644,7 +72668,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       const skEl = SKILL_ELEM[sk.id];
                       const advantage = gate.open && skEl && ui.enemy && WEAK[ui.enemy.spId] === skEl;
                       const bg = gate.open ? `#${sk.color.toString(16).padStart(6, "0")}` : "#b0aca4";
-                      return iconBtn(cdLeft > 0 ? `${cdLeft.toFixed(1)}` : (gate.open ? sk.emoji : "🔒"), bg, () => {
+                      return iconBtn(gate.open ? <span style={{ position: "relative", display: "inline-flex" }}><SkIco sk={sk} size={46} dim={cdLeft > 0} />{cdLeft > 0 && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>{cdLeft.toFixed(1)}</span>}</span> : <SkIco lock size={34} />, bg, () => {
                         if (!gate.open) { G.toast(`🔒 ${sk.name} — ${gate.reasons.filter((r) => !r.ok).map((r) => r.text).join(" · ")}`); return; }
                         if (cdLeft > 0) { G.toast(`⏳ ${sk.name} คูลดาวน์ (${cdLeft.toFixed(1)} วิ)`); return; }
                         if (!afford) { G.toast(`💧 มานาไม่พอ — ${sk.name} ใช้ ${cost} มานา`); return; }
