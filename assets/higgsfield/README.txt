@@ -151,3 +151,12 @@ Zone gates + Dimension Tower remake — 2026-11-05
 - tower_dim.glb (🗼 หอคอยมิติ): slender magic tower, violet spire + crystal, glowing rune bands, portal doorway
 - Concept: Higgsfield (GPT Image 2.5) · Image-to-3D: Meshy 7 · simplified, JPEG textures, quantized
   (the gates keep the game's charge ring / glowing veil / ground glow inside the opening)
+
+Cherry Town (เมืองเชอร์รี่) remake — 2026-11-05
+- town_house_a.glb (cream timber-frame, rose-pink roof, flower boxes) / town_house_b.glb (stone cottage, sky-blue slate roof, ivy)
+  / town_house_c.glb (butter-yellow bakery, mint roof, striped awning): replace the town ring houses, mixed in turn
+- town_castle.glb: cherry-blossom royal palace (white walls, pink cone roofs) replacing the KayKit castle north of the plaza
+- town_fountain.glb: two-tier marble fountain with a cherry-tree sculpture and a flower ring
+- town_plaza.jpg: seamless warm cobblestone (cream / peach / rose) with cherry petals — plaza + the 8 lighter stone roads
+- 8 sakura trees around the plaza reuse meadow_sakura.glb
+- Concept: Higgsfield (GPT Image 2.5) · Image-to-3D: Meshy 7 · simplified (7-11.6k triangles), 1024 JPEG, quantized
