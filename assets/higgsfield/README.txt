@@ -170,3 +170,9 @@ Skill VFX pack (เอฟเฟกต์สกิล) — 2026-11-05 · folder f
 - hf_impactw (white hit star) / hf_ringw (white shockwave ring) / hf_circlew (white rune circle) — tinted per skill colour
 - hf_crack (molten ground cracks) — quake / Earth Split / fire impacts
 - Generated: Higgsfield (GPT Image 2.5) on pure black · processed: black crush + edge vignette, straight alpha from brightness, WebP
+
+HUD icons (ไอคอนหน้าจอ) — 2026-11-05 · folder ui/
+- 24 painted icons (cute glossy pastel cherry-blossom style, transparent background): menu, bag, skills, swords (PvP + attack),
+  friends, hp / mp potions, paw (pets), scroll (quests), gear (settings), profile, robot (auto-battle), gather (auto-gather),
+  dash, jump, run, star, crown, bolt, fire, coins, gem, sword, shield
+- Generated: Higgsfield (GPT Image 2.5, transparent background) · processed: faint glow halo suppressed, trimmed, 128px WebP

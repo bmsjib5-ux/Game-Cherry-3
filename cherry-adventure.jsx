@@ -417,7 +417,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v750";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v751";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -1002,7 +1002,17 @@ const FashionTab = ({ G, ui, font, wide, onBack, setUi }) => {
     </div>
   );
 };
-const Ico = ({ n, size = 22, color = "currentColor", style }) => {
+// 🎨 v751 ไอคอนหน้าจอวาดใหม่ (Higgsfield · GPT Image 2.5 พื้นใส) — ชื่อที่อยู่ในชุดนี้แสดงเป็นภาพวาดสีแทนเส้นทึบสีเดียว · flat = ใช้แบบเส้นเดิม
+const HUI_SET = { menu: 1, bag: 1, skills: 1, swords: 1, pvp: "swords", friends: 1, hp: 1, mp: 1, paw: 1, scroll: 1, gear: 1, profile: 1, robot: 1, gather: 1,
+  dash: 1, jump: 1, run: 1, star: 1, crown: 1, bolt: 1, fire: 1, coins: 1, gem: 1, sword: 1, shield: 1 };
+const HUI = (n) => { const v = HUI_SET[n]; return v ? "assets/higgsfield/ui/" + (v === 1 ? n : v) + ".webp" : null; };
+const HIco = ({ n, size = 22, dim, style }) => {
+  const src = HUI(n); if (!src) return null;
+  return <img src={src} alt="" draggable={false} width={size} height={size} style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, objectFit: "contain", pointerEvents: "none", userSelect: "none", WebkitUserDrag: "none",
+    filter: dim ? "grayscale(0.85) opacity(0.6)" : "drop-shadow(0 1px 1.5px rgba(60,20,50,0.32))", ...(style || {}) }} />;
+};
+const Ico = ({ n, size = 22, color = "currentColor", style, flat }) => {
+  if (!flat && HUI_SET[n]) return <HIco n={n} size={Math.round(size * (size < 16 ? 1.38 : 1.22))} dim={color === "#f4ece4"} style={style} />;   // ปุ่มใช้แล้ว (สีจาง) = ภาพเทาจาง
   const d = GI[n]; if (!d) return null;
   return <svg viewBox="0 0 512 512" width={size} height={size} aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0, ...(style || {}) }}><path d={d} fill={color} /></svg>;
 };
@@ -31341,7 +31351,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (let k = 0; k < (big ? 22 : 14); k++) { const m = _advSprite(T.glow, k % 3 ? color : 0xffffff, 0.95); const s0 = (0.18 + Math.random() * 0.22) * sc; m.scale.set(s0, s0, 1); m.userData = { a: Math.random() * Math.PI * 2, r: (0.5 + Math.random() * 0.9) * sc, h: Math.random(), sp: 0.6 + Math.random() * 0.8, s0 }; g.add(m); motes.push(m); }
       g.userData = { kind: "cast", life: big ? 1.6 : 1.1, max: big ? 1.6 : 1.1, c1, c2, pool, beams, motes, sc };
       g.scale.setScalar(0.3);
-      scene.add(g); advRigs.push(g);
+      oldFx(g, { col: color }); scene.add(g); advRigs.push(g);
     };
     const spawnAdvImpact = (color, pos, big) => {
       const T = advTex();
@@ -31357,7 +31367,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (let k = 0; k < (big ? 26 : 16); k++) { const sp = _advSprite(T.glow, k % 3 ? color : 0xffe8a0, 1); const s0 = (0.14 + Math.random() * 0.16) * sc; sp.scale.set(s0, s0, 1); sp.position.y = 1.0;
         const a = Math.random() * Math.PI * 2, v = (2.2 + Math.random() * 3) * sc; sp.userData = { vx: Math.cos(a) * v, vz: Math.sin(a) * v, vy: 1.8 + Math.random() * 3.2, s0 }; g.add(sp); sparks.push(sp); }
       g.userData = { kind: "boom", life: big ? 1.0 : 0.8, max: big ? 1.0 : 0.8, flash, halo, rays, wave, wave2, sparks, sc };
-      scene.add(g); advRigs.push(g);
+      oldFx(g, { col: color }); scene.add(g); advRigs.push(g);
       burst(pos, color, big ? 2.2 : 1.6); burst(pos, 0xffffff, big ? 1.5 : 1.0);
       if (G.sfx && G.sfx.crit) G.sfx.crit();
     };
@@ -31637,6 +31647,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       });
     };
     const fireShock = (pos, color) => {
+      try { if (G._skillFxAt) { G._skillFxAt("default", pos.x, pos.z, color); return; } } catch (_) {}   // 🧹 v751 วงช็อกเรขาคณิตเดิม → ดาวปะทะ+วงคลื่นภาพวาด
       shockFx.material.color.setHex(color);
       shockFx.position.set(pos.x, 0.05, pos.z);
       shockFx.scale.setScalar(0.5);
@@ -32077,8 +32088,11 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // 🌟 v750 ประเภทที่สร้างใหม่ทั้งชุดจากภาพวาด Higgsfield (ค่า = ระยะเวลา) · ท่าใหญ่ที่เหลือใช้ฉากเดิม + ภาพวาดซ้อน (HF_OVER)
     const HF_ONLY = { fire: 0.85, hellfire: 1.3, bolt: 0.65, ice: 0.75, poison: 0.95, poisonknives: 0.9, shadow: 0.85, quake: 0.85, pierce: 0.55, snipe: 0.5, default: 0.55, orb: 0.6,
       punchwave: 0.55, shieldbash: 0.6, multi: 0.6, kneeburst: 0.65, healbless: 1.2, healpop: 1.0, crescent: 0.55, crossslash: 0.7, bleedstab: 0.6, warfrenzy: 1.0, summonpop: 0.6 };
-    const HF_OVER = { icespear: 1, thunderstorm: 1, swordbeam: 1, earthsplit: 1, arrowpierce: 1, arrowsnipe: 1, arrowpoison: 1, arrowmulti: 1, shadowdance: 1, spearsweep: 1, evolve: 1 };
+    const HF_OVER = { icespear: 1.25, thunderstorm: 1.75, swordbeam: 1.0, earthsplit: 0.95, arrowpierce: 1.82, arrowsnipe: 1.12, arrowpoison: 1.12, arrowmulti: 0.9, shadowdance: 0.9, spearsweep: 0.75, evolve: 1.3,
+      plasmadash: 0.85, dronebarrage: 1.15, gravitycore: 1.35, overclock: 1.4, omega: 2.6, pixel: 0.7 };   // 🧹 v751: ท่าใหญ่ก็ไม่ใช้ฉากเรขาคณิตชุดเก่าแล้ว — สร้างจากภาพวาดทั้งหมด (ค่า = ระยะเวลา)
+    Object.keys(HF_OVER).forEach((k) => { HF_ONLY[k] = HF_OVER[k]; });
     const spawnSkillFx = (fxType, pos, color) => {
+      if (HF_ONLY[fxType] == null && KFX_ONLY[fxType] == null) fxType = "default";   // 🧹 v751 ชื่อแปลก/ไม่รู้จัก = ดาวปะทะภาพวาด (ไม่ตกไปวงแหวนเรขาคณิตเดิม)
       const kType = fxType, hOnly = HF_ONLY[fxType] != null, kOnly = hOnly || KFX_ONLY[fxType] != null;
       if (kOnly) fxType = "__kfx__";                   // ไม่เข้าสาขาของเดิม (สาขา default ท้ายสุดสร้างแค่วงแหวน → ตัดทิ้งด้านล่าง)
       const g = new THREE.Group();
@@ -33852,23 +33866,36 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const ic = A(hS("hf_ice", 0xffffff, 3.0, { core: 0.3, rot: Math.random() * 6 })); ic.sp.position.y = 0.9; const r0 = ic.sp.material.rotation;
             const rg = A(hD("hf_ringw", 0x9fe4ff, 1, 0.07, { core: 0.3 }));
             kx.push((pr) => { const q = kEase(pr, 0.12, 0.75); ic.set(q > 0 ? Math.min(1, q * 6) * (1 - kEase(q, 0.5, 1)) * 0.9 : 0, 1.2 + hEaseOut(q / 0.35) * 2.0, r0 + q * 0.3); rg.set(q > 0 ? (1 - q) * 0.85 : 0, 1 + hEaseOut(q / 0.7) * 3.2); });
-          } else if (t === "thunderstorm") {                // 🌩️ พายุ — สายฟ้าวาดฟาดตามจังหวะเดิม 3 ครั้ง (0.14/0.34/0.54) + วาบพื้น
+          } else if (t === "thunderstorm") {                // 🌩️ พายุ — เมฆครึ้ม + สายฟ้าวาดฟาด 3 ครั้ง (0.14/0.34/0.54) + วาบพื้น
+            const cl = [0, 1, 2].map((k) => { const m = add(kSprite("smoke_05", 0x4a4a5e, 2.2, { normal: true, rot: Math.random() * 6 })); m.position.set((k - 1) * 0.9, 3.5 + (k % 2) * 0.25, 0); m.userData.r0 = m.material.rotation; return m; });
+            kx.push((pr) => cl.forEach((m, k) => { m.material.opacity = Math.min(1, pr * 5) * (1 - kEase(pr, 0.8, 1)) * 0.85; m.material.rotation = m.userData.r0 + pr * (k % 2 ? 0.6 : -0.6); m.scale.setScalar(2.2 + pr * 0.6); }));
             const B = [0.14, 0.34, 0.54].map((f) => { const h = A(hS("hf_bolt", 0xffffff, 5.6, { core: 0.6 })); h.sp.position.set((Math.random() - 0.5) * 1.2, 2.75, (Math.random() - 0.5) * 1.0); h.f = f;
               h.im = A(hS("hf_impactw", 0xd8e8ff, 1.8, { core: 0.8 })); h.im.sp.position.set(h.sp.position.x, 0.35, h.sp.position.z); return h; });
             const rg = A(hD("hf_ringw", 0xa8c0ff, 1, 0.07, { core: 0.4 }));
             kx.push((pr) => { B.forEach((h) => { const l = pr - h.f, on = l > 0 && l < 0.13, ph = Math.floor(l / 0.033) % 2; h.set(on ? (ph ? 0.55 : 1) * (1 - (l / 0.13) * 0.5) : 0, null, on ? (ph ? 0.05 : -0.04) : 0);
                 const li = kEase(pr, h.f, h.f + 0.2); h.im.set(li > 0 ? 1 - li : 0, 0.8 + li * 1.6); });
               const q = kEase(pr, 0.14, 0.9); rg.set(q > 0 ? (1 - q) * 0.8 : 0, 1 + hEaseOut(q / 0.6) * 3.6); });
-          } else if (t === "swordbeam") {                   // 🗡️ ดาบสวรรค์ — วงเวทใต้จุดตก + วาบตอนปักพื้น (pr 0.35)
+          } else if (t === "swordbeam") {                   // 🗡️ ดาบสวรรค์ — ลำแสงตกจากฟ้า + วงเวทใต้จุดตก + วาบตอนปักพื้น (pr 0.35)
             const cc = cw ? 0xffe9a0 : col;
+            const lb = A(hS("hf_heal", cc, 2.2, { core: 0.6, h: 4.4 }));
+            kx.push((pr) => { const d = Math.min(1, pr / 0.35); lb.sp.position.y = 4.6 - d * d * 2.6; lb.set(pr < 0.35 ? Math.min(1, pr * 8) : 1 - kEase(pr, 0.35, 0.6), 2.2); });
             const mc = A(hD("hf_circlew", cc, 3.0, 0.07, { core: 0.4 })), rg = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.4 }));
             const fl = A(hS("hf_impactw", cc, 2.6, { core: 0.8 })); fl.sp.position.y = 0.6;
             kx.push((pr) => { mc.set(io(pr, 4, 0.6) * 0.9, 2.6 + pr * 0.8, pr * 2); const q = kEase(pr, 0.33, 0.8); fl.set(q > 0 ? 1 - kEase(q, 0.2, 1) : 0, 1.0 + hEaseOut(q / 0.4) * 1.8); rg.set(q > 0 ? (1 - q) * 0.9 : 0, 1 + hEaseOut(q / 0.7) * 4.0); });
-          } else if (t === "earthsplit") {                  // 🌋 ธรณีแยก — รอยแตกลาวา + วงฝุ่น
+          } else if (t === "earthsplit") {                  // 🌋 ธรณีแยก — รอยแตกลาวา + วงฝุ่น + ควันฝุ่นพวย
+            const sm = [0, 1, 2, 3].map((k) => { const m = add(kSprite("smoke_05", 0xa89478, 1.3, { normal: true, rot: Math.random() * 6 })); m.userData = { a: (k / 4) * Math.PI * 2 + Math.random() }; return m; });
+            kx.push((pr) => sm.forEach((m) => { const a = m.userData.a; m.position.set(Math.cos(a) * (0.6 + pr * 1.6), 0.35 + pr * 1.0, Math.sin(a) * (0.6 + pr * 1.6)); m.scale.setScalar(1.3 + pr * 1.6); m.material.opacity = (1 - pr) * 0.65; }));
             const cr = A(hD("hf_crack", 0xffffff, 4.2, 0.065, { core: 0.3 })), crR = Math.random() * 6, rg = A(hD("hf_ringw", cw ? 0xffd09a : col, 1, 0.08, { core: 0.3 }));
             kx.push((pr) => { cr.set(Math.min(1, pr * 8) * (1 - kEase(pr, 0.6, 1)), 2.6 + hEaseOut(pr / 0.3) * 1.6, crR); rg.set((1 - kEase(pr, 0.15, 0.85)) * 0.85, 1 + hEaseOut(pr / 0.6) * 4.2); });
           } else if (t === "arrowpierce" || t === "arrowsnipe" || t === "arrowpoison") {   // 🏹 จุดปะทะตอนลูกธนูถึงเป้า (ธนูไฟ = ระเบิดไล่เฟรม · ธนูพิษ = หมอกพิษ)
             const hit = t === "arrowpierce" ? 1.32 / 1.82 : 0.32 / 1.12, cc = t === "arrowpoison" ? 0xb070ff : t === "arrowsnipe" ? 0xff8a3a : (cw ? 0x9ac8ff : col);
+            const f0 = t === "arrowpierce" ? 1.0 / 1.82 : 0, f1 = hit;   // ช่วงลูกธนูพุ่ง (เดิมเป็นลูกธนูทรงเรขาคณิต) → แสงพุ่งวาด
+            const st = A(hS("hf_slashw", cc, 1.9, { core: 0.6, h: 0.55 })); st.sp.position.y = 1.0;
+            const ch = t === "arrowpierce" ? A(hS("hf_impactw", cc, 1.0, { core: 0.7 })) : null; if (ch) ch.sp.position.set(-2.6, 1.0, 0);
+            const tf = t === "arrowsnipe" ? A(hS("hf_fire", 0xffffff, 1.1, { rot: Math.PI / 2 })) : null; if (tf) tf.sp.position.y = 1.0;
+            kx.push((pr) => { const q = kEase(pr, f0, f1), on = pr >= f0 && pr < f1 + 0.02; const xx = -2.6 + q * 2.6;
+              st.sp.position.x = xx; st.set(on ? 1 : 0, 1.9); if (tf) { tf.sp.position.x = xx - 0.3; tf.set(on ? 0.9 : 0, 1.1); }
+              if (ch) ch.set(pr < f0 ? (0.5 + 0.5 * Math.sin(pr * 60)) * Math.min(1, pr * 6) : 0, 0.8 + kEase(pr, 0, f0) * 0.9); });
             const fl = A(hS("hf_impactw", cc, 2.0, { core: 0.8, rot: Math.random() * 6 })); fl.sp.position.y = 1.0;
             const rg = A(hS("hf_ringw", cc, 0.6, { core: 0.4 })); rg.sp.position.y = 1.0;
             const F = t === "arrowsnipe" ? flip(2.8, 1.1) : null;
@@ -33879,18 +33906,61 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const cc = cw ? 0x9ad0ff : col;
             const P = [[-0.55, 1.1], [0.5, 1.3], [0, 0.85]].map(([dx, y], i) => { const h = A(hS("hf_impactw", cc, 1.3, { core: 0.7, rot: Math.random() * 6 })); h.sp.position.set(dx, y, 0.05); h.d0 = i * 0.08; return h; });
             kx.push((pr) => P.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.35); h.set(q > 0 ? 1 - kEase(q, 0.3, 1) : 0, 0.5 + hEaseOut(q / 0.5) * 1.1); }));
-          } else if (t === "shadowdance") {                 // 🌑 ร่างเงา — วังวนเงาใต้ร่างแยก
+          } else if (t === "shadowdance") {                 // 🌑 ร่างเงา — วังวนเงา + รอยฟันม่วง 3 เส้นรอบตัว
+            const SL = [0, 1, 2].map((i) => { const h = A(hS("hf_slashw", cw ? 0xb070ff : col, 2.2, { core: 0.4, rot: Math.random() * 6, h: 1.0 })); h.sp.position.set((i - 1) * 0.7, 1.0 + (i % 2) * 0.3, 0); h.d0 = 0.1 + i * 0.15; h.r0 = h.sp.material.rotation; return h; });
+            kx.push((pr) => SL.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.35); h.set(q > 0 ? Math.min(1, q * 8) * (1 - kEase(q, 0.4, 1)) : 0, 1.6 + hEaseOut(q / 0.5) * 0.8, h.r0 - (1 - hEaseOut(q / 0.5)) * 0.5); }));
             const sv = A(hS("hf_shadow", 0xffffff, 2.8, { core: 0.2 })); sv.sp.position.y = 1.0;
             kx.push((pr) => sv.set(io(pr, 5, 0.5) * 0.85, 1.6 + pr * 1.6, -pr * 6));
-          } else if (t === "spearsweep") {                  // 🌀 กวาดหอก — เสี้ยวพลังแบนหมุนรอบตัว + วงคลื่นพื้น
+          } else if (t === "spearsweep") {                  // 🌀 กวาดหอก — เสี้ยวพลังแบนหมุนรอบตัว 2 ชั้น + วงคลื่นพื้น
+            const s2 = A(hD("hf_slashw", cw ? 0xd8f0ff : col, 3.0, 1.2, { core: 0.4 }));
+            kx.push((pr) => s2.set(io(pr, 5, 0.45) * 0.85, 2.6 + pr * 1.4, Math.PI + pr * 8));
             const rg = A(hD("hf_ringw", cw ? 0xbfe8ff : col, 1, 0.07, { core: 0.5 })), sl = A(hD("hf_slashw", cw ? 0xd8f0ff : col, 3.6, 0.5, { core: 0.5 }));
             kx.push((pr) => { rg.set((1 - kEase(pr, 0.2, 1)) * 0.9, 1.2 + hEaseOut(pr / 0.7) * 4.0); sl.set(io(pr, 6, 0.4) , 3.0 + pr * 1.6, -pr * 7); });
+          } else if (t === "plasmadash") {                  // 🤖⚡ พุ่งพลาสมา — แสงพุ่งฟ้าพาดผ่าน + ดาวปะทะ + วงคลื่น
+            const cc = cw ? 0x3ad0ff : col;
+            const st = A(hS("hf_slashw", cc, 2.6, { core: 0.7, h: 0.7 })); st.sp.position.y = 1.0;
+            const fl = A(hS("hf_impactw", cc, 2.0, { core: 0.8, rot: Math.random() * 6 })); fl.sp.position.y = 1.0; const rg = A(hD("hf_ringw", cc, 1, 0.07, { core: 0.4 }));
+            const bt = A(hS("hf_bolt", cc, 2.4, { core: 0.5, rot: Math.PI / 2 })); bt.sp.position.y = 1.0;
+            kx.push((pr) => { const q = kEase(pr, 0, 0.35); st.sp.position.x = -2.4 + q * 2.6; st.set(pr < 0.4 ? 1 : 0, 2.6); bt.sp.position.x = st.sp.position.x - 0.6; bt.set(pr < 0.38 ? (Math.floor(pr / 0.05) % 2 ? 0.5 : 0.9) : 0, 2.4, Math.PI / 2);
+              const h = kEase(pr, 0.3, 0.8); fl.set(h > 0 ? 1 - kEase(h, 0.2, 1) : 0, 1.0 + hEaseOut(h / 0.4) * 1.5); rg.set(h > 0 ? (1 - h) * 0.85 : 0, 1 + hEaseOut(h / 0.7) * 3.0); });
+          } else if (t === "dronebarrage") {                // 🛸 ห่ากระสุนโดรน — ดาวปะทะ 6 จุดสลับสี + ระเบิดไล่เฟรม
+            const cc = cw ? 0x3ad0ff : col;
+            const P = [0, 1, 2, 3, 4, 5].map((i) => { const h = A(hS("hf_impactw", i % 2 ? 0xffb040 : cc, 1.2, { core: 0.7, rot: Math.random() * 6 })); const a = Math.random() * 6.3, r = 0.3 + Math.random() * 1.0; h.sp.position.set(Math.cos(a) * r, 0.6 + Math.random() * 0.9, Math.sin(a) * r); h.d0 = i * 0.09; return h; });
+            const F = flip(2.6, 1.0), rg = A(hD("hf_ringw", cc, 1, 0.07, { core: 0.4 }));
+            kx.push((pr) => { P.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.3); h.set(q > 0 ? 1 - kEase(q, 0.3, 1) : 0, 0.5 + hEaseOut(q / 0.5) * 1.1); }); flipAt(F, kEase(pr, 0.3, 1)); rg.set((1 - kEase(pr, 0.3, 1)) * 0.8, 1 + hEaseOut(pr / 0.7) * 3.0); });
+          } else if (t === "gravitycore") {                 // 🌌 แกนแรงโน้มถ่วง — วังวนดูดเข้ากลางแล้วระเบิด
+            const cc = cw ? 0x9a6aff : col;
+            const sv = A(hS("hf_shadow", 0xffffff, 3.0, { core: 0.3 })); sv.sp.position.y = 1.1; const mc = A(hD("hf_circlew", cc, 3.4, 0.07, { core: 0.3 }));
+            const rg = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.5 })), fl = A(hS("hf_impactw", cc, 2.2, { core: 0.8 })); fl.sp.position.y = 1.1;
+            kx.push((pr) => { const pull = kEase(pr, 0, 0.7); sv.set(Math.min(1, pr * 5) * (1 - kEase(pr, 0.7, 0.85)), 3.0 - pull * 1.6, -pr * 14); mc.set(io(pr, 5, 0.75) * 0.85, 3.4 - pull * 0.8, pr * 4);
+              rg.set(pr < 0.7 ? 0.8 : (1 - kEase(pr, 0.7, 1)) * 0.9, pr < 0.7 ? 4.2 - pull * 3.4 : 0.8 + hEaseOut(kEase(pr, 0.7, 1)) * 4.0);
+              const b = kEase(pr, 0.7, 1); fl.set(b > 0 ? 1 - kEase(b, 0.3, 1) : 0, 1.0 + hEaseOut(b / 0.4) * 2.0); });
+          } else if (t === "overclock") {                   // 🚀 โอเวอร์คล็อก (บัฟตัวเอง) — วงเวทฟ้าหมุน + ประกายไฟฟ้าเต้นรอบตัว + วงคลื่นลอยขึ้น
+            const cc = cw ? 0x3ad0ff : col;
+            const mc = A(hD("hf_circlew", cc, 3.0, 0.07, { core: 0.35 }));
+            const B = [0, 1, 2].map((i) => { const h = A(hS("hf_bolt", cc, 1.8, { core: 0.5 })); const a = (i / 3) * Math.PI * 2; h.sp.position.set(Math.cos(a) * 0.7, 1.1, Math.sin(a) * 0.7); h.ph = i; return h; });
+            const rg = A(hS("hf_ringw", cc, 1.0, { core: 0.4 })); rg.sp.position.y = 0.5;
+            kx.push((pr) => { const v = io(pr, 5, 0.6); mc.set(v * 0.9, 2.6 + hEaseOut(pr / 0.4) * 0.6, pr * 3);
+              B.forEach((h) => h.set(v * (Math.floor(pr * 18 + h.ph) % 2 ? 0.9 : 0.25), 1.6, (h.ph - 1) * 0.3)); rg.sp.position.y = 0.5 + pr * 1.8; rg.set((1 - kEase(pr, 0.3, 1)) * 0.8, 1.0 + pr * 1.6); });
+          } else if (t === "omega") {                       // ☄️ โอเมก้า (ไม้ตายใหญ่) — วงเวทยักษ์ → สายฟ้าลำใหญ่ฟาด → ระเบิดไล่เฟรม + รอยแตก + วงคลื่น
+            const cc = cw ? 0x8adfff : col;
+            const mc = A(hD("hf_circlew", cc, 5.6, 0.07, { core: 0.4 })), cr = A(hD("hf_crack", 0xffffff, 5.0, 0.065, { core: 0.3 })), crR = Math.random() * 6;
+            const bt = A(hS("hf_bolt", 0xffffff, 9.0, { core: 0.7 })); bt.sp.position.y = 4.4;
+            const F = flip(6.0, 2.0), r1 = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.5 })), fl = A(hS("hf_impactw", cc, 4.0, { core: 0.8 })); fl.sp.position.y = 1.0;
+            kx.push((pr) => { mc.set(io(pr, 6, 0.8) * 0.95, 4.6 + hEaseOut(pr / 0.3) * 1.2, pr * 2.5);
+              const b = kEase(pr, 0.25, 0.45); bt.set(b > 0 && b < 1 ? (Math.floor(pr / 0.03) % 2 ? 0.6 : 1) : 0, null, Math.floor(pr / 0.03) % 2 ? 0.04 : -0.04);
+              const h = kEase(pr, 0.33, 1); flipAt(F, h); fl.set(h > 0 ? 1 - kEase(h, 0.15, 0.5) : 0, 2.0 + hEaseOut(h / 0.3) * 3.0);
+              cr.set(h > 0 ? Math.min(1, h * 8) * (1 - kEase(h, 0.6, 1)) : 0, 3.6 + hEaseOut(h / 0.3) * 1.8, crR); r1.set(h > 0 ? (1 - h) * 0.9 : 0, 1 + hEaseOut(h / 0.6) * 7.0); });
+          } else if (t === "pixel") {                       // 👾 พิกเซลแตก — ดาวปะทะ + วงคลื่นเล็ก (ย้อมสีสกิล)
+            const cc = cw ? 0x38f08a : col;
+            const fl = A(hS("hf_impactw", cc, 1.6, { core: 0.7, rot: Math.random() * 6 })); fl.sp.position.y = 1.0; const rg = A(hS("hf_ringw", cc, 0.6, { core: 0.4 })); rg.sp.position.y = 1.0;
+            kx.push((pr) => { fl.set(1 - kEase(pr, 0.15, 0.6), 0.8 + hEaseOut(pr / 0.35) * 1.2); rg.set((1 - kEase(pr, 0.2, 1)) * 0.9, 0.5 + hEaseOut(pr / 0.8) * 2.4); });
           } else if (t === "evolve") {                      // ✨ วิวัฒนาการ — วงเวททอง + แสงศักดิ์สิทธิ์ลอยขึ้น
             const mc = A(hD("hf_circle", 0xffffff, 3.0, 0.07, { core: 0.35 })), hl = A(hS("hf_heal", 0xfff0c0, 2.6, { core: 0.3 })); hl.sp.position.y = 1.4;
             kx.push((pr) => { const v = io(pr, 4, 0.6); mc.set(v * 0.9, 2.4 + hEaseOut(pr / 0.5) * 0.8, pr * 2); hl.set(v * 0.85, 2.0 + pr * 1.0); hl.sp.position.y = 1.3 + pr * 0.8; });
           }
         };
-        if (hOnly) hfLayer(kType);
+        if (hOnly) { if (HF_OVER[kType]) hfOver(kType); else hfLayer(kType); }
         else if (fxType === "fire") {
           const fc = fxType === "fire" ? 0xff7a1a : col;
           const sc = add(kDecal("scorch_02", 0xff8a30, 2.6)); sc.rotation.z = Math.random() * Math.PI;
@@ -33946,7 +34016,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const rg = add(kSprite("circle_02", 0x9fe4ff, 0.5)); rg.position.y = 1.2; const sb = bits(8, "star_01", 0x9fe4ff, 1.0, 2.4, 1.6);
           kx.push((pr) => { sb(pr, dur); rg.scale.setScalar(0.5 + pr * 2.4); rg.material.opacity = (1 - pr) * 0.85; st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.5 + pr * 1.2); gl.material.opacity = (1 - pr) * 0.8; gl.scale.setScalar(0.7 + pr * 1.0); });
         }
-        if (HF_OVER[kType]) hfOver(kType);
         if (kx.length) { const u0 = update; update = (pr, tn) => { if (u0) u0(pr, tn); for (const f of kx) f(pr); }; }
       } catch (_) { if (kOnly && !g.children.length) { fxType = kType; } }
       { const DIM = { punchwave: 0.62, kneeburst: 0.62 }[kType] || (fxDimK() < 1 ? fxDimK() : 0);   // 🥊 ท่าสกิลนักมวย (หมัด/เข่า) — ลดความจ้าลงนิดหน่อย (สีเข้มขึ้น = แสงบวกน้อยลง) · 🥷 นักฆ่าลดลงอีก
@@ -33970,6 +34039,63 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     G._disposeObj3D = disposeObj3D;
     G.healFx = () => { try { spawnSkillFx("healpop", char.position, 0xffffff); } catch (_) {} };        // 💚 เรียกตอนดื่มยา/กินอาหาร
     G.questFx = () => { try { spawnSkillFx("questdone", char.position, 0xffffff); } catch (_) {} };    // ✅ เรียกตอนภารกิจ/บทเนื้อเรื่องสำเร็จ
+    // 🧹 v751 เอฟเฟกต์สกิลชุดเก่า (ทรงเรขาคณิตเรืองแสง: เสาไฟ/หนามน้ำแข็ง/คลื่นเสี้ยว/พายุใบมีด/วงแหวนศักดิ์สิทธิ์/ออร่า/โดม ฯลฯ) — ซ่อนทั้งหมด
+    //    ตัวเดิมยังทำงานเหมือนเดิม (จังหวะดาเมจ · คอลแบ็กโดนเป้า · ดึงศัตรู · ดาเมจต่อเนื่อง) แค่มองไม่เห็น แล้ววางภาพวาด Higgsfield แทนตรงตำแหน่ง/เวลาเดิม
+    //    ของจริงที่เป็นวัตถุ (ลูกธนู/กระสุน/สัตว์อัญเชิญ/โกเลม/โดรน/ของประจำอาชีพ) ไม่ยุ่ง
+    const _oldHide1 = (o) => { const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm && !(mm.userData && mm.userData._shared)) mm.visible = false; }); };
+    const hfAt = (t, x, z, c, delay) => { const f = () => { try { spawnSkillFx(t, { x, z }, c); } catch (_) {} }; if (delay > 0) setTimeout(f, delay * 1000); else f(); };
+    const hfLine = (t, x, z, dirY, len, c, n, step) => { for (let i = 0; i < n; i++) { const d = (len * (i + 0.6)) / n; hfAt(t, x + Math.sin(dirY) * d, z + Math.cos(dirY) * d, c, i * (step || 0.05)); } };
+    const hfHold = (x, z, dur, follow, build) => kfxSpawn(x, z, dur, (g) => { const u = build(g); return (pr) => { if (follow) g.position.set(char.position.x, 0, char.position.z); u(pr); }; });
+    const hfFade = (pr, dur, tin, tout) => Math.min(1, (pr * dur) / (tin || 0.25)) * Math.min(1, ((1 - pr) * dur) / (tout || 0.4));   // เข้า/ออกเป็นวินาที (ใช้กับออร่ายาว)
+    const oldFx = (g, o) => {
+      try {
+        g.traverse(_oldHide1); const ad = g.add.bind(g); g.add = (...a) => { ad(...a); a.forEach((c) => { if (c && c.traverse) c.traverse(_oldHide1); }); return g; };
+        o = o || {}; if (o.quiet) return;
+        const U = g.userData || {}, k = U.kind, x = g.position.x, z = g.position.z, c = o.col != null ? o.col : (U.col != null ? U.col : 0xffd24a), cw = hNearWhite(c);
+        if (k === "cast") { const big = U.max > 1.2, c1 = o.col != null ? o.col : 0xb07ae0;   // 👑 ร่ายท่าไม้ตาย — วงเวทใต้เท้า + แสงศักดิ์สิทธิ์ลอยขึ้น
+          hfHold(x, z, U.max || 1.1, false, (G2) => { const mc = hD("hf_circlew", c1, big ? 4.0 : 3.0, 0.07, { core: 0.4 }); G2.add(mc.d); const hl = hS("hf_heal", c1, big ? 3.0 : 2.4, { core: 0.3 }); hl.sp.position.y = 1.4; G2.add(hl.sp);
+            return (pr) => { const v = Math.min(1, pr * 5) * (1 - kEase(pr, 0.6, 1)); mc.set(v * 0.95, (big ? 3.4 : 2.6) + hEaseOut(pr / 0.4) * 0.8, pr * 3); hl.set(v * 0.8, (big ? 2.6 : 2.0) + pr * 0.8); hl.sp.position.y = 1.3 + pr * 0.8; }; }); }
+        else if (k === "boom") hfAt(U.sc > 1.1 ? "hellfire" : "punchwave", x, z, o.col);
+        else if (k === "pillar") hfAt("fire", x, z, c);
+        else if (k === "spike") hfAt("ice", x, z, c);
+        else if (k === "beam") hfLine("pierce", x, z, o.dirY || 0, o.len || 5, c, 4, 0.04);
+        else if (k === "bolt") (U.nodes || []).forEach((nd, i) => hfAt("bolt", nd.x, nd.z, c, i * (U.step || 0.075)));
+        else if (k === "pool") { const fr = U.dotKind === "frost", r = U.r || 2.4;     // ☠️/❄️ บ่อพิษ/ลานน้ำแข็ง — แผ่นภาพวาดบนพื้นตลอดเวลาที่ยังทำดาเมจ
+          hfHold(x, z, U.dur || 4.5, false, (G2) => { const pd = hD(fr ? "hf_ice" : "hf_poison", 0xffffff, r * 2.1, 0.07); G2.add(pd.d); const rg = hD("hf_ringw", fr ? 0x9fe4ff : 0x8ae04a, r * 2.0, 0.08, { core: 0.2 }); G2.add(rg.d);
+            return (pr) => { const v = hfFade(pr, U.dur || 4.5, 0.3, 0.6); pd.set(v * 0.85, r * (2.0 + 0.1 * Math.sin(pr * 30)), pr * 2); rg.set(v * 0.6, r * 2.0); }; }); }
+        else if (k === "hshield" || k === "dome" || k === "stonearmor" || k === "firewall" || k === "nano" || k === "coffee" || k === "clock") {   // 🛡️ โล่/โดม/เกราะหิน/ไฟร์วอลล์/นาโน/กาแฟ/นาฬิกา (ติดตัว) — ฟองวงคลื่นรอบตัว + วงเวทใต้เท้า
+          const D = U.dur || 1, cc = k === "stonearmor" ? 0xe0b878 : k === "firewall" ? (cw ? 0x38f08a : c) : k === "coffee" || k === "clock" ? (cw ? 0xffc870 : c) : k === "dome" || k === "nano" ? (cw ? 0x7ad8ff : c) : (cw ? 0xffe9a0 : c);
+          hfHold(char.position.x, char.position.z, D, true, (G2) => { const rg = hS("hf_ringw", cc, 3.0, { core: 0.3 }); rg.sp.position.y = 1.1; G2.add(rg.sp); const mc = hD("hf_circlew", cc, 2.8, 0.07, { core: 0.3 }); G2.add(mc.d);
+            return (pr) => { const v = hfFade(pr, D, 0.2, 0.4), lng = D > 2; rg.set(v * (lng ? 0.45 : 0.85), 2.9 + 0.12 * Math.sin(pr * D * 4)); mc.set(v * (lng ? 0.4 : 0.8), 2.6, pr * D * 0.8); }; }); }
+        else if (k === "hring" || k === "wave") { const r = U.r || 3.2, D = U.dur || 0.5;  // ✨ วงแหวนศักดิ์สิทธิ์/คลื่นแสง — วงเวท + วงคลื่นแผ่ถึงรัศมีจริง
+          hfHold(x, z, D + 0.2, false, (G2) => { const mc = hD("hf_circlew", cw ? 0xffe9a0 : c, r * 1.6, 0.07, { core: 0.4 }); G2.add(mc.d); const rg = hD("hf_ringw", cw ? 0xffe9a0 : c, 1, 0.08, { core: 0.4 }); G2.add(rg.d);
+            return (pr) => { mc.set(Math.min(1, pr * 6) * (1 - kEase(pr, 0.5, 1)), r * (1.2 + hEaseOut(pr / 0.5) * 0.6), pr * 2); rg.set((1 - kEase(pr, 0.3, 1)) * 0.9, 0.8 + hEaseOut(pr / 0.8) * r * 2.1); }; }); }
+        else if (k === "lpillar") hfAt("summonpop", U.x != null ? U.x : x, U.z != null ? U.z : z, cw ? 0xffe9a0 : c, U.delay || 0);
+        else if (k === "crack") hfLine("quake", x, z, o.dirY != null ? o.dirY : g.rotation.y, o.len || 4, c, 3, 0.06);
+        else if (k === "tornado" || k === "hole" || k === "eclipse") {                    // 🌪️ พายุใบมีด / 🕳️ หลุมดำ / 🌑 สุริยุปราคา — คงอยู่ตามเวลาจริง
+          const D = U.dur || 1.1, r = U.r || 3.2, dark = k !== "tornado";
+          hfHold(x, z, D, false, (G2) => { const a = dark ? hS("hf_shadow", 0xffffff, r * 0.9, { core: 0.3 }) : null; if (a) { a.sp.position.y = 1.2; G2.add(a.sp); }
+            const s1 = dark ? null : hD("hf_slashw", cw ? 0xd8f0ff : c, r * 1.3, 0.6, { core: 0.5 }), s2 = dark ? null : hD("hf_slashw", cw ? 0xd8f0ff : c, r * 1.0, 1.4, { core: 0.4 }); if (s1) { G2.add(s1.d); G2.add(s2.d); }
+            const mc = hD(dark ? "hf_circlew" : "hf_ringw", dark ? (cw ? 0x9a6aff : c) : (cw ? 0xd8f0ff : c), r * 1.9, 0.07, { core: 0.3 }); G2.add(mc.d);
+            return (pr) => { const v = hfFade(pr, D, 0.15, 0.3), tt = pr * D; if (a) a.set(v, r * (0.8 + 0.1 * Math.sin(tt * 6)), -tt * 6); if (s1) { s1.set(v * 0.95, r * 1.3, tt * 11); s2.set(v * 0.85, r * 1.0, Math.PI - tt * 14); } mc.set(v * 0.8, r * 1.9, tt * (dark ? 2 : -3)); }; }); }
+        else if (k === "rage" || k === "healcirc") { const D = U.dur || 3, rg8 = k === "rage";   // 😡 ออร่าคลั่ง / 💚 วงฮีลต่อเนื่อง (ติดตัว)
+          hfHold(char.position.x, char.position.z, D, true, (G2) => { const mc = hD(rg8 ? "hf_circlew" : "hf_circle", rg8 ? (cw ? 0xff5a3a : c) : 0xffffff, rg8 ? 2.6 : 3.0, 0.07, { core: 0.3 }); G2.add(mc.d);
+            const f = hS(rg8 ? "hf_fire" : "hf_heal", rg8 ? (cw ? 0xffffff : c) : 0xffffff, rg8 ? 1.6 : 2.4, { core: 0.2 }); f.sp.position.y = rg8 ? 1.0 : 1.3; G2.add(f.sp);
+            return (pr) => { const v = hfFade(pr, D, 0.3, 0.5), tt = pr * D; mc.set(v * (rg8 ? 0.55 : 0.85), (rg8 ? 2.6 : 3.0) + 0.1 * Math.sin(tt * 3), tt * (rg8 ? -1.2 : 0.8)); f.set(v * (rg8 ? 0.35 + 0.15 * Math.sin(tt * 9) : 0.7 + 0.2 * Math.sin(tt * 4)), (rg8 ? 1.6 : 2.4) + 0.1 * Math.sin(tt * 7)); }; }); }
+        else if (k === "wind") hfLine("pierce", x, z, o.dirY || 0, o.len || 3, c, 3, 0.04);
+        else if (k === "frost") hfLine("ice", x, z, o.dirY || 0, o.len || 6, c, 3, 0.05);
+        else if (k === "crescent") hfLine("crescent", U.sx != null ? U.sx : x, U.sz != null ? U.sz : z, U.dirY || 0, U.len || 5, c, 3, 0.08);
+        else if (k === "iaiflash") hfLine("crescent", x, z, o.dirY || 0, o.len || 5, c, 2, 0.05);
+        else if (k === "pillar2") hfAt("quake", x, z, c);
+        else if (k === "glitch") hfAt("pixel", x, z, c);
+        else if (k === "coderain") hfAt("dronebarrage", x, z, c);
+        else if (k === "dstorm") hfAt("thunderstorm", x, z, c);
+        else if (k === "zday") hfAt("pierce", x, z, c, U.delay || 0);
+        else if (k === "orbital") hfAt("bolt", x, z, c, U.delay || 0);
+        else if (k === "fistshock") hfAt("punchwave", x, z, c);
+        else if (k === "kneeimpact") hfAt("kneeburst", x, z, c);
+      } catch (_) {}
+    };
     const updateSkillFx = (dt, tNow) => {
       for (let i = activeFx.length - 1; i >= 0; i--) {
         const f = activeFx[i];
@@ -39349,7 +39475,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
         if (!n) { gm.dispose(); return; }
         g.userData = { life: life || 0.16, max: life || 0.16, mat: gm };
-        scene.add(g); wpnGhosts.push(g);
+        oldFx(g, { quiet: true }); scene.add(g); wpnGhosts.push(g);
       } catch (e) {}
     };
     // 👤 เงาซ้อนทั้งตัว (after-image) — ทิ้งร่างจาง ๆ ไว้ตามแนวพุ่ง แบบตัวละครอนิเมะเคลื่อนที่เร็ว
@@ -39367,7 +39493,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         });
         if (!n) { gm.dispose(); return; }
         g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.22 };
-        scene.add(g); wpnGhosts.push(g);
+        oldFx(g, { quiet: true }); scene.add(g); wpnGhosts.push(g);
       } catch (e) {}
     };
     // 🥷 เงาพุ่ง — ร่างเงาของตัวละครทะยานจากตัวไปหาเป้า แล้วสลายเป็นควันตอนถึง (ท่าประหารเงา)
@@ -39396,7 +39522,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const a = (idx % 5) / 5 * Math.PI * 2 + 0.9, OFF = [Math.sin(a) * 2.3, 0, Math.cos(a) * 2.3];   // ยืนล้อมตัวเราบนพื้น
             g.position.set(char.position.x + OFF[0], 0, char.position.z + OFF[2]); g.scale.copy(char.scale);   // ขนาดเท่าตัวจริง (เรขาคณิตถูกอบเป็นพิกัดในตัวละครที่หักสเกลออกแล้ว)
             g.userData = { boneMat, eyeMat, t: 0, hold: 0.2, dur: 0.2, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: char.position.y, oz: OFF[2], ey: char.position.y, real: true, target, onHit };
-            fxDimObj(g); scene.add(g); shadowBolts.push(g);
+            fxDimObj(g); oldFx(g, { quiet: true }); scene.add(g); shadowBolts.push(g);
             return;
           }
         }
@@ -39422,7 +39548,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const OFF = [[-1.6, 1.9, -0.15], [1.6, 2.2, -0.05], [0, 2.6, -1.3]][idx % 3]; // จุดลอยรอบตัว เหนือไหล่ ให้เห็นชัด
         g.position.set(char.position.x + OFF[0], OFF[1], char.position.z + OFF[2]);
         g.userData = { boneMat, eyeMat, t: 0, hold: 0.18, dur: 0.17, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: OFF[1], oz: OFF[2], target, onHit };
-        fxDimObj(g); scene.add(g); shadowBolts.push(g);
+        fxDimObj(g); oldFx(g, { quiet: true }); scene.add(g); shadowBolts.push(g);
       } catch (e) {}
     };
     // 🌟 เลเวลอัพ — ลำแสงสีทองส่องลงมาจากฟ้าครอบตัวละคร + วงแสงบนพื้น + ประกายลอยขึ้น (แทนพลุกระดาษ)
@@ -39538,6 +39664,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       } catch (e) {}
     };
     const spawnPoisonCloud = (x, z, col, big) => {
+      hfAt(big ? "poisonknives" : "poison", x, z, col);   // 🧹 v751 หมอกพิษภาพวาด (ก้อนเดิมซ่อน)
       try {
         const n = big ? 9 : 4;
         for (let k = 0; k < n; k++) {
@@ -39547,7 +39674,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           puff.position.set(x + Math.cos(a) * r, 0.22 + Math.random() * 0.3, z + Math.sin(a) * r);
           puff.raycast = () => {};
           puff.userData = { kind: "puff", t: 0, dur: big ? 1.5 : 0.95, mats: [m], rise: 0.85 + Math.random() * 0.8, spin: (Math.random() - 0.5) * 2, gro: big ? 2.1 : 1.5 };
-          scene.add(puff); poisonFx.push(puff);
+          oldFx(puff, { quiet: true }); scene.add(puff); poisonFx.push(puff);
         }
       } catch (e) {}
     };
@@ -40305,7 +40432,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z);
         g.userData = { kind: "pillar", t: 0, dur: 0.9, mats, bits, fc: new THREE.Color() };
-        scene.add(g); magicFx.push(g);
+        oldFx(g, { col }); scene.add(g); magicFx.push(g);
       } catch (e) {}
     };
     const spawnFireOrb = (idx, target, col, onHit) => {
@@ -40384,7 +40511,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const tp = target ? target.position : char.position;
         g.position.set(tp.x, 0, tp.z); g.scale.set(1, 0.02, 1);
         g.userData = { kind: "spike", t: 0, up: 0.18, hold: 1.0, out: 0.34, target, onShatter, col, mats, mist, glints, ice, lit, done: false };
-        scene.add(g); magicFx.push(g);
+        oldFx(g, { col }); scene.add(g); magicFx.push(g);
       } catch (e) {}
     };
     G._animMagicFx = (d) => {
@@ -40519,7 +40646,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const m0 = bowMuzzle();
         g.position.copy(m0); g.rotation.y = dirY;
         g.userData = { kind: "beam", t: 0, dur: 0.4, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { dirY, len, col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🦅 เหยี่ยวล็อกเป้า — นกบินวนรอบตัวแล้วโฉบไปวนเหนือเป้าตลอดช่วงยิงรัว
@@ -40620,7 +40747,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           prev = to;
         });
         g.userData = { kind: "bolt", t: 0, step: 0.075, dur: 0.075 * nodes.length + 0.32, segs, n: 0, onNode, nodes, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🌿 เถาวัลย์ยักษ์ — งอกทะลุพื้นขึ้นมาพันรอบตัวมอนสเตอร์ ตรึงไว้จนกว่าจะเหี่ยว
@@ -40666,7 +40793,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z);
         g.userData = { kind: "pool", t: 0, dur: dur || 4.5, r, dmg, col: col || 0x7ad04a, next: 0.6, puff: 0, dotKind: dotKind || "poison", onTick, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🐺 หมาป่าวิญญาณ — ร่างโปร่งแสงผุดข้างตัวผู้ร่าย ย่อตัวเตรียมพุ่ง แล้วทะยานขย้ำเป้า
@@ -40741,7 +40868,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.traverse((o) => { o.raycast = () => {}; });
         g.userData = { kind: "hshield", t: 0, dur: dur || 0.6, mats: [gm, cm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 💥 คลื่นกระแทกวงแหวน — แผ่ออกจากจุดชน (ใช้ตอนโล่กระแทก / ฟันจบคอมโบ)
@@ -40751,7 +40878,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.78, 30), mm);
         ring.rotation.x = -Math.PI / 2; ring.position.set(x, 0.09, z); ring.raycast = () => {};
         ring.userData = { kind: "hring", t: 0, dur: 0.45, r: r || 3.2, mats: [mm] };
-        scene.add(ring); archerFx.push(ring);
+        oldFx(ring, { col }); scene.add(ring); archerFx.push(ring);
       } catch (e) {}
     };
     // 🌟 ลำแสงพิพากษา — เสาแสงดิ่งลงจากฟ้ามาปักที่พื้น
@@ -40771,7 +40898,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(glyph); mats.push(gm);
         g.position.set(x, 0, z); g.visible = !delay;
         g.userData = { kind: "lpillar", t: 0, delay: delay || 0, dur: 0.5, onHit, x, z, done: false, glyph, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 👼 โคลนแสง — ร่างจำลองของผู้เล่นเรืองแสง ผุดรอบเป้า พุ่งเข้าฟัน แล้วสลาย
@@ -40827,7 +40954,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         mats.push(rockM);
         g.position.set(x, 0, z); g.rotation.y = dirY; g.scale.set(1, 1, 0.02);
         g.userData = { kind: "crack", t: 0, up: 0.12, dur: 1.15, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { dirY, len, col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🌪️ พายุอสูร — กรวยพายุหมุนติ้ว ดูดทุกตัวในรัศมีเข้ามากลางวง
@@ -40844,7 +40971,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z);
         g.userData = { kind: "tornado", t: 0, dur: dur || 1.1, r: r || 3.2, pull: (r || 3.2) * 1.55, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🩸 ออร่าคลั่ง — วงเลือดหมุนรอบเท้า + ละอองเลือดลอยขึ้นรอบตัว ตามผู้เล่นไปตลอดที่บัฟยังอยู่
@@ -40866,7 +40993,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         mats.push(fm);
         g.userData = { kind: "rage", t: 0, dur: dur || 8, motes, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🔱 คลื่นลมจากการจ้วง — เสี้ยวลมซ้อนกันพุ่งไปตามแนวแทง
@@ -40883,7 +41010,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, y, z); g.rotation.y = dirY;
         g.userData = { kind: "wind", t: 0, dur: 0.34, mats };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { dirY, len, col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🌍 เสาหินปฐพี — แท่งหินทะลุพื้นขึ้นมาแล้วยุบกลับ
@@ -40904,7 +41031,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z); g.scale.set(1, 0.02, 1);
         g.userData = { kind: "pillar2", t: 0, up: 0.14, hold: 0.7, out: 0.35, mats: [rm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // ⚡🐉 มังกรสายฟ้า — หัวมีเขา ลำตัวเป็นปล้อง ทะยานเป็นคลื่นไปตามแนวพุ่ง
@@ -40948,7 +41075,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, y, z); g.rotation.y = dirY; g.scale.set(1, 1, 0.05);
         g.userData = { kind: "frost", t: 0, up: 0.1, dur: 0.5, mats: [im, dm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { dirY, len, col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🔱👻 เงาหอก — หอกโปร่งแสงผุดลอยรอบเป้า แล้วพุ่งเสียบเข้าใส่พร้อมกัน
@@ -40987,7 +41114,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; ring.raycast = () => {};
         g.add(ring);
         g.userData = { kind: "stonearmor", t: 0, dur: dur || 12, plates, ring, mats: [rm, gm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🗿 โกเลมโบราณ — หินยักษ์ผุดขึ้นจากพื้น ยกหมัดสองข้างแล้วทุบลงสนาม
@@ -41050,7 +41177,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         dome.raycast = () => {}; skin.raycast = () => {};
         g.add(skin, dome);
         g.userData = { kind: "dome", t: 0, dur: dur || 14, dome, mats: [dm, sm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 💥 มิสไซล์ไหล่ — พุ่งขึ้นเป็นเส้นโค้งแล้วดิ่งลงระเบิดที่เป้า
@@ -41263,7 +41390,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 1.4, z);
         g.userData = { kind: "hole", t: 0, dur: dur || 1.2, r: r || 4.4, rings, onBurst, done: false, mats: [cm, rm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // ☄️ อุกกาบาตเพลิง — ก้อนหินยักษ์ห่อไฟดิ่งลงจากฟ้าพร้อมหางไฟ แล้วระเบิดเป็นลาวา
@@ -41362,7 +41489,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           motes.push({ o: mo, a: Math.random() * Math.PI * 2, r: 0.4 + Math.random() * (R - 0.6), y: Math.random() * 2.4, sp: 0.8 + Math.random() * 1.1 });
         }
         g.userData = { kind: "healcirc", t: 0, dur: dur || 3.0, rings, motes, mats: [gm, wm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🌊 นทีสวรรค์ — คลื่นน้ำแสงโค้งกวาดออกจากตัวผู้ร่ายไปข้างหน้า
@@ -41380,7 +41507,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(char.position.x, 0, char.position.z); g.rotation.y = dirY;
         g.userData = { kind: "wave", t: 0, dur: 0.7, r: r || 5.0, mats: [wm, fm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // ☕ แก้วกาแฟ — ถ้วยลอยขึ้นข้างหัวพร้อมไอร้อนพวยพุ่ง
@@ -41404,7 +41531,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.traverse((o) => { o.raycast = () => {}; });
         g.userData = { kind: "coffee", t: 0, dur: dur || 1.1, puffs, mats: [cupM, brewM, stM] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 📄 ทอร์นาโดกระดาษ — กรวยลมสีขาวพร้อมแผ่นกระดาษปลิวหมุนวน ดูดศัตรูเข้ากลาง
@@ -41471,7 +41598,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; ring.raycast = () => {};
         g.add(ring);
         g.userData = { kind: "clock", t: 0, dur: dur || 12, clocks, ring, mats: [rimM, faceM, auM] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🏆 คำสั่งด่วนจาก CEO — แฟ้มประทับตราแดงร่วงลงมาพร้อมเหรียญทอง
@@ -41663,7 +41790,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; ring.raycast = () => {};
         g.add(ring);
         g.userData = { kind: "firewall", t: 0, dur: dur || 14, bricks, ring, mats: [bm, lm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 💥 ระบบล่ม — หน้าต่าง ERROR สีแดงเด้งรัวรอบตัวเป้า พร้อมภาพกระตุกแตก
@@ -41685,7 +41812,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z);
         g.userData = { kind: "glitch", t: 0, dur: 0.75, x, z, panes, onHit, done: false, mats: [wm, rm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🟩 ฝนโค้ดเขียว — เสาอักขระเขียวไหลลงจากฟ้าแบบเมทริกซ์
@@ -41712,7 +41839,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(pool);
         g.position.set(x, 0, z);
         g.userData = { kind: "coderain", t: 0, dur: 0.62, x, z, cols, onHit, done: false, mats: [gm, wm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🕶️ โซ่ข้อมูล — โซ่เลขฐานสองสีม่วงพันรัดตัวเป้า หมุนล็อกไว้จนกว่าจะสลาย
@@ -41762,7 +41889,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(x, 0, z);
         g.userData = { kind: "dstorm", t: 0, dur: 0.5, x, z, rings, pkts, onHit, done: false, mats: [wm, pm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🔒 แรนซัมแวร์ — แม่กุญแจดิจิทัลคร่อมตัวเป้า ล็อกแล้วระเบิดเป็นเศษข้อมูล
@@ -41807,7 +41934,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(skull);
         g.position.set(x, 11, z); g.visible = !delay;
         g.userData = { kind: "zday", t: 0, delay: delay || 0, dur: 0.22, x, z, onHit, mats: [dm, gm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🛸 ลูกพลาสมา — กระสุนพลังงานจากโดรน พุ่งเป็นเส้นตรงเข้าเป้า
@@ -41842,7 +41969,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         shell.position.y = 1.0; shell.raycast = () => {};
         g.add(shell);
         g.userData = { kind: "nano", t: 0, form: 0.3, dur: dur || 14, bots, shell, mats: [nm, gm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🛰️ ดาวเทียมยิงเลเซอร์ — ตัวดาวเทียมลอยสูง ยิงลำแสงหนาลงมาแล้วกวาด
@@ -41872,7 +41999,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.traverse((o) => { o.raycast = () => {}; });
         g.position.set(x, 0, z); g.visible = !delay;
         g.userData = { kind: "orbital", t: 0, delay: delay || 0, dur: 0.62, x, z, sat, beam, core, glyph, onHit, done: false, mats: [beamM, coreM] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🧠 เป้าล็อกคำนวณ — กรอบเล็งหมุนคำนวณจุดตายเหนือหัวเป้า แล้วยิงทะลุลงมา
@@ -41953,7 +42080,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         root.position.set(x, 0, z);
         root.userData = g.userData;
         root.userData.sky = g;
-        scene.add(root); archerFx.push(root);
+        oldFx(root, { col }); scene.add(root); archerFx.push(root);
       } catch (e) {}
     };
     // 🐍 เงางูเห่า — งูเห่าเงาแผ่แม่เบี้ยพุ่งขย้ำเป้า
@@ -42019,7 +42146,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         }
         g.position.set(char.position.x, 0, char.position.z); g.rotation.y = dirY;
         g.userData = { kind: "crescent", t: 0, dur: 0.6, len: len || 5.2, back: !!back, dirY, sx: char.position.x, sz: char.position.z, onSweep, last: -1, mats: [cm, wm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // ⚡ แสงดาบชัก — รอยฟันแนวนอนสว่างวาบออกไปข้างหน้า แล้วจางหายในเสี้ยววินาที
@@ -42038,7 +42165,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         const w = new THREE.Group(); w.add(g);
         w.position.set(char.position.x, 0, char.position.z); w.rotation.y = dirY;
         w.userData = { kind: "iaiflash", t: 0, dur: 0.42, blade, core, mats: [bm, cm] };
-        scene.add(w); archerFx.push(w);
+        oldFx(w, { dirY, len, col }); scene.add(w); archerFx.push(w);
       } catch (e) {}
     };
     // 👹 ดาบเทพลงทัณฑ์ — ดาบยักษ์ปักหัวลงดิ่งจากฟ้าลงกลางวง
@@ -42110,7 +42237,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(cone);
         g.position.set(x, y, z); g.rotation.y = dirY;
         g.userData = { kind: "fistshock", t: 0, dur: 0.34, sc, rings, cone, mats: [rm, wm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     // 🦶 แรงกระแทกเข่า/ศอก — ลำพลังพุ่งขึ้นจากจุดกระแทก + วงแหวนแผ่ที่พื้น
@@ -42136,7 +42263,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         g.add(col2); g.add(core); g.add(ring);
         g.position.set(x, 0, z);
         g.userData = { kind: "kneeimpact", t: 0, dur: 0.44, col2, core, ring, shard, mats: [cm, wm] };
-        scene.add(g); archerFx.push(g);
+        oldFx(g, { col }); scene.add(g); archerFx.push(g);
       } catch (e) {}
     };
     G._animArcherFx = (d) => {
@@ -43000,9 +43127,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
     // ✨ วงเวทย์ใต้เท้า + ประกายพลังที่หดเข้าหาตัว — ใช้ตอน "สะสมพลัง" ก่อนปล่อยสกิล
     const ensureCastFx = () => {
       if (G._castRing) return;
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.72, 1.22, 40),
-        new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
+      const ring = new THREE.Mesh(   // 🌟 v751 วงเวทใต้เท้าตอนสะสมพลัง = วงเวทภาพวาด Higgsfield (ย้อมสีสกิล) แทนวงแหวนเรขาคณิตเดิม — ลูปเดิมยังคุมความทึบ/ขนาด/หมุนเหมือนเดิม
+        new THREE.PlaneGeometry(2.6, 2.6),
+        new THREE.MeshBasicMaterial({ map: hfxTex("hf_circlew"), color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, toneMapped: false })
       );
       ring.rotation.x = -Math.PI / 2; ring.visible = false; ring.raycast = () => {}; scene.add(ring); G._castRing = ring;
       // 🔮 วงในหมุนสวนทาง + ขีดอักขระเวทรอบวง — ทำให้ดูเป็น "วงเวท" ไม่ใช่วงแหวนเฉย ๆ
@@ -43010,12 +43137,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         new THREE.RingGeometry(0.3, 0.52, 3, 1),
         new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
       );
-      ring2.rotation.x = -Math.PI / 2; ring2.visible = false; ring2.raycast = () => {}; scene.add(ring2); G._castRing2 = ring2;
+      ring2.rotation.x = -Math.PI / 2; ring2.visible = false; ring2.raycast = () => {}; ring2.material.visible = false; scene.add(ring2); G._castRing2 = ring2;   // 🧹 สามเหลี่ยมชุดเก่า — ซ่อน
       const runes = [];
       for (let i = 0; i < 8; i++) {
         const rn = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.3),
           new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-        rn.rotation.x = -Math.PI / 2; rn.visible = false; rn.raycast = () => {};
+        rn.rotation.x = -Math.PI / 2; rn.visible = false; rn.raycast = () => {}; rn.material.visible = false;   // 🧹 ขีดอักขระชุดเก่า — ซ่อน (วงเวทภาพวาดมีอักษรในตัวแล้ว)
         rn.userData = { a: (i / 8) * Math.PI * 2 };
         scene.add(rn); runes.push(rn);
       }
@@ -43023,7 +43150,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const orbs = [];
       for (let i = 0; i < 8; i++) {
         const o = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
-        o.visible = false; o.raycast = () => {}; scene.add(o); orbs.push(o);
+        o.visible = false; o.raycast = () => {}; o.material.visible = false; scene.add(o); orbs.push(o);   // 🧹 ลูกแก้วชุดเก่า — ซ่อน
       }
       G._castOrbs = orbs;
       // ➡️ เส้นบอกทิศพุ่งบนพื้น — โผล่ตอนย่อเก็บแรง แล้วดับเมื่อพุ่งจบ
@@ -43031,7 +43158,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         new THREE.PlaneGeometry(0.42, 1),
         new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
       );
-      line.rotation.x = -Math.PI / 2; line.visible = false; line.raycast = () => {}; scene.add(line); G._dashLine = line;
+      line.rotation.x = -Math.PI / 2; line.visible = false; line.raycast = () => {}; line.material.visible = false; scene.add(line); G._dashLine = line;   // 🧹 เส้นบอกทิศชุดเก่า — ซ่อน
     };
     // 🌟 เส้นดาว 5 แฉกบนพื้น — วาดทีละเส้นตามที่ตัวละครวิ่งผ่าน
     // 🌟 ระบำเงา — เส้นดาวเป็นลำแสงขอบนุ่ม (แกนสว่าง + ฟุ้งจางออกข้าง + ปลายเรียว) ไม่ใช่แผ่นสี่เหลี่ยมทึบ
@@ -54672,7 +54799,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🦊 KITSUNE — ท่าโจมตีพิเศษ: สะบัดเก้าหางจุดไฟจิ้งจอกเก้าดวง → ดวงไฟโคจรรอบตัว → พุ่งเข้าใส่พร้อมกัน → ระเบิดวงไฟ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureK = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const kMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const foxO = ensureK("foxO", 9, (i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), kMat(i % 2 ? 0xbde8ff : 0x8ac0ff, 0.9)); m.visible = false; return m; });
@@ -54760,7 +54887,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
               const CS2 = (typeof CHAR_S !== "undefined" ? CHAR_S : char.scale.x) || 1;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureP = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const pMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const cocoon = ensureP("cocoon", 1, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.9, 20, 16), pMat(0xff7a14, 0.5)); m.visible = false; return m; })[0];
@@ -54854,7 +54981,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🧜‍♀️ MERMAID — ท่าโจมตีพิเศษเจ้าหญิงเงือก: ชูไตรศูลเรียกวังวนน้ำวน → น้ำวนดูดยกศัตรูลอย → ฟันไตรศูลลง คลื่นยักษ์ซัดถล่ม → น้ำสาดกระเซ็น → กลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureM = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const wMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const swirl2 = ensureM("swirl2", 4, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.72 - i * 0.14, 0.08 - i * 0.012, 10, 30), wMat(i % 2 ? 0xd8fbff : 0x3ab8e8)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
@@ -54940,7 +55067,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 💀 LICH — ท่าโจมตีพิเศษจ้าวกองทัพกระดูก: ชูคทาเปิดวงเวทย์ → มือกระดูกผุดจากดินตรึง → โครงกระดูกหกตัวผุดขึ้นรุมกัด → คทาระเบิดวิญญาณ → ล่องกลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureL2 = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const sMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const circle2 = ensureL2("circle2", 2, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.85 - i * 0.28, 0.06 - i * 0.014, 8, 34), sMat(i ? 0xd8ffe4 : 0x4ae880)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
@@ -55028,7 +55155,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐍 NAKI — ท่าโจมตีพิเศษนางพญานาค: เรียกวังน้ำวน → พ่นพิษนาคีสายน้ำเขียว → เศียรนาคสามหัวผุดจากบาดาลงับ → หางนาคฟาดปิดท้าย → ลอยกลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureN2 = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const nMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const vortex = ensureN2("vortex", 3, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.62 - i * 0.14, 0.075 - i * 0.014, 10, 30), nMat(i === 1 ? 0xaaffe8 : 0x3ad0b0)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
@@ -55123,7 +55250,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🕊️ KINNAREE — ท่าโจมตีพิเศษกินรี: กางปีกร่ายรำลอยขึ้น → หมุนรอบโปรยขนหงส์ → ขนหงส์คมพุ่งเข้าเป้าพร้อมกัน → ดอกไม้หิมพานต์ระเบิด → ร่อนลงอ่อนช้อย
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureK = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const kMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const blades = ensureK("blades", 10, (i) => { const m = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.62, 6), kMat(i % 3 === 0 ? 0xffffff : 0xffb8d8, 0.95)); m.scale.z = 0.26; m.visible = false; return m; });
@@ -55215,7 +55342,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐒 HANUMAN — ท่าโจมตีพิเศษวานรเผือก: ควงตรีเพชรตั้งท่า → หาวเป็นดาวเป็นเดือน (ร่างใหญ่ขึ้นเท่าตัว) → ฟาดตรีเพชรยักษ์ลงเต็มแรง → ดาวเดือนโปรยลง → ย่อร่างกลับ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureH = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const hMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const stars = ensureH("stars", 10, (i) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.13 + (i % 3) * 0.04, 0), hMat(i % 3 === 0 ? 0xfff4b0 : 0xffe07a, 0.95)); m.visible = false; return m; });
@@ -55311,7 +55438,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🦅 GARUDA — ท่าโจมตีพิเศษพญาปักษิน: กระพือปีกทะยานขึ้นฟ้า → โฉบดิ่งฉีกด้วยกรงเล็บ → ตวัดปีกเป็นพายุลม → ร่อนกลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureG2 = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const gMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const gash = ensureG2("gash", 3, (i) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.66, 22, 1, Math.PI * 0.15, Math.PI * 0.62), gMat(i === 1 ? 0xfff0b0 : 0xffc24a)); m.visible = false; return m; });
@@ -55389,7 +55516,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 😈 ASURA — ท่าโจมตีพิเศษเผ่าปีศาจ: ปลดผนึกอสูรพลังดำระเบิด → พุ่งทะลุตัวศัตรูทิ้งเงาไว้ → ขวากนรกผุดเสียบจากพื้น → เพลิงวิญญาณระเบิดปิดท้าย → ผงาดกลับที่
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureD = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const dMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const sigils = ensureD("sigils", 2, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.7 - i * 0.24, 0.08 - i * 0.02, 8, 30), dMat(i ? 0xff8a9a : 0xff2a4a)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
@@ -55491,7 +55618,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 👼 APSARA — ท่าโจมตีพิเศษนางฟ้า: กางปีกลอยขึ้นฟ้า → พนมมือรวมแสงเหนือเศียร → ลำแสงสวรรค์ทลายลงเป้า → ฝนขนนกศักดิ์สิทธิ์ → ร่อนลงพื้นอย่างนุ่มนวล
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureA = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const aMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const orb = ensureA("orb", 1, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 14), aMat(0xfff4b0, 0.9)); m.visible = false; return m; })[0];
@@ -55586,7 +55713,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🧝‍♀️ LUMINIA — ท่าโจมตีพิเศษเอลฟ์สาว: หมุนตัวร่ายรำเรียกกลีบดอก → ร่อนเข้าใกล้ → เถาวัลย์ผุดจากดินรัดศัตรู → ส่งจูบต้องมนตร์ระเบิดดาวชมพู → ร่อนถอยอย่างอ่อนช้อย
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureL = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const lMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               // 🌿 เถาวัลย์สามเส้นผุดจากดิน — บิดเกลียวขึ้นรัดตัวศัตรู
@@ -55693,7 +55820,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 👹 YAKSA — ท่าโจมตีพิเศษเผ่ายักษ์: กระทืบเท้าสะเทือนดิน → คว้ากระบองบุกเข้าใส่ → ทุบถล่มสองจังหวะหนักขึ้นเรื่อยๆ → แบกกระบองเดินกลับ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureY = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const yRings = ensureY("yRings", 3, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.55, i ? 0.07 : 0.11, 10, 30), new THREE.MeshBasicMaterial({ color: i === 2 ? 0xffd24a : 0xc0a060, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
               const yClub = ensureY("yClub", 1, () => {
@@ -55767,7 +55894,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🤖 IGNIS — ท่าโจมตีพิเศษเกราะเหล็ก: เจ็ตชาร์จ → ลอยตัวกลางอากาศ → ระดมยิงลำแสงฝ่ามือ 5 นัด → ลำแสงคู่เต็มกำลัง → ร่อนลงจอด
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureI = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const iMat = (cc) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
               const bolts = ensureI("bolts", 5, () => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), iMat(0x7ae0ff)); m.scale.x = 2.2; m.visible = false; return m; });
@@ -55838,7 +55965,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🛡️ CAPTAIN — ท่าโจมตีพิเศษผู้กอง: บิดตัวง้างโล่ → ขว้างโล่หมุนติ้ว → กระแทกเด้งสะท้อน → ตีกลับผ่านศัตรูอีกครั้ง → รับโล่คืนมือ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureC2 = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const disc = ensureC2("disc", 1, () => {
                 const g2 = new THREE.Group();
@@ -55909,7 +56036,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // ⚡ THUNDER — ท่าโจมตีพิเศษเทพอัสนี: ชูแขนเรียกพายุ → สายฟ้าฟาดสามดอก → ขว้างค้อนพายุหมุนติ้ว → ค้อนลอยกลับคืนมือ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureT = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const tbolts = ensureT("tbolts", 3, () => {
                 const g2 = new THREE.Group();
@@ -55979,7 +56106,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐉 RYUJIN — ท่าโจมตีพิเศษเผ่ามังกร: กางปีกรวมเพลิงเข้าแก่นอก → โผเข้าใกล้ → พ่นลมหายใจมังกรเพลิงท่วมศัตรู → เล็บเพลิงฟาดปิดท้าย → ร่อนถอยกลับ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureR = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const rMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const flames = ensureR("flames", 3, (i) => { const m = new THREE.Mesh(new THREE.ConeGeometry(0.34 + i * 0.2, 1.6, 12, 1, true), rMat([0xfff0a0, 0xffa030, 0xff5a1a][i])); m.rotation.z = -Math.PI / 2; m.visible = false; return m; }); // 🔥 กรวยเพลิงสามชั้นพุ่งไปหน้า
@@ -56054,7 +56181,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐰 USAGI — ท่าโจมตีพิเศษเผ่ากระต่าย: ย่อเก็บสปริงขา → ฮ็อปสองจังหวะ → เผ่นขึ้นฟ้าเหนือศัตรู → ค้อนแครอททุบดิ่งลงเต็มแรง → เด้งดีดกลับ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureU = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const uMat = (cc, op) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: op == null ? 0 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const rings = ensureU("rings", 2, (i) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.55, i ? 0.06 : 0.11, 10, 30), uMat(i ? 0xfff0d0 : 0xff8a2a)); m.rotation.x = Math.PI / 2; m.visible = false; return m; });
@@ -56125,7 +56252,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐱 NEKO — ท่าโจมตีพิเศษเผ่าแมว: เขย่งท่าแมวเก็บอุ้งมือ → โดดสองจังหวะเข้าประชิด → ตบแมวรัว 3 ที (อุ้งเท้าประทับ) → ตีลังกาถอยอย่างสง่า
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureN = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const paws = ensureN("paws", 3, (i) => {
                 const g2 = new THREE.Group();
@@ -56205,7 +56332,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               // 🐺 FENRIR — ท่าโจมตีพิเศษเผ่ามนุษย์หมาป่า: หมอบเก็บตัว → พุ่งตะครุบ → กรงเล็บฟาดไขว้ X → ตีลังกากลับ
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const ensureC = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); A.wfx.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
               const cMat = (cc) => new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const claws = ensureC("claws", 6, (i) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 22, 1, Math.PI * 0.2, Math.PI * 0.6), cMat(i < 3 ? 0xff5a3a : 0xffb03a)); m.visible = false; return m; });
@@ -56451,7 +56578,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               const steel = 0x9ec8ff, wind = 0x8fd0ff, gold = 0xf5d24a, rageR = 0xff5a2a, flame = 0xffa030, earth = 0x8a6a44, dust = 0xe0d0a8, white = 0xeafcff;
               const EP = em.position;
               const bx = battleCenter.x - 1.3;
-              if (!A.wfx) { A.wfx = new THREE.Group(); scene.add(A.wfx); A.wfxParts = {}; }
+              if (!A.wfx) { A.wfx = new THREE.Group(); oldFx(A.wfx, { quiet: true }); scene.add(A.wfx); A.wfxParts = {}; }
               const WFX = A.wfx;
               const addMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op == null ? 1 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
               const ensure = (key, n, make) => { if (!A.wfxParts[key]) { A.wfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); WFX.add(m); A.wfxParts[key].push(m); } } return A.wfxParts[key]; };
@@ -57322,7 +57449,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               const EP = em.position;
               char.position.x = battleCenter.x - 1.3; char.position.z = battleCenter.z; char.rotation.y = Math.PI / 2;
               const typing = rate => { armR.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate)) * 0.22; armL.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate + 1.1)) * 0.22; armR.rotation.z = 0.3; armL.rotation.z = -0.3; };
-              if (!A.cfx) { A.cfx = new THREE.Group(); scene.add(A.cfx); A.cfxParts = {}; }
+              if (!A.cfx) { A.cfx = new THREE.Group(); oldFx(A.cfx, { quiet: true }); scene.add(A.cfx); A.cfxParts = {}; }
               const CFX = A.cfx;
               const ensure = (key, n, make) => { if (!A.cfxParts[key]) { A.cfxParts[key] = []; for (let i = 0; i < n; i++) { const m = make(i); CFX.add(m); A.cfxParts[key].push(m); } } return A.cfxParts[key]; };
               const addMat = (col, op) => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: op == null ? 1 : op, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
@@ -58209,7 +58336,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     A.boltCut = new THREE.Mesh(new THREE.BoxGeometry(11, 0.24, 0.24), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0, depthWrite: false }));
                     A.boltCut.position.set(em.position.x, 1.25, em.position.z + 0.3);
                     A.boltCut.rotation.z = 0.3; A.boltCut.renderOrder = 999;
-                    scene.add(A.boltCut);
+                    oldFx(A.boltCut, { quiet: true }); scene.add(A.boltCut);
                   }
                   A.boltCut.material.opacity = Math.min(1, dp * 2);
                   A.boltCut.scale.x = Math.min(1, dp * 1.6);
@@ -58257,10 +58384,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   A.moon = new THREE.Mesh(new THREE.CircleGeometry(1.5, 32), new THREE.MeshBasicMaterial({ color: moonW, transparent: true, opacity: 0, depthWrite: false }));
                   A.moon.position.set(em.position.x - 0.5, 6.2, em.position.z - 3);
                   A.moon.renderOrder = 990;
-                  scene.add(A.moon);
+                  oldFx(A.moon, { quiet: true }); scene.add(A.moon);
                   A.moonLight = new THREE.PointLight(0xcfe0ff, 0, 14);
                   A.moonLight.position.set(em.position.x, 5, em.position.z);
-                  scene.add(A.moonLight);
+                  oldFx(A.moonLight, { quiet: true }); scene.add(A.moonLight);
                 }
                 // ─── the moon rises, the katana lifts, blossoms start falling ───
                 if (p < 0.26) {
@@ -58339,7 +58466,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     A.crescent = new THREE.Mesh(new THREE.RingGeometry(1.5, 2.6, 40, 1, Math.PI * 0.1, Math.PI * 1.0), new THREE.MeshBasicMaterial({ color: moonW, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
                     A.crescent.position.set(em.position.x, 1.3, em.position.z + 0.3);
                     A.crescent.rotation.z = -0.5; A.crescent.renderOrder = 999;
-                    scene.add(A.crescent);
+                    oldFx(A.crescent, { quiet: true }); scene.add(A.crescent);
                   }
                   A.crescent.material.opacity = Math.min(1, fp * 3) * (1 - Math.max(0, fp - 0.5) * 2);
                   A.crescent.scale.setScalar(0.5 + fp * 1.2);
@@ -61010,9 +61137,9 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               if (!A.sMoon) {
                 A.sMoon = new THREE.Mesh(new THREE.CircleGeometry(1.7, 32), new THREE.MeshBasicMaterial({ color: moonW, transparent: true, opacity: 0, depthWrite: false }));
                 A.sMoon.position.set(em.position.x - 0.4, 6.5, em.position.z - 3.2);
-                A.sMoon.renderOrder = 990; scene.add(A.sMoon);
+                A.sMoon.renderOrder = 990; oldFx(A.sMoon, { quiet: true }); scene.add(A.sMoon);
                 A.sMoonL = new THREE.PointLight(0xcfe0ff, 0, 16);
-                A.sMoonL.position.set(em.position.x, 5, em.position.z); scene.add(A.sMoonL);
+                A.sMoonL.position.set(em.position.x, 5, em.position.z); oldFx(A.sMoonL, { quiet: true }); scene.add(A.sMoonL);
                 // the moon's two halves (for the split)
                 A.moonHalves = [];
                 for (const sx of [-1, 1]) {
@@ -61112,7 +61239,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   A.sCrescent = new THREE.Mesh(new THREE.RingGeometry(1.8, 3.1, 44, 1, Math.PI * 0.08, Math.PI * 1.05), new THREE.MeshBasicMaterial({ color: white, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
                   A.sCrescent.position.set(em.position.x, 1.4, em.position.z + 0.3);
                   A.sCrescent.rotation.z = -0.6; A.sCrescent.renderOrder = 999;
-                  scene.add(A.sCrescent);
+                  oldFx(A.sCrescent, { quiet: true }); scene.add(A.sCrescent);
                 }
                 A.sCrescent.material.opacity = Math.min(1, dp * 3);
                 A.sCrescent.scale.setScalar(0.5 + dp * 1.3);
@@ -65553,19 +65680,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           <button onClick={() => setUi((u) => ({ ...u, settingsOpen: true }))} title="ตั้งค่าเกม" style={{
             width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
             fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-          }}>⚙️</button>
+          }}><HIco n="gear" size={25} /></button>
           {ui.mode === "explore" && (
             <button onClick={() => { if (G.ensurePid) G.ensurePid(); setUi((u) => ({ ...u, ...closeAllMenus(), profileOpen: true, profileInfo: G.profileInfo(), profileNameEdit: null })); }} title="โปรไฟล์ · บ้านถ้วยรางวัล" style={{
               width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
               fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-            }}>👤</button>
+            }}><HIco n="profile" size={26} /></button>
           )}
           {ui.mode === "explore" && (
             <button onClick={() => setUi((u) => ({ ...u, qtrack: !u.qtrack }))} title={ui.qtrack ? "ซ่อนรายการภารกิจ" : "แสดงรายการภารกิจ (เปิดค้างไว้ได้)"} style={{
               width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", position: "relative",
               fontSize: 15, background: ui.qtrack ? "linear-gradient(135deg,#f2b24d,#e0862f)" : "#fff",
               boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-            }}>📜{TODO.quest > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e04a6a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{TODO.quest}</span>}</button>
+            }}><HIco n="scroll" size={25} />{TODO.quest > 0 && <span style={{ position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e04a6a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" }}>{TODO.quest}</span>}</button>
           )}
           {/* 🍽️ บัฟอาหาร — ไอคอนต่อจากปุ่มภารกิจ แตะดูรายละเอียดบัฟ */}
           {(ui.mode === "explore" || ui.mode === "battle") && (ui.foodBuff || (ui.foodBag || []).length > 0) && (
@@ -66806,15 +66933,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 11, lineHeight: 1, fontFamily: font,
                 filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.85,
                 background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
-                boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45)" : "0 1px 4px rgba(0,0,0,0.3)" }}>🤖</button>
+                boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45)" : "0 1px 4px rgba(0,0,0,0.3)" }}><HIco n="robot" size={18} /></button>
               <button onClick={() => G.toggleAutoJob()} title={(ui.autoHerb || ui.autoFish || ui.autoMine) ? "เก็บของอัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "เก็บของอัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)"} style={{
                 width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 11, lineHeight: 1, fontFamily: font,
                 filter: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "none" : "grayscale(0.85)", opacity: (ui.autoHerb || ui.autoFish || ui.autoMine) ? 1 : 0.85,
                 background: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "linear-gradient(135deg,#5ab86a,#a8c84a)" : "#fff",
-                boxShadow: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "0 0 0 2px rgba(90,184,106,0.45)" : "0 1px 4px rgba(0,0,0,0.3)" }}>{ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : "🌿"}</button>
+                boxShadow: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "0 0 0 2px rgba(90,184,106,0.45)" : "0 1px 4px rgba(0,0,0,0.3)" }}>{ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : <HIco n="gather" size={18} />}</button>
               <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{
                 width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 10.5, lineHeight: 1, fontFamily: font, color: "#59a0e8",
-                background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>⚙️</button>
+                background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}><HIco n="gear" size={18} /></button>
             </div>
           )}
           {/* ❤️💧 หลอดเลือด + มานา (จอแนวนอน) */}
@@ -66842,19 +66969,19 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.8,
               background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
               boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45), 0 2px 8px rgba(89,160,232,0.5)" : "0 2px 6px rgba(0,0,0,0.24)",
-            }}>🤖</button>
+            }}><HIco n="robot" size={21} /></button>
             <button onClick={() => G.toggleAutoJob()} title={(ui.autoHerb || ui.autoFish || ui.autoMine) ? "เก็บของอัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "เก็บของอัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)"} style={{
               width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
               fontSize: 13, lineHeight: 1, fontFamily: font,
               filter: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "none" : "grayscale(0.85)", opacity: (ui.autoHerb || ui.autoFish || ui.autoMine) ? 1 : 0.8,
               background: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "linear-gradient(135deg,#5ab86a,#a8c84a)" : "#fff",
               boxShadow: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "0 0 0 2px rgba(90,184,106,0.45), 0 2px 8px rgba(90,184,106,0.5)" : "0 2px 6px rgba(0,0,0,0.24)",
-            }}>{ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : "🌿"}</button>
+            }}>{ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : <HIco n="gather" size={21} />}</button>
             <button onClick={() => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen }))} title="ตั้งค่าออโต้" style={{
               width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
               fontSize: 12, lineHeight: 1, fontFamily: font, color: "#59a0e8",
               background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.24)",
-            }}>⚙️</button>
+            }}><HIco n="gear" size={21} /></button>
           </div>
           </>)}
           {/* ⚙️ auto-battle settings popup */}
@@ -67430,7 +67557,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         <button onClick={() => G.toggleSocial()} title="เพื่อน" style={{ position: "absolute", ...Lslot(4), display: Lfit(4) ? "block" : "none", borderRadius: 15, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 23, background: "linear-gradient(135deg,#5fb0f0,#4a8ad0)", color: "#fff", boxShadow: "0 4px 12px rgba(70,130,210,0.42)", zIndex: 24 }}><Ico n="friends" size={25} color="#fff" />{(ui.onlineCount || 0) > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{ui.onlineCount}</span>}</button>
       </>)}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 24, background: "#fffaf4", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : <Ico n="hp" size={25} color="#e04a6a" />}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_hpCount}</span></button>
+        <button onClick={() => G.usePotion(G.hpPotUse)} title="น้ำยาเพิ่มเลือด" style={{ position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 24, background: "#fffaf4", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 }}>{_hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : <HIco n="hp" size={36} />}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_hpCount}</span></button>
       )}
       {/* 🏠 ปุ่มในบ้าน: แต่งบ้าน + นอนพัก (โหมดเยี่ยมบ้านเพื่อน = ดูอย่างเดียว) */}
       {ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (
@@ -67495,7 +67622,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       )}
       {/* 💧 mana potion — ใต้ปุ่มเลือด */}
       {ui.mode === "explore" && !ui.equipScreen && (
-        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>{_mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : "💧"}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _mpBrew ? "#3a8a4a" : "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_mpCount}</span></button>
+        <button onClick={() => G.useManaPotion(G.mpPotUse)} title="น้ำยาเพิ่มมานา" style={{ position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 }}>{_mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : <HIco n="mp" size={36} />}<span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _mpBrew ? "#3a8a4a" : "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" }}>{_mpCount}</span></button>
       )}
       {/* 🐎 ride / dismount — one tap */}
       {ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (
@@ -68201,7 +68328,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       border: "3px solid rgba(255,255,255,0.7)", cursor: "pointer", pointerEvents: "auto", padding: 0,
                       background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
                       boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
-                    }}>⚔️{ui.bufAct === "__atk" && <span style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" }} />}</button>
+                    }}><HIco n="swords" size={Math.round(ATK * 0.56)} />{ui.bufAct === "__atk" && <span style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" }} />}</button>
                   );
                   return (
                     <button onClick={D.fn} title={D.title} style={{
@@ -68219,8 +68346,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 })()}
                 {/* 🦘💨 กระโดด + พุ่ง — คู่เล็กใต้ซ้ายของปุ่มโจมตี */}
                 <div style={{ position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" }}>
-                  {hopBtn("💨", "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash())}
-                  {hopBtn("🦘", "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)}
+                  {hopBtn(<HIco n="dash" size={Math.round(HOPB * 0.66)} />, "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash())}
+                  {hopBtn(<HIco n="jump" size={Math.round(HOPB * 0.66)} />, "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)}
                 </div>
                 {/* ✨ สกิลเรียงเป็นวงโค้งรอบปุ่มโจมตี */}
                 {skills.map((sk, i) => {
@@ -70159,7 +70286,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                     boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.45), 0 0 12px rgba(240,207,122,0.5)" : it ? `0 0 8px ${col}55, inset 0 1px 0 rgba(255,255,255,0.12)` : "inset 0 1px 0 rgba(255,255,255,0.06)",
                     transition: "border-color .15s, box-shadow .15s" }}>
-                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : <Ico n={SLOT_GI[slot]} size={22} color="#d8c0d0" />}</span>
+                  <span style={{ fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 }}>{it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : <Ico n={SLOT_GI[slot]} size={22} color="#d8c0d0" flat />}</span>
                   <span style={{ marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : twoLock ? "#e0b86a" : "#c8b0c0", opacity: it ? 0.95 : 0.8, letterSpacing: 0.2 }}>{twoLock ? "สองมือ" : SLOT_NAMES[slot]}</span>
                   {it && <button title={`ถอด${SLOT_NAMES[slot]}`} onClick={(e) => { e.stopPropagation(); G.unequipSlot(slot); }} style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", border: "none", background: "linear-gradient(135deg,#d05050,#9a2c2c)", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "17px", boxShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>✕</button>}
                 </div>

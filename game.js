@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v750"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v751"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -1241,7 +1241,20 @@ const FashionTab = ({ G, ui, font, wide, onBack, setUi }) => {
                     React.createElement("button", { onClick: () => G.delWardrobe(i), style: { width: 26, height: 26, borderRadius: "50%", border: `1px solid ${line}`, cursor: "pointer", background: "rgba(0,0,0,0.3)", color: "#e88a9e", fontWeight: 900 } }, "\u2715")))),
                 !(G.wardrobePresets || []).length && React.createElement("div", { style: { fontSize: 10.5, color: "#c8b0c0" } }, "\u0E1C\u0E2A\u0E21\u0E25\u0E38\u0E04\u0E08\u0E32\u0E01\u0E2B\u0E21\u0E27\u0E14\u0E2D\u0E37\u0E48\u0E19\u0E41\u0E25\u0E49\u0E27\u0E01\u0E14 \uD83D\uDCBE \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E27\u0E49\u0E2A\u0E25\u0E31\u0E1A\u0E43\u0E0A\u0E49\u0E17\u0E35\u0E2B\u0E25\u0E31\u0E07"))))));
 };
-const Ico = ({ n, size = 22, color = "currentColor", style }) => {
+// 🎨 v751 ไอคอนหน้าจอวาดใหม่ (Higgsfield · GPT Image 2.5 พื้นใส) — ชื่อที่อยู่ในชุดนี้แสดงเป็นภาพวาดสีแทนเส้นทึบสีเดียว · flat = ใช้แบบเส้นเดิม
+const HUI_SET = { menu: 1, bag: 1, skills: 1, swords: 1, pvp: "swords", friends: 1, hp: 1, mp: 1, paw: 1, scroll: 1, gear: 1, profile: 1, robot: 1, gather: 1,
+    dash: 1, jump: 1, run: 1, star: 1, crown: 1, bolt: 1, fire: 1, coins: 1, gem: 1, sword: 1, shield: 1 };
+const HUI = (n) => { const v = HUI_SET[n]; return v ? "assets/higgsfield/ui/" + (v === 1 ? n : v) + ".webp" : null; };
+const HIco = ({ n, size = 22, dim, style }) => {
+    const src = HUI(n);
+    if (!src)
+        return null;
+    return React.createElement("img", { src: src, alt: "", draggable: false, width: size, height: size, style: { display: "inline-block", verticalAlign: "middle", flexShrink: 0, objectFit: "contain", pointerEvents: "none", userSelect: "none", WebkitUserDrag: "none",
+            filter: dim ? "grayscale(0.85) opacity(0.6)" : "drop-shadow(0 1px 1.5px rgba(60,20,50,0.32))", ...(style || {}) } });
+};
+const Ico = ({ n, size = 22, color = "currentColor", style, flat }) => {
+    if (!flat && HUI_SET[n])
+        return React.createElement(HIco, { n: n, size: Math.round(size * (size < 16 ? 1.38 : 1.22)), dim: color === "#f4ece4", style: style }); // ปุ่มใช้แล้ว (สีจาง) = ภาพเทาจาง
     const d = GI[n];
     if (!d)
         return null;
@@ -53184,6 +53197,7 @@ function CherryAdventure() {
             }
             g.userData = { kind: "cast", life: big ? 1.6 : 1.1, max: big ? 1.6 : 1.1, c1, c2, pool, beams, motes, sc };
             g.scale.setScalar(0.3);
+            oldFx(g, { col: color });
             scene.add(g);
             advRigs.push(g);
         };
@@ -53220,6 +53234,7 @@ function CherryAdventure() {
                 sparks.push(sp);
             }
             g.userData = { kind: "boom", life: big ? 1.0 : 0.8, max: big ? 1.0 : 0.8, flash, halo, rays, wave, wave2, sparks, sc };
+            oldFx(g, { col: color });
             scene.add(g);
             advRigs.push(g);
             burst(pos, color, big ? 2.2 : 1.6);
@@ -53550,6 +53565,13 @@ function CherryAdventure() {
             });
         };
         const fireShock = (pos, color) => {
+            try {
+                if (G._skillFxAt) {
+                    G._skillFxAt("default", pos.x, pos.z, color);
+                    return;
+                }
+            }
+            catch (_) { } // 🧹 v751 วงช็อกเรขาคณิตเดิม → ดาวปะทะ+วงคลื่นภาพวาด
             shockFx.material.color.setHex(color);
             shockFx.position.set(pos.x, 0.05, pos.z);
             shockFx.scale.setScalar(0.5);
@@ -54452,8 +54474,12 @@ function CherryAdventure() {
         // 🌟 v750 ประเภทที่สร้างใหม่ทั้งชุดจากภาพวาด Higgsfield (ค่า = ระยะเวลา) · ท่าใหญ่ที่เหลือใช้ฉากเดิม + ภาพวาดซ้อน (HF_OVER)
         const HF_ONLY = { fire: 0.85, hellfire: 1.3, bolt: 0.65, ice: 0.75, poison: 0.95, poisonknives: 0.9, shadow: 0.85, quake: 0.85, pierce: 0.55, snipe: 0.5, default: 0.55, orb: 0.6,
             punchwave: 0.55, shieldbash: 0.6, multi: 0.6, kneeburst: 0.65, healbless: 1.2, healpop: 1.0, crescent: 0.55, crossslash: 0.7, bleedstab: 0.6, warfrenzy: 1.0, summonpop: 0.6 };
-        const HF_OVER = { icespear: 1, thunderstorm: 1, swordbeam: 1, earthsplit: 1, arrowpierce: 1, arrowsnipe: 1, arrowpoison: 1, arrowmulti: 1, shadowdance: 1, spearsweep: 1, evolve: 1 };
+        const HF_OVER = { icespear: 1.25, thunderstorm: 1.75, swordbeam: 1.0, earthsplit: 0.95, arrowpierce: 1.82, arrowsnipe: 1.12, arrowpoison: 1.12, arrowmulti: 0.9, shadowdance: 0.9, spearsweep: 0.75, evolve: 1.3,
+            plasmadash: 0.85, dronebarrage: 1.15, gravitycore: 1.35, overclock: 1.4, omega: 2.6, pixel: 0.7 }; // 🧹 v751: ท่าใหญ่ก็ไม่ใช้ฉากเรขาคณิตชุดเก่าแล้ว — สร้างจากภาพวาดทั้งหมด (ค่า = ระยะเวลา)
+        Object.keys(HF_OVER).forEach((k) => { HF_ONLY[k] = HF_OVER[k]; });
         const spawnSkillFx = (fxType, pos, color) => {
+            if (HF_ONLY[fxType] == null && KFX_ONLY[fxType] == null)
+                fxType = "default"; // 🧹 v751 ชื่อแปลก/ไม่รู้จัก = ดาวปะทะภาพวาด (ไม่ตกไปวงแหวนเรขาคณิตเดิม)
             const kType = fxType, hOnly = HF_ONLY[fxType] != null, kOnly = hOnly || KFX_ONLY[fxType] != null;
             if (kOnly)
                 fxType = "__kfx__"; // ไม่เข้าสาขาของเดิม (สาขา default ท้ายสุดสร้างแค่วงแหวน → ตัดทิ้งด้านล่าง)
@@ -56966,7 +56992,9 @@ function CherryAdventure() {
                         const rg = A(hD("hf_ringw", 0x9fe4ff, 1, 0.07, { core: 0.3 }));
                         kx.push((pr) => { const q = kEase(pr, 0.12, 0.75); ic.set(q > 0 ? Math.min(1, q * 6) * (1 - kEase(q, 0.5, 1)) * 0.9 : 0, 1.2 + hEaseOut(q / 0.35) * 2.0, r0 + q * 0.3); rg.set(q > 0 ? (1 - q) * 0.85 : 0, 1 + hEaseOut(q / 0.7) * 3.2); });
                     }
-                    else if (t === "thunderstorm") { // 🌩️ พายุ — สายฟ้าวาดฟาดตามจังหวะเดิม 3 ครั้ง (0.14/0.34/0.54) + วาบพื้น
+                    else if (t === "thunderstorm") { // 🌩️ พายุ — เมฆครึ้ม + สายฟ้าวาดฟาด 3 ครั้ง (0.14/0.34/0.54) + วาบพื้น
+                        const cl = [0, 1, 2].map((k) => { const m = add(kSprite("smoke_05", 0x4a4a5e, 2.2, { normal: true, rot: Math.random() * 6 })); m.position.set((k - 1) * 0.9, 3.5 + (k % 2) * 0.25, 0); m.userData.r0 = m.material.rotation; return m; });
+                        kx.push((pr) => cl.forEach((m, k) => { m.material.opacity = Math.min(1, pr * 5) * (1 - kEase(pr, 0.8, 1)) * 0.85; m.material.rotation = m.userData.r0 + pr * (k % 2 ? 0.6 : -0.6); m.scale.setScalar(2.2 + pr * 0.6); }));
                         const B = [0.14, 0.34, 0.54].map((f) => {
                             const h = A(hS("hf_bolt", 0xffffff, 5.6, { core: 0.6 }));
                             h.sp.position.set((Math.random() - 0.5) * 1.2, 2.75, (Math.random() - 0.5) * 1.0);
@@ -56987,19 +57015,44 @@ function CherryAdventure() {
                             rg.set(q > 0 ? (1 - q) * 0.8 : 0, 1 + hEaseOut(q / 0.6) * 3.6);
                         });
                     }
-                    else if (t === "swordbeam") { // 🗡️ ดาบสวรรค์ — วงเวทใต้จุดตก + วาบตอนปักพื้น (pr 0.35)
+                    else if (t === "swordbeam") { // 🗡️ ดาบสวรรค์ — ลำแสงตกจากฟ้า + วงเวทใต้จุดตก + วาบตอนปักพื้น (pr 0.35)
                         const cc = cw ? 0xffe9a0 : col;
+                        const lb = A(hS("hf_heal", cc, 2.2, { core: 0.6, h: 4.4 }));
+                        kx.push((pr) => { const d = Math.min(1, pr / 0.35); lb.sp.position.y = 4.6 - d * d * 2.6; lb.set(pr < 0.35 ? Math.min(1, pr * 8) : 1 - kEase(pr, 0.35, 0.6), 2.2); });
                         const mc = A(hD("hf_circlew", cc, 3.0, 0.07, { core: 0.4 })), rg = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.4 }));
                         const fl = A(hS("hf_impactw", cc, 2.6, { core: 0.8 }));
                         fl.sp.position.y = 0.6;
                         kx.push((pr) => { mc.set(io(pr, 4, 0.6) * 0.9, 2.6 + pr * 0.8, pr * 2); const q = kEase(pr, 0.33, 0.8); fl.set(q > 0 ? 1 - kEase(q, 0.2, 1) : 0, 1.0 + hEaseOut(q / 0.4) * 1.8); rg.set(q > 0 ? (1 - q) * 0.9 : 0, 1 + hEaseOut(q / 0.7) * 4.0); });
                     }
-                    else if (t === "earthsplit") { // 🌋 ธรณีแยก — รอยแตกลาวา + วงฝุ่น
+                    else if (t === "earthsplit") { // 🌋 ธรณีแยก — รอยแตกลาวา + วงฝุ่น + ควันฝุ่นพวย
+                        const sm = [0, 1, 2, 3].map((k) => { const m = add(kSprite("smoke_05", 0xa89478, 1.3, { normal: true, rot: Math.random() * 6 })); m.userData = { a: (k / 4) * Math.PI * 2 + Math.random() }; return m; });
+                        kx.push((pr) => sm.forEach((m) => { const a = m.userData.a; m.position.set(Math.cos(a) * (0.6 + pr * 1.6), 0.35 + pr * 1.0, Math.sin(a) * (0.6 + pr * 1.6)); m.scale.setScalar(1.3 + pr * 1.6); m.material.opacity = (1 - pr) * 0.65; }));
                         const cr = A(hD("hf_crack", 0xffffff, 4.2, 0.065, { core: 0.3 })), crR = Math.random() * 6, rg = A(hD("hf_ringw", cw ? 0xffd09a : col, 1, 0.08, { core: 0.3 }));
                         kx.push((pr) => { cr.set(Math.min(1, pr * 8) * (1 - kEase(pr, 0.6, 1)), 2.6 + hEaseOut(pr / 0.3) * 1.6, crR); rg.set((1 - kEase(pr, 0.15, 0.85)) * 0.85, 1 + hEaseOut(pr / 0.6) * 4.2); });
                     }
                     else if (t === "arrowpierce" || t === "arrowsnipe" || t === "arrowpoison") { // 🏹 จุดปะทะตอนลูกธนูถึงเป้า (ธนูไฟ = ระเบิดไล่เฟรม · ธนูพิษ = หมอกพิษ)
                         const hit = t === "arrowpierce" ? 1.32 / 1.82 : 0.32 / 1.12, cc = t === "arrowpoison" ? 0xb070ff : t === "arrowsnipe" ? 0xff8a3a : (cw ? 0x9ac8ff : col);
+                        const f0 = t === "arrowpierce" ? 1.0 / 1.82 : 0, f1 = hit; // ช่วงลูกธนูพุ่ง (เดิมเป็นลูกธนูทรงเรขาคณิต) → แสงพุ่งวาด
+                        const st = A(hS("hf_slashw", cc, 1.9, { core: 0.6, h: 0.55 }));
+                        st.sp.position.y = 1.0;
+                        const ch = t === "arrowpierce" ? A(hS("hf_impactw", cc, 1.0, { core: 0.7 })) : null;
+                        if (ch)
+                            ch.sp.position.set(-2.6, 1.0, 0);
+                        const tf = t === "arrowsnipe" ? A(hS("hf_fire", 0xffffff, 1.1, { rot: Math.PI / 2 })) : null;
+                        if (tf)
+                            tf.sp.position.y = 1.0;
+                        kx.push((pr) => {
+                            const q = kEase(pr, f0, f1), on = pr >= f0 && pr < f1 + 0.02;
+                            const xx = -2.6 + q * 2.6;
+                            st.sp.position.x = xx;
+                            st.set(on ? 1 : 0, 1.9);
+                            if (tf) {
+                                tf.sp.position.x = xx - 0.3;
+                                tf.set(on ? 0.9 : 0, 1.1);
+                            }
+                            if (ch)
+                                ch.set(pr < f0 ? (0.5 + 0.5 * Math.sin(pr * 60)) * Math.min(1, pr * 6) : 0, 0.8 + kEase(pr, 0, f0) * 0.9);
+                        });
                         const fl = A(hS("hf_impactw", cc, 2.0, { core: 0.8, rot: Math.random() * 6 }));
                         fl.sp.position.y = 1.0;
                         const rg = A(hS("hf_ringw", cc, 0.6, { core: 0.4 }));
@@ -57025,14 +57078,100 @@ function CherryAdventure() {
                         const P = [[-0.55, 1.1], [0.5, 1.3], [0, 0.85]].map(([dx, y], i) => { const h = A(hS("hf_impactw", cc, 1.3, { core: 0.7, rot: Math.random() * 6 })); h.sp.position.set(dx, y, 0.05); h.d0 = i * 0.08; return h; });
                         kx.push((pr) => P.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.35); h.set(q > 0 ? 1 - kEase(q, 0.3, 1) : 0, 0.5 + hEaseOut(q / 0.5) * 1.1); }));
                     }
-                    else if (t === "shadowdance") { // 🌑 ร่างเงา — วังวนเงาใต้ร่างแยก
+                    else if (t === "shadowdance") { // 🌑 ร่างเงา — วังวนเงา + รอยฟันม่วง 3 เส้นรอบตัว
+                        const SL = [0, 1, 2].map((i) => { const h = A(hS("hf_slashw", cw ? 0xb070ff : col, 2.2, { core: 0.4, rot: Math.random() * 6, h: 1.0 })); h.sp.position.set((i - 1) * 0.7, 1.0 + (i % 2) * 0.3, 0); h.d0 = 0.1 + i * 0.15; h.r0 = h.sp.material.rotation; return h; });
+                        kx.push((pr) => SL.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.35); h.set(q > 0 ? Math.min(1, q * 8) * (1 - kEase(q, 0.4, 1)) : 0, 1.6 + hEaseOut(q / 0.5) * 0.8, h.r0 - (1 - hEaseOut(q / 0.5)) * 0.5); }));
                         const sv = A(hS("hf_shadow", 0xffffff, 2.8, { core: 0.2 }));
                         sv.sp.position.y = 1.0;
                         kx.push((pr) => sv.set(io(pr, 5, 0.5) * 0.85, 1.6 + pr * 1.6, -pr * 6));
                     }
-                    else if (t === "spearsweep") { // 🌀 กวาดหอก — เสี้ยวพลังแบนหมุนรอบตัว + วงคลื่นพื้น
+                    else if (t === "spearsweep") { // 🌀 กวาดหอก — เสี้ยวพลังแบนหมุนรอบตัว 2 ชั้น + วงคลื่นพื้น
+                        const s2 = A(hD("hf_slashw", cw ? 0xd8f0ff : col, 3.0, 1.2, { core: 0.4 }));
+                        kx.push((pr) => s2.set(io(pr, 5, 0.45) * 0.85, 2.6 + pr * 1.4, Math.PI + pr * 8));
                         const rg = A(hD("hf_ringw", cw ? 0xbfe8ff : col, 1, 0.07, { core: 0.5 })), sl = A(hD("hf_slashw", cw ? 0xd8f0ff : col, 3.6, 0.5, { core: 0.5 }));
                         kx.push((pr) => { rg.set((1 - kEase(pr, 0.2, 1)) * 0.9, 1.2 + hEaseOut(pr / 0.7) * 4.0); sl.set(io(pr, 6, 0.4), 3.0 + pr * 1.6, -pr * 7); });
+                    }
+                    else if (t === "plasmadash") { // 🤖⚡ พุ่งพลาสมา — แสงพุ่งฟ้าพาดผ่าน + ดาวปะทะ + วงคลื่น
+                        const cc = cw ? 0x3ad0ff : col;
+                        const st = A(hS("hf_slashw", cc, 2.6, { core: 0.7, h: 0.7 }));
+                        st.sp.position.y = 1.0;
+                        const fl = A(hS("hf_impactw", cc, 2.0, { core: 0.8, rot: Math.random() * 6 }));
+                        fl.sp.position.y = 1.0;
+                        const rg = A(hD("hf_ringw", cc, 1, 0.07, { core: 0.4 }));
+                        const bt = A(hS("hf_bolt", cc, 2.4, { core: 0.5, rot: Math.PI / 2 }));
+                        bt.sp.position.y = 1.0;
+                        kx.push((pr) => {
+                            const q = kEase(pr, 0, 0.35);
+                            st.sp.position.x = -2.4 + q * 2.6;
+                            st.set(pr < 0.4 ? 1 : 0, 2.6);
+                            bt.sp.position.x = st.sp.position.x - 0.6;
+                            bt.set(pr < 0.38 ? (Math.floor(pr / 0.05) % 2 ? 0.5 : 0.9) : 0, 2.4, Math.PI / 2);
+                            const h = kEase(pr, 0.3, 0.8);
+                            fl.set(h > 0 ? 1 - kEase(h, 0.2, 1) : 0, 1.0 + hEaseOut(h / 0.4) * 1.5);
+                            rg.set(h > 0 ? (1 - h) * 0.85 : 0, 1 + hEaseOut(h / 0.7) * 3.0);
+                        });
+                    }
+                    else if (t === "dronebarrage") { // 🛸 ห่ากระสุนโดรน — ดาวปะทะ 6 จุดสลับสี + ระเบิดไล่เฟรม
+                        const cc = cw ? 0x3ad0ff : col;
+                        const P = [0, 1, 2, 3, 4, 5].map((i) => { const h = A(hS("hf_impactw", i % 2 ? 0xffb040 : cc, 1.2, { core: 0.7, rot: Math.random() * 6 })); const a = Math.random() * 6.3, r = 0.3 + Math.random() * 1.0; h.sp.position.set(Math.cos(a) * r, 0.6 + Math.random() * 0.9, Math.sin(a) * r); h.d0 = i * 0.09; return h; });
+                        const F = flip(2.6, 1.0), rg = A(hD("hf_ringw", cc, 1, 0.07, { core: 0.4 }));
+                        kx.push((pr) => { P.forEach((h) => { const q = kEase(pr, h.d0, h.d0 + 0.3); h.set(q > 0 ? 1 - kEase(q, 0.3, 1) : 0, 0.5 + hEaseOut(q / 0.5) * 1.1); }); flipAt(F, kEase(pr, 0.3, 1)); rg.set((1 - kEase(pr, 0.3, 1)) * 0.8, 1 + hEaseOut(pr / 0.7) * 3.0); });
+                    }
+                    else if (t === "gravitycore") { // 🌌 แกนแรงโน้มถ่วง — วังวนดูดเข้ากลางแล้วระเบิด
+                        const cc = cw ? 0x9a6aff : col;
+                        const sv = A(hS("hf_shadow", 0xffffff, 3.0, { core: 0.3 }));
+                        sv.sp.position.y = 1.1;
+                        const mc = A(hD("hf_circlew", cc, 3.4, 0.07, { core: 0.3 }));
+                        const rg = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.5 })), fl = A(hS("hf_impactw", cc, 2.2, { core: 0.8 }));
+                        fl.sp.position.y = 1.1;
+                        kx.push((pr) => {
+                            const pull = kEase(pr, 0, 0.7);
+                            sv.set(Math.min(1, pr * 5) * (1 - kEase(pr, 0.7, 0.85)), 3.0 - pull * 1.6, -pr * 14);
+                            mc.set(io(pr, 5, 0.75) * 0.85, 3.4 - pull * 0.8, pr * 4);
+                            rg.set(pr < 0.7 ? 0.8 : (1 - kEase(pr, 0.7, 1)) * 0.9, pr < 0.7 ? 4.2 - pull * 3.4 : 0.8 + hEaseOut(kEase(pr, 0.7, 1)) * 4.0);
+                            const b = kEase(pr, 0.7, 1);
+                            fl.set(b > 0 ? 1 - kEase(b, 0.3, 1) : 0, 1.0 + hEaseOut(b / 0.4) * 2.0);
+                        });
+                    }
+                    else if (t === "overclock") { // 🚀 โอเวอร์คล็อก (บัฟตัวเอง) — วงเวทฟ้าหมุน + ประกายไฟฟ้าเต้นรอบตัว + วงคลื่นลอยขึ้น
+                        const cc = cw ? 0x3ad0ff : col;
+                        const mc = A(hD("hf_circlew", cc, 3.0, 0.07, { core: 0.35 }));
+                        const B = [0, 1, 2].map((i) => { const h = A(hS("hf_bolt", cc, 1.8, { core: 0.5 })); const a = (i / 3) * Math.PI * 2; h.sp.position.set(Math.cos(a) * 0.7, 1.1, Math.sin(a) * 0.7); h.ph = i; return h; });
+                        const rg = A(hS("hf_ringw", cc, 1.0, { core: 0.4 }));
+                        rg.sp.position.y = 0.5;
+                        kx.push((pr) => {
+                            const v = io(pr, 5, 0.6);
+                            mc.set(v * 0.9, 2.6 + hEaseOut(pr / 0.4) * 0.6, pr * 3);
+                            B.forEach((h) => h.set(v * (Math.floor(pr * 18 + h.ph) % 2 ? 0.9 : 0.25), 1.6, (h.ph - 1) * 0.3));
+                            rg.sp.position.y = 0.5 + pr * 1.8;
+                            rg.set((1 - kEase(pr, 0.3, 1)) * 0.8, 1.0 + pr * 1.6);
+                        });
+                    }
+                    else if (t === "omega") { // ☄️ โอเมก้า (ไม้ตายใหญ่) — วงเวทยักษ์ → สายฟ้าลำใหญ่ฟาด → ระเบิดไล่เฟรม + รอยแตก + วงคลื่น
+                        const cc = cw ? 0x8adfff : col;
+                        const mc = A(hD("hf_circlew", cc, 5.6, 0.07, { core: 0.4 })), cr = A(hD("hf_crack", 0xffffff, 5.0, 0.065, { core: 0.3 })), crR = Math.random() * 6;
+                        const bt = A(hS("hf_bolt", 0xffffff, 9.0, { core: 0.7 }));
+                        bt.sp.position.y = 4.4;
+                        const F = flip(6.0, 2.0), r1 = A(hD("hf_ringw", cc, 1, 0.08, { core: 0.5 })), fl = A(hS("hf_impactw", cc, 4.0, { core: 0.8 }));
+                        fl.sp.position.y = 1.0;
+                        kx.push((pr) => {
+                            mc.set(io(pr, 6, 0.8) * 0.95, 4.6 + hEaseOut(pr / 0.3) * 1.2, pr * 2.5);
+                            const b = kEase(pr, 0.25, 0.45);
+                            bt.set(b > 0 && b < 1 ? (Math.floor(pr / 0.03) % 2 ? 0.6 : 1) : 0, null, Math.floor(pr / 0.03) % 2 ? 0.04 : -0.04);
+                            const h = kEase(pr, 0.33, 1);
+                            flipAt(F, h);
+                            fl.set(h > 0 ? 1 - kEase(h, 0.15, 0.5) : 0, 2.0 + hEaseOut(h / 0.3) * 3.0);
+                            cr.set(h > 0 ? Math.min(1, h * 8) * (1 - kEase(h, 0.6, 1)) : 0, 3.6 + hEaseOut(h / 0.3) * 1.8, crR);
+                            r1.set(h > 0 ? (1 - h) * 0.9 : 0, 1 + hEaseOut(h / 0.6) * 7.0);
+                        });
+                    }
+                    else if (t === "pixel") { // 👾 พิกเซลแตก — ดาวปะทะ + วงคลื่นเล็ก (ย้อมสีสกิล)
+                        const cc = cw ? 0x38f08a : col;
+                        const fl = A(hS("hf_impactw", cc, 1.6, { core: 0.7, rot: Math.random() * 6 }));
+                        fl.sp.position.y = 1.0;
+                        const rg = A(hS("hf_ringw", cc, 0.6, { core: 0.4 }));
+                        rg.sp.position.y = 1.0;
+                        kx.push((pr) => { fl.set(1 - kEase(pr, 0.15, 0.6), 0.8 + hEaseOut(pr / 0.35) * 1.2); rg.set((1 - kEase(pr, 0.2, 1)) * 0.9, 0.5 + hEaseOut(pr / 0.8) * 2.4); });
                     }
                     else if (t === "evolve") { // ✨ วิวัฒนาการ — วงเวททอง + แสงศักดิ์สิทธิ์ลอยขึ้น
                         const mc = A(hD("hf_circle", 0xffffff, 3.0, 0.07, { core: 0.35 })), hl = A(hS("hf_heal", 0xfff0c0, 2.6, { core: 0.3 }));
@@ -57040,8 +57179,12 @@ function CherryAdventure() {
                         kx.push((pr) => { const v = io(pr, 4, 0.6); mc.set(v * 0.9, 2.4 + hEaseOut(pr / 0.5) * 0.8, pr * 2); hl.set(v * 0.85, 2.0 + pr * 1.0); hl.sp.position.y = 1.3 + pr * 0.8; });
                     }
                 };
-                if (hOnly)
-                    hfLayer(kType);
+                if (hOnly) {
+                    if (HF_OVER[kType])
+                        hfOver(kType);
+                    else
+                        hfLayer(kType);
+                }
                 else if (fxType === "fire") {
                     const fc = fxType === "fire" ? 0xff7a1a : col;
                     const sc = add(kDecal("scorch_02", 0xff8a30, 2.6));
@@ -57171,8 +57314,6 @@ function CherryAdventure() {
                     const sb = bits(8, "star_01", 0x9fe4ff, 1.0, 2.4, 1.6);
                     kx.push((pr) => { sb(pr, dur); rg.scale.setScalar(0.5 + pr * 2.4); rg.material.opacity = (1 - pr) * 0.85; st.material.opacity = 1 - kEase(pr, 0, 0.5); st.scale.setScalar(1.5 + pr * 1.2); gl.material.opacity = (1 - pr) * 0.8; gl.scale.setScalar(0.7 + pr * 1.0); });
                 }
-                if (HF_OVER[kType])
-                    hfOver(kType);
                 if (kx.length) {
                     const u0 = update;
                     update = (pr, tn) => { if (u0)
@@ -57237,6 +57378,152 @@ function CherryAdventure() {
             spawnSkillFx("questdone", char.position, 0xffffff);
         }
         catch (_) { } }; // ✅ เรียกตอนภารกิจ/บทเนื้อเรื่องสำเร็จ
+        // 🧹 v751 เอฟเฟกต์สกิลชุดเก่า (ทรงเรขาคณิตเรืองแสง: เสาไฟ/หนามน้ำแข็ง/คลื่นเสี้ยว/พายุใบมีด/วงแหวนศักดิ์สิทธิ์/ออร่า/โดม ฯลฯ) — ซ่อนทั้งหมด
+        //    ตัวเดิมยังทำงานเหมือนเดิม (จังหวะดาเมจ · คอลแบ็กโดนเป้า · ดึงศัตรู · ดาเมจต่อเนื่อง) แค่มองไม่เห็น แล้ววางภาพวาด Higgsfield แทนตรงตำแหน่ง/เวลาเดิม
+        //    ของจริงที่เป็นวัตถุ (ลูกธนู/กระสุน/สัตว์อัญเชิญ/โกเลม/โดรน/ของประจำอาชีพ) ไม่ยุ่ง
+        const _oldHide1 = (o) => { const m = o.material; if (m)
+            (Array.isArray(m) ? m : [m]).forEach((mm) => { if (mm && !(mm.userData && mm.userData._shared))
+                mm.visible = false; }); };
+        const hfAt = (t, x, z, c, delay) => { const f = () => { try {
+            spawnSkillFx(t, { x, z }, c);
+        }
+        catch (_) { } }; if (delay > 0)
+            setTimeout(f, delay * 1000);
+        else
+            f(); };
+        const hfLine = (t, x, z, dirY, len, c, n, step) => { for (let i = 0; i < n; i++) {
+            const d = (len * (i + 0.6)) / n;
+            hfAt(t, x + Math.sin(dirY) * d, z + Math.cos(dirY) * d, c, i * (step || 0.05));
+        } };
+        const hfHold = (x, z, dur, follow, build) => kfxSpawn(x, z, dur, (g) => { const u = build(g); return (pr) => { if (follow)
+            g.position.set(char.position.x, 0, char.position.z); u(pr); }; });
+        const hfFade = (pr, dur, tin, tout) => Math.min(1, (pr * dur) / (tin || 0.25)) * Math.min(1, ((1 - pr) * dur) / (tout || 0.4)); // เข้า/ออกเป็นวินาที (ใช้กับออร่ายาว)
+        const oldFx = (g, o) => {
+            try {
+                g.traverse(_oldHide1);
+                const ad = g.add.bind(g);
+                g.add = (...a) => { ad(...a); a.forEach((c) => { if (c && c.traverse)
+                    c.traverse(_oldHide1); }); return g; };
+                o = o || {};
+                if (o.quiet)
+                    return;
+                const U = g.userData || {}, k = U.kind, x = g.position.x, z = g.position.z, c = o.col != null ? o.col : (U.col != null ? U.col : 0xffd24a), cw = hNearWhite(c);
+                if (k === "cast") {
+                    const big = U.max > 1.2, c1 = o.col != null ? o.col : 0xb07ae0; // 👑 ร่ายท่าไม้ตาย — วงเวทใต้เท้า + แสงศักดิ์สิทธิ์ลอยขึ้น
+                    hfHold(x, z, U.max || 1.1, false, (G2) => {
+                        const mc = hD("hf_circlew", c1, big ? 4.0 : 3.0, 0.07, { core: 0.4 });
+                        G2.add(mc.d);
+                        const hl = hS("hf_heal", c1, big ? 3.0 : 2.4, { core: 0.3 });
+                        hl.sp.position.y = 1.4;
+                        G2.add(hl.sp);
+                        return (pr) => { const v = Math.min(1, pr * 5) * (1 - kEase(pr, 0.6, 1)); mc.set(v * 0.95, (big ? 3.4 : 2.6) + hEaseOut(pr / 0.4) * 0.8, pr * 3); hl.set(v * 0.8, (big ? 2.6 : 2.0) + pr * 0.8); hl.sp.position.y = 1.3 + pr * 0.8; };
+                    });
+                }
+                else if (k === "boom")
+                    hfAt(U.sc > 1.1 ? "hellfire" : "punchwave", x, z, o.col);
+                else if (k === "pillar")
+                    hfAt("fire", x, z, c);
+                else if (k === "spike")
+                    hfAt("ice", x, z, c);
+                else if (k === "beam")
+                    hfLine("pierce", x, z, o.dirY || 0, o.len || 5, c, 4, 0.04);
+                else if (k === "bolt")
+                    (U.nodes || []).forEach((nd, i) => hfAt("bolt", nd.x, nd.z, c, i * (U.step || 0.075)));
+                else if (k === "pool") {
+                    const fr = U.dotKind === "frost", r = U.r || 2.4; // ☠️/❄️ บ่อพิษ/ลานน้ำแข็ง — แผ่นภาพวาดบนพื้นตลอดเวลาที่ยังทำดาเมจ
+                    hfHold(x, z, U.dur || 4.5, false, (G2) => {
+                        const pd = hD(fr ? "hf_ice" : "hf_poison", 0xffffff, r * 2.1, 0.07);
+                        G2.add(pd.d);
+                        const rg = hD("hf_ringw", fr ? 0x9fe4ff : 0x8ae04a, r * 2.0, 0.08, { core: 0.2 });
+                        G2.add(rg.d);
+                        return (pr) => { const v = hfFade(pr, U.dur || 4.5, 0.3, 0.6); pd.set(v * 0.85, r * (2.0 + 0.1 * Math.sin(pr * 30)), pr * 2); rg.set(v * 0.6, r * 2.0); };
+                    });
+                }
+                else if (k === "hshield" || k === "dome" || k === "stonearmor" || k === "firewall" || k === "nano" || k === "coffee" || k === "clock") { // 🛡️ โล่/โดม/เกราะหิน/ไฟร์วอลล์/นาโน/กาแฟ/นาฬิกา (ติดตัว) — ฟองวงคลื่นรอบตัว + วงเวทใต้เท้า
+                    const D = U.dur || 1, cc = k === "stonearmor" ? 0xe0b878 : k === "firewall" ? (cw ? 0x38f08a : c) : k === "coffee" || k === "clock" ? (cw ? 0xffc870 : c) : k === "dome" || k === "nano" ? (cw ? 0x7ad8ff : c) : (cw ? 0xffe9a0 : c);
+                    hfHold(char.position.x, char.position.z, D, true, (G2) => {
+                        const rg = hS("hf_ringw", cc, 3.0, { core: 0.3 });
+                        rg.sp.position.y = 1.1;
+                        G2.add(rg.sp);
+                        const mc = hD("hf_circlew", cc, 2.8, 0.07, { core: 0.3 });
+                        G2.add(mc.d);
+                        return (pr) => { const v = hfFade(pr, D, 0.2, 0.4), lng = D > 2; rg.set(v * (lng ? 0.45 : 0.85), 2.9 + 0.12 * Math.sin(pr * D * 4)); mc.set(v * (lng ? 0.4 : 0.8), 2.6, pr * D * 0.8); };
+                    });
+                }
+                else if (k === "hring" || k === "wave") {
+                    const r = U.r || 3.2, D = U.dur || 0.5; // ✨ วงแหวนศักดิ์สิทธิ์/คลื่นแสง — วงเวท + วงคลื่นแผ่ถึงรัศมีจริง
+                    hfHold(x, z, D + 0.2, false, (G2) => {
+                        const mc = hD("hf_circlew", cw ? 0xffe9a0 : c, r * 1.6, 0.07, { core: 0.4 });
+                        G2.add(mc.d);
+                        const rg = hD("hf_ringw", cw ? 0xffe9a0 : c, 1, 0.08, { core: 0.4 });
+                        G2.add(rg.d);
+                        return (pr) => { mc.set(Math.min(1, pr * 6) * (1 - kEase(pr, 0.5, 1)), r * (1.2 + hEaseOut(pr / 0.5) * 0.6), pr * 2); rg.set((1 - kEase(pr, 0.3, 1)) * 0.9, 0.8 + hEaseOut(pr / 0.8) * r * 2.1); };
+                    });
+                }
+                else if (k === "lpillar")
+                    hfAt("summonpop", U.x != null ? U.x : x, U.z != null ? U.z : z, cw ? 0xffe9a0 : c, U.delay || 0);
+                else if (k === "crack")
+                    hfLine("quake", x, z, o.dirY != null ? o.dirY : g.rotation.y, o.len || 4, c, 3, 0.06);
+                else if (k === "tornado" || k === "hole" || k === "eclipse") { // 🌪️ พายุใบมีด / 🕳️ หลุมดำ / 🌑 สุริยุปราคา — คงอยู่ตามเวลาจริง
+                    const D = U.dur || 1.1, r = U.r || 3.2, dark = k !== "tornado";
+                    hfHold(x, z, D, false, (G2) => {
+                        const a = dark ? hS("hf_shadow", 0xffffff, r * 0.9, { core: 0.3 }) : null;
+                        if (a) {
+                            a.sp.position.y = 1.2;
+                            G2.add(a.sp);
+                        }
+                        const s1 = dark ? null : hD("hf_slashw", cw ? 0xd8f0ff : c, r * 1.3, 0.6, { core: 0.5 }), s2 = dark ? null : hD("hf_slashw", cw ? 0xd8f0ff : c, r * 1.0, 1.4, { core: 0.4 });
+                        if (s1) {
+                            G2.add(s1.d);
+                            G2.add(s2.d);
+                        }
+                        const mc = hD(dark ? "hf_circlew" : "hf_ringw", dark ? (cw ? 0x9a6aff : c) : (cw ? 0xd8f0ff : c), r * 1.9, 0.07, { core: 0.3 });
+                        G2.add(mc.d);
+                        return (pr) => { const v = hfFade(pr, D, 0.15, 0.3), tt = pr * D; if (a)
+                            a.set(v, r * (0.8 + 0.1 * Math.sin(tt * 6)), -tt * 6); if (s1) {
+                            s1.set(v * 0.95, r * 1.3, tt * 11);
+                            s2.set(v * 0.85, r * 1.0, Math.PI - tt * 14);
+                        } mc.set(v * 0.8, r * 1.9, tt * (dark ? 2 : -3)); };
+                    });
+                }
+                else if (k === "rage" || k === "healcirc") {
+                    const D = U.dur || 3, rg8 = k === "rage"; // 😡 ออร่าคลั่ง / 💚 วงฮีลต่อเนื่อง (ติดตัว)
+                    hfHold(char.position.x, char.position.z, D, true, (G2) => {
+                        const mc = hD(rg8 ? "hf_circlew" : "hf_circle", rg8 ? (cw ? 0xff5a3a : c) : 0xffffff, rg8 ? 2.6 : 3.0, 0.07, { core: 0.3 });
+                        G2.add(mc.d);
+                        const f = hS(rg8 ? "hf_fire" : "hf_heal", rg8 ? (cw ? 0xffffff : c) : 0xffffff, rg8 ? 1.6 : 2.4, { core: 0.2 });
+                        f.sp.position.y = rg8 ? 1.0 : 1.3;
+                        G2.add(f.sp);
+                        return (pr) => { const v = hfFade(pr, D, 0.3, 0.5), tt = pr * D; mc.set(v * (rg8 ? 0.55 : 0.85), (rg8 ? 2.6 : 3.0) + 0.1 * Math.sin(tt * 3), tt * (rg8 ? -1.2 : 0.8)); f.set(v * (rg8 ? 0.35 + 0.15 * Math.sin(tt * 9) : 0.7 + 0.2 * Math.sin(tt * 4)), (rg8 ? 1.6 : 2.4) + 0.1 * Math.sin(tt * 7)); };
+                    });
+                }
+                else if (k === "wind")
+                    hfLine("pierce", x, z, o.dirY || 0, o.len || 3, c, 3, 0.04);
+                else if (k === "frost")
+                    hfLine("ice", x, z, o.dirY || 0, o.len || 6, c, 3, 0.05);
+                else if (k === "crescent")
+                    hfLine("crescent", U.sx != null ? U.sx : x, U.sz != null ? U.sz : z, U.dirY || 0, U.len || 5, c, 3, 0.08);
+                else if (k === "iaiflash")
+                    hfLine("crescent", x, z, o.dirY || 0, o.len || 5, c, 2, 0.05);
+                else if (k === "pillar2")
+                    hfAt("quake", x, z, c);
+                else if (k === "glitch")
+                    hfAt("pixel", x, z, c);
+                else if (k === "coderain")
+                    hfAt("dronebarrage", x, z, c);
+                else if (k === "dstorm")
+                    hfAt("thunderstorm", x, z, c);
+                else if (k === "zday")
+                    hfAt("pierce", x, z, c, U.delay || 0);
+                else if (k === "orbital")
+                    hfAt("bolt", x, z, c, U.delay || 0);
+                else if (k === "fistshock")
+                    hfAt("punchwave", x, z, c);
+                else if (k === "kneeimpact")
+                    hfAt("kneeburst", x, z, c);
+            }
+            catch (_) { }
+        };
         const updateSkillFx = (dt, tNow) => {
             for (let i = activeFx.length - 1; i >= 0; i--) {
                 const f = activeFx[i];
@@ -65241,6 +65528,7 @@ function CherryAdventure() {
                     return;
                 }
                 g.userData = { life: life || 0.16, max: life || 0.16, mat: gm };
+                oldFx(g, { quiet: true });
                 scene.add(g);
                 wpnGhosts.push(g);
             }
@@ -65276,6 +65564,7 @@ function CherryAdventure() {
                     return;
                 }
                 g.userData = { life: life || 0.22, max: life || 0.22, mat: gm, base: 0.22 };
+                oldFx(g, { quiet: true });
                 scene.add(g);
                 wpnGhosts.push(g);
             }
@@ -65320,6 +65609,7 @@ function CherryAdventure() {
                         g.scale.copy(char.scale); // ขนาดเท่าตัวจริง (เรขาคณิตถูกอบเป็นพิกัดในตัวละครที่หักสเกลออกแล้ว)
                         g.userData = { boneMat, eyeMat, t: 0, hold: 0.2, dur: 0.2, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: char.position.y, oz: OFF[2], ey: char.position.y, real: true, target, onHit };
                         fxDimObj(g);
+                        oldFx(g, { quiet: true });
                         scene.add(g);
                         shadowBolts.push(g);
                         return;
@@ -65350,6 +65640,7 @@ function CherryAdventure() {
                 g.position.set(char.position.x + OFF[0], OFF[1], char.position.z + OFF[2]);
                 g.userData = { boneMat, eyeMat, t: 0, hold: 0.18, dur: 0.17, sx: char.position.x, sz: char.position.z, ox: OFF[0], oy: OFF[1], oz: OFF[2], target, onHit };
                 fxDimObj(g);
+                oldFx(g, { quiet: true });
                 scene.add(g);
                 shadowBolts.push(g);
             }
@@ -65533,6 +65824,7 @@ function CherryAdventure() {
             catch (e) { }
         };
         const spawnPoisonCloud = (x, z, col, big) => {
+            hfAt(big ? "poisonknives" : "poison", x, z, col); // 🧹 v751 หมอกพิษภาพวาด (ก้อนเดิมซ่อน)
             try {
                 const n = big ? 9 : 4;
                 for (let k = 0; k < n; k++) {
@@ -65542,6 +65834,7 @@ function CherryAdventure() {
                     puff.position.set(x + Math.cos(a) * r, 0.22 + Math.random() * 0.3, z + Math.sin(a) * r);
                     puff.raycast = () => { };
                     puff.userData = { kind: "puff", t: 0, dur: big ? 1.5 : 0.95, mats: [m], rise: 0.85 + Math.random() * 0.8, spin: (Math.random() - 0.5) * 2, gro: big ? 2.1 : 1.5 };
+                    oldFx(puff, { quiet: true });
                     scene.add(puff);
                     poisonFx.push(puff);
                 }
@@ -66422,6 +66715,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 0, z);
                 g.userData = { kind: "pillar", t: 0, dur: 0.9, mats, bits, fc: new THREE.Color() };
+                oldFx(g, { col });
                 scene.add(g);
                 magicFx.push(g);
             }
@@ -66535,6 +66829,7 @@ function CherryAdventure() {
                 g.position.set(tp.x, 0, tp.z);
                 g.scale.set(1, 0.02, 1);
                 g.userData = { kind: "spike", t: 0, up: 0.18, hold: 1.0, out: 0.34, target, onShatter, col, mats, mist, glints, ice, lit, done: false };
+                oldFx(g, { col });
                 scene.add(g);
                 magicFx.push(g);
             }
@@ -66736,6 +67031,7 @@ function CherryAdventure() {
                 g.position.copy(m0);
                 g.rotation.y = dirY;
                 g.userData = { kind: "beam", t: 0, dur: 0.4, mats };
+                oldFx(g, { dirY, len, col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -66881,6 +67177,7 @@ function CherryAdventure() {
                     prev = to;
                 });
                 g.userData = { kind: "bolt", t: 0, step: 0.075, dur: 0.075 * nodes.length + 0.32, segs, n: 0, onNode, nodes, mats };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -66938,6 +67235,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 0, z);
                 g.userData = { kind: "pool", t: 0, dur: dur || 4.5, r, dmg, col: col || 0x7ad04a, next: 0.6, puff: 0, dotKind: dotKind || "poison", onTick, mats };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67037,6 +67335,7 @@ function CherryAdventure() {
                 }
                 g.traverse((o) => { o.raycast = () => { }; });
                 g.userData = { kind: "hshield", t: 0, dur: dur || 0.6, mats: [gm, cm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67051,6 +67350,7 @@ function CherryAdventure() {
                 ring.position.set(x, 0.09, z);
                 ring.raycast = () => { };
                 ring.userData = { kind: "hring", t: 0, dur: 0.45, r: r || 3.2, mats: [mm] };
+                oldFx(ring, { col });
                 scene.add(ring);
                 archerFx.push(ring);
             }
@@ -67080,6 +67380,7 @@ function CherryAdventure() {
                 g.position.set(x, 0, z);
                 g.visible = !delay;
                 g.userData = { kind: "lpillar", t: 0, delay: delay || 0, dur: 0.5, onHit, x, z, done: false, glyph, mats };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67169,6 +67470,7 @@ function CherryAdventure() {
                 g.rotation.y = dirY;
                 g.scale.set(1, 1, 0.02);
                 g.userData = { kind: "crack", t: 0, up: 0.12, dur: 1.15, mats };
+                oldFx(g, { dirY, len, col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67192,6 +67494,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 0, z);
                 g.userData = { kind: "tornado", t: 0, dur: dur || 1.1, r: r || 3.2, pull: (r || 3.2) * 1.55, mats };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67221,6 +67524,7 @@ function CherryAdventure() {
                 }
                 mats.push(fm);
                 g.userData = { kind: "rage", t: 0, dur: dur || 8, motes, mats };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67244,6 +67548,7 @@ function CherryAdventure() {
                 g.position.set(x, y, z);
                 g.rotation.y = dirY;
                 g.userData = { kind: "wind", t: 0, dur: 0.34, mats };
+                oldFx(g, { dirY, len, col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67272,6 +67577,7 @@ function CherryAdventure() {
                 g.position.set(x, 0, z);
                 g.scale.set(1, 0.02, 1);
                 g.userData = { kind: "pillar2", t: 0, up: 0.14, hold: 0.7, out: 0.35, mats: [rm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67334,6 +67640,7 @@ function CherryAdventure() {
                 g.rotation.y = dirY;
                 g.scale.set(1, 1, 0.05);
                 g.userData = { kind: "frost", t: 0, up: 0.1, dur: 0.5, mats: [im, dm] };
+                oldFx(g, { dirY, len, col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67386,6 +67693,7 @@ function CherryAdventure() {
                 ring.raycast = () => { };
                 g.add(ring);
                 g.userData = { kind: "stonearmor", t: 0, dur: dur || 12, plates, ring, mats: [rm, gm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67472,6 +67780,7 @@ function CherryAdventure() {
                 skin.raycast = () => { };
                 g.add(skin, dome);
                 g.userData = { kind: "dome", t: 0, dur: dur || 14, dome, mats: [dm, sm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -67905,6 +68214,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 1.4, z);
                 g.userData = { kind: "hole", t: 0, dur: dur || 1.2, r: r || 4.4, rings, onBurst, done: false, mats: [cm, rm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68029,6 +68339,7 @@ function CherryAdventure() {
                     motes.push({ o: mo, a: Math.random() * Math.PI * 2, r: 0.4 + Math.random() * (R - 0.6), y: Math.random() * 2.4, sp: 0.8 + Math.random() * 1.1 });
                 }
                 g.userData = { kind: "healcirc", t: 0, dur: dur || 3.0, rings, motes, mats: [gm, wm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68051,6 +68362,7 @@ function CherryAdventure() {
                 g.position.set(char.position.x, 0, char.position.z);
                 g.rotation.y = dirY;
                 g.userData = { kind: "wave", t: 0, dur: 0.7, r: r || 5.0, mats: [wm, fm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68081,6 +68393,7 @@ function CherryAdventure() {
                 }
                 g.traverse((o) => { o.raycast = () => { }; });
                 g.userData = { kind: "coffee", t: 0, dur: dur || 1.1, puffs, mats: [cupM, brewM, stM] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68171,6 +68484,7 @@ function CherryAdventure() {
                 ring.raycast = () => { };
                 g.add(ring);
                 g.userData = { kind: "clock", t: 0, dur: dur || 12, clocks, ring, mats: [rimM, faceM, auM] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68410,6 +68724,7 @@ function CherryAdventure() {
                 ring.raycast = () => { };
                 g.add(ring);
                 g.userData = { kind: "firewall", t: 0, dur: dur || 14, bricks, ring, mats: [bm, lm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68440,6 +68755,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 0, z);
                 g.userData = { kind: "glitch", t: 0, dur: 0.75, x, z, panes, onHit, done: false, mats: [wm, rm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68473,6 +68789,7 @@ function CherryAdventure() {
                 g.add(pool);
                 g.position.set(x, 0, z);
                 g.userData = { kind: "coderain", t: 0, dur: 0.62, x, z, cols, onHit, done: false, mats: [gm, wm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68534,6 +68851,7 @@ function CherryAdventure() {
                 }
                 g.position.set(x, 0, z);
                 g.userData = { kind: "dstorm", t: 0, dur: 0.5, x, z, rings, pkts, onHit, done: false, mats: [wm, pm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68594,6 +68912,7 @@ function CherryAdventure() {
                 g.position.set(x, 11, z);
                 g.visible = !delay;
                 g.userData = { kind: "zday", t: 0, delay: delay || 0, dur: 0.22, x, z, onHit, mats: [dm, gm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68637,6 +68956,7 @@ function CherryAdventure() {
                 shell.raycast = () => { };
                 g.add(shell);
                 g.userData = { kind: "nano", t: 0, form: 0.3, dur: dur || 14, bots, shell, mats: [nm, gm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68678,6 +68998,7 @@ function CherryAdventure() {
                 g.position.set(x, 0, z);
                 g.visible = !delay;
                 g.userData = { kind: "orbital", t: 0, delay: delay || 0, dur: 0.62, x, z, sat, beam, core, glyph, onHit, done: false, mats: [beamM, coreM] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68776,6 +69097,7 @@ function CherryAdventure() {
                 root.position.set(x, 0, z);
                 root.userData = g.userData;
                 root.userData.sky = g;
+                oldFx(root, { col });
                 scene.add(root);
                 archerFx.push(root);
             }
@@ -68864,6 +69186,7 @@ function CherryAdventure() {
                 g.position.set(char.position.x, 0, char.position.z);
                 g.rotation.y = dirY;
                 g.userData = { kind: "crescent", t: 0, dur: 0.6, len: len || 5.2, back: !!back, dirY, sx: char.position.x, sz: char.position.z, onSweep, last: -1, mats: [cm, wm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -68892,6 +69215,7 @@ function CherryAdventure() {
                 w.position.set(char.position.x, 0, char.position.z);
                 w.rotation.y = dirY;
                 w.userData = { kind: "iaiflash", t: 0, dur: 0.42, blade, core, mats: [bm, cm] };
+                oldFx(w, { dirY, len, col });
                 scene.add(w);
                 archerFx.push(w);
             }
@@ -69001,6 +69325,7 @@ function CherryAdventure() {
                 g.position.set(x, y, z);
                 g.rotation.y = dirY;
                 g.userData = { kind: "fistshock", t: 0, dur: 0.34, sc, rings, cone, mats: [rm, wm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -69038,6 +69363,7 @@ function CherryAdventure() {
                 g.add(ring);
                 g.position.set(x, 0, z);
                 g.userData = { kind: "kneeimpact", t: 0, dur: 0.44, col2, core, ring, shard, mats: [cm, wm] };
+                oldFx(g, { col });
                 scene.add(g);
                 archerFx.push(g);
             }
@@ -70551,7 +70877,8 @@ function CherryAdventure() {
         const ensureCastFx = () => {
             if (G._castRing)
                 return;
-            const ring = new THREE.Mesh(new THREE.RingGeometry(0.72, 1.22, 40), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+            const ring = new THREE.Mesh(// 🌟 v751 วงเวทใต้เท้าตอนสะสมพลัง = วงเวทภาพวาด Higgsfield (ย้อมสีสกิล) แทนวงแหวนเรขาคณิตเดิม — ลูปเดิมยังคุมความทึบ/ขนาด/หมุนเหมือนเดิม
+            new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: hfxTex("hf_circlew"), color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }));
             ring.rotation.x = -Math.PI / 2;
             ring.visible = false;
             ring.raycast = () => { };
@@ -70562,14 +70889,16 @@ function CherryAdventure() {
             ring2.rotation.x = -Math.PI / 2;
             ring2.visible = false;
             ring2.raycast = () => { };
+            ring2.material.visible = false;
             scene.add(ring2);
-            G._castRing2 = ring2;
+            G._castRing2 = ring2; // 🧹 สามเหลี่ยมชุดเก่า — ซ่อน
             const runes = [];
             for (let i = 0; i < 8; i++) {
                 const rn = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.3), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
                 rn.rotation.x = -Math.PI / 2;
                 rn.visible = false;
                 rn.raycast = () => { };
+                rn.material.visible = false; // 🧹 ขีดอักขระชุดเก่า — ซ่อน (วงเวทภาพวาดมีอักษรในตัวแล้ว)
                 rn.userData = { a: (i / 8) * Math.PI * 2 };
                 scene.add(rn);
                 runes.push(rn);
@@ -70580,8 +70909,9 @@ function CherryAdventure() {
                 const o = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffd24a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
                 o.visible = false;
                 o.raycast = () => { };
+                o.material.visible = false;
                 scene.add(o);
-                orbs.push(o);
+                orbs.push(o); // 🧹 ลูกแก้วชุดเก่า — ซ่อน
             }
             G._castOrbs = orbs;
             // ➡️ เส้นบอกทิศพุ่งบนพื้น — โผล่ตอนย่อเก็บแรง แล้วดับเมื่อพุ่งจบ
@@ -70589,8 +70919,9 @@ function CherryAdventure() {
             line.rotation.x = -Math.PI / 2;
             line.visible = false;
             line.raycast = () => { };
+            line.material.visible = false;
             scene.add(line);
-            G._dashLine = line;
+            G._dashLine = line; // 🧹 เส้นบอกทิศชุดเก่า — ซ่อน
         };
         // 🌟 เส้นดาว 5 แฉกบนพื้น — วาดทีละเส้นตามที่ตัวละครวิ่งผ่าน
         // 🌟 ระบำเงา — เส้นดาวเป็นลำแสงขอบนุ่ม (แกนสว่าง + ฟุ้งจางออกข้าง + ปลายเรียว) ไม่ใช่แผ่นสี่เหลี่ยมทึบ
@@ -87754,6 +88085,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -87925,6 +88257,7 @@ function CherryAdventure() {
                                 const CS2 = (typeof CHAR_S !== "undefined" ? CHAR_S : char.scale.x) || 1;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88113,6 +88446,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88268,6 +88602,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88439,6 +88774,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88617,6 +88953,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88768,6 +89105,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -88929,6 +89267,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89066,6 +89405,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89237,6 +89577,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89394,6 +89735,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89569,6 +89911,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89734,6 +90077,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89859,6 +90203,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -89992,6 +90337,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -90130,6 +90476,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -90265,6 +90612,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -90383,6 +90731,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -90518,6 +90867,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -90944,6 +91294,7 @@ function CherryAdventure() {
                                 const bx = battleCenter.x - 1.3;
                                 if (!A.wfx) {
                                     A.wfx = new THREE.Group();
+                                    oldFx(A.wfx, { quiet: true });
                                     scene.add(A.wfx);
                                     A.wfxParts = {};
                                 }
@@ -92352,6 +92703,7 @@ function CherryAdventure() {
                                 const typing = rate => { armR.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate)) * 0.22; armL.rotation.x = -1.15 + Math.abs(Math.sin(p * Math.PI * rate + 1.1)) * 0.22; armR.rotation.z = 0.3; armL.rotation.z = -0.3; };
                                 if (!A.cfx) {
                                     A.cfx = new THREE.Group();
+                                    oldFx(A.cfx, { quiet: true });
                                     scene.add(A.cfx);
                                     A.cfxParts = {};
                                 }
@@ -93796,6 +94148,7 @@ function CherryAdventure() {
                                             A.boltCut.position.set(em.position.x, 1.25, em.position.z + 0.3);
                                             A.boltCut.rotation.z = 0.3;
                                             A.boltCut.renderOrder = 999;
+                                            oldFx(A.boltCut, { quiet: true });
                                             scene.add(A.boltCut);
                                         }
                                         A.boltCut.material.opacity = Math.min(1, dp * 2);
@@ -93862,9 +94215,11 @@ function CherryAdventure() {
                                         A.moon = new THREE.Mesh(new THREE.CircleGeometry(1.5, 32), new THREE.MeshBasicMaterial({ color: moonW, transparent: true, opacity: 0, depthWrite: false }));
                                         A.moon.position.set(em.position.x - 0.5, 6.2, em.position.z - 3);
                                         A.moon.renderOrder = 990;
+                                        oldFx(A.moon, { quiet: true });
                                         scene.add(A.moon);
                                         A.moonLight = new THREE.PointLight(0xcfe0ff, 0, 14);
                                         A.moonLight.position.set(em.position.x, 5, em.position.z);
+                                        oldFx(A.moonLight, { quiet: true });
                                         scene.add(A.moonLight);
                                     }
                                     // ─── the moon rises, the katana lifts, blossoms start falling ───
@@ -93957,6 +94312,7 @@ function CherryAdventure() {
                                             A.crescent.position.set(em.position.x, 1.3, em.position.z + 0.3);
                                             A.crescent.rotation.z = -0.5;
                                             A.crescent.renderOrder = 999;
+                                            oldFx(A.crescent, { quiet: true });
                                             scene.add(A.crescent);
                                         }
                                         A.crescent.material.opacity = Math.min(1, fp * 3) * (1 - Math.max(0, fp - 0.5) * 2);
@@ -98343,9 +98699,11 @@ function CherryAdventure() {
                                     A.sMoon = new THREE.Mesh(new THREE.CircleGeometry(1.7, 32), new THREE.MeshBasicMaterial({ color: moonW, transparent: true, opacity: 0, depthWrite: false }));
                                     A.sMoon.position.set(em.position.x - 0.4, 6.5, em.position.z - 3.2);
                                     A.sMoon.renderOrder = 990;
+                                    oldFx(A.sMoon, { quiet: true });
                                     scene.add(A.sMoon);
                                     A.sMoonL = new THREE.PointLight(0xcfe0ff, 0, 16);
                                     A.sMoonL.position.set(em.position.x, 5, em.position.z);
+                                    oldFx(A.sMoonL, { quiet: true });
                                     scene.add(A.sMoonL);
                                     // the moon's two halves (for the split)
                                     A.moonHalves = [];
@@ -98477,6 +98835,7 @@ function CherryAdventure() {
                                         A.sCrescent.position.set(em.position.x, 1.4, em.position.z + 0.3);
                                         A.sCrescent.rotation.z = -0.6;
                                         A.sCrescent.renderOrder = 999;
+                                        oldFx(A.sCrescent, { quiet: true });
                                         scene.add(A.sCrescent);
                                     }
                                     A.sCrescent.material.opacity = Math.min(1, dp * 3);
@@ -103486,18 +103845,20 @@ function CherryAdventure() {
             React.createElement("button", { onClick: () => setUi((u) => ({ ...u, settingsOpen: true })), title: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E40\u0E01\u0E21", style: {
                     width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
                     fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-                } }, "\u2699\uFE0F"),
+                } },
+                React.createElement(HIco, { n: "gear", size: 25 })),
             ui.mode === "explore" && (React.createElement("button", { onClick: () => { if (G.ensurePid)
                     G.ensurePid(); setUi((u) => ({ ...u, ...closeAllMenus(), profileOpen: true, profileInfo: G.profileInfo(), profileNameEdit: null })); }, title: "\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C \u00B7 \u0E1A\u0E49\u0E32\u0E19\u0E16\u0E49\u0E27\u0E22\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25", style: {
                     width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer",
                     fontSize: 15, background: "#fff", boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
-                } }, "\uD83D\uDC64")),
+                } },
+                React.createElement(HIco, { n: "profile", size: 26 }))),
             ui.mode === "explore" && (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, qtrack: !u.qtrack })), title: ui.qtrack ? "ซ่อนรายการภารกิจ" : "แสดงรายการภารกิจ (เปิดค้างไว้ได้)", style: {
                     width: 34, height: 34, borderRadius: "50%", border: "none", cursor: "pointer", position: "relative",
                     fontSize: 15, background: ui.qtrack ? "linear-gradient(135deg,#f2b24d,#e0862f)" : "#fff",
                     boxShadow: "0 2px 6px rgba(90,120,70,0.25)",
                 } },
-                "\uD83D\uDCDC",
+                React.createElement(HIco, { n: "scroll", size: 25 }),
                 TODO.quest > 0 && React.createElement("span", { style: { position: "absolute", top: -3, right: -3, minWidth: 15, height: 15, borderRadius: 999, background: "#e04a6a", color: "#fff", fontSize: 9, fontWeight: 800, lineHeight: "15px", padding: "0 3px" } }, TODO.quest))),
             (ui.mode === "explore" || ui.mode === "battle") && (ui.foodBuff || (ui.foodBag || []).length > 0) && (React.createElement("button", { onClick: () => { if (ui.foodBuff)
                     setUi((u) => ({ ...u, foodInfoOpen: !u.foodInfoOpen }));
@@ -104627,17 +104988,19 @@ function CherryAdventure() {
                         filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.85,
                         background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
                         boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45)" : "0 1px 4px rgba(0,0,0,0.3)"
-                    } }, "\uD83E\uDD16"),
+                    } },
+                    React.createElement(HIco, { n: "robot", size: 18 })),
                 React.createElement("button", { onClick: () => G.toggleAutoJob(), title: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "เก็บของอัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "เก็บของอัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)", style: {
                         width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 11, lineHeight: 1, fontFamily: font,
                         filter: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "none" : "grayscale(0.85)", opacity: (ui.autoHerb || ui.autoFish || ui.autoMine) ? 1 : 0.85,
                         background: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "linear-gradient(135deg,#5ab86a,#a8c84a)" : "#fff",
                         boxShadow: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "0 0 0 2px rgba(90,184,106,0.45)" : "0 1px 4px rgba(0,0,0,0.3)"
-                    } }, ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : "🌿"),
+                    } }, ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : React.createElement(HIco, { n: "gather", size: 18 })),
                 React.createElement("button", { onClick: () => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen })), title: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E2D\u0E2D\u0E42\u0E15\u0E49", style: {
                         width: 22, height: 22, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0, fontSize: 10.5, lineHeight: 1, fontFamily: font, color: "#59a0e8",
                         background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.3)"
-                    } }, "\u2699\uFE0F"))),
+                    } },
+                    React.createElement(HIco, { n: "gear", size: 18 })))),
             HUD_CARD && (React.createElement(React.Fragment, null,
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginTop: 4 } }, [["hp", "❤️", ui.hp, ui.maxHp, (ui.maxHp && ui.hp / ui.maxHp > 0.35) ? "linear-gradient(90deg,#4aa86a,#7fd08a)" : "linear-gradient(90deg,#c03a3a,#e05555)", 1.5],
                     ["mp", "💧", ui.mp, ui.maxMp, "linear-gradient(90deg,#3a80d0,#6ac0f0)", 1]].map(([k, em, cur, max, col, fl]) => (React.createElement("div", { key: k, style: { flex: fl, position: "relative", height: 12, background: "rgba(120,60,90,0.16)", borderRadius: 999, overflow: "hidden", border: "1px solid rgba(242,182,201,0.9)" } },
@@ -104665,19 +105028,21 @@ function CherryAdventure() {
                             filter: ui.auto ? "none" : "grayscale(0.85)", opacity: ui.auto ? 1 : 0.8,
                             background: ui.auto ? "linear-gradient(135deg,#59a0e8,#9a6ad0)" : "#fff",
                             boxShadow: ui.auto ? "0 0 0 2px rgba(89,160,232,0.45), 0 2px 8px rgba(89,160,232,0.5)" : "0 2px 6px rgba(0,0,0,0.24)",
-                        } }, "\uD83E\uDD16"),
+                        } },
+                        React.createElement(HIco, { n: "robot", size: 21 })),
                     React.createElement("button", { onClick: () => G.toggleAutoJob(), title: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "เก็บของอัตโนมัติ: เปิดอยู่ (แตะเพื่อปิด)" : "เก็บของอัตโนมัติ: ปิดอยู่ (แตะเพื่อเปิด)", style: {
                             width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
                             fontSize: 13, lineHeight: 1, fontFamily: font,
                             filter: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "none" : "grayscale(0.85)", opacity: (ui.autoHerb || ui.autoFish || ui.autoMine) ? 1 : 0.8,
                             background: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "linear-gradient(135deg,#5ab86a,#a8c84a)" : "#fff",
                             boxShadow: (ui.autoHerb || ui.autoFish || ui.autoMine) ? "0 0 0 2px rgba(90,184,106,0.45), 0 2px 8px rgba(90,184,106,0.5)" : "0 2px 6px rgba(0,0,0,0.24)",
-                        } }, ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : "🌿"),
+                        } }, ui.autoMine && !ui.autoHerb && !ui.autoFish ? "⛏️" : ui.autoFish && !ui.autoHerb && !ui.autoMine ? "🎣" : React.createElement(HIco, { n: "gather", size: 21 })),
                     React.createElement("button", { onClick: () => setUi((u) => ({ ...u, autoCfgOpen: !u.autoCfgOpen })), title: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E2D\u0E2D\u0E42\u0E15\u0E49", style: {
                             width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
                             fontSize: 12, lineHeight: 1, fontFamily: font, color: "#59a0e8",
                             background: ui.autoCfgOpen ? "#d8e8ff" : "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.24)",
-                        } }, "\u2699\uFE0F")))),
+                        } },
+                        React.createElement(HIco, { n: "gear", size: 21 }))))),
             ui.autoCfgOpen && (React.createElement("div", { style: { position: "absolute",
                     // 🖥️📱 แถบสถานะอยู่ด้านบนทั้งสองผังแล้ว → กางลงล่างเสมอ
                     ...(HUD_CARD ? { top: "calc(100% + 8px)", left: 0 } : { top: "calc(100% + 8px)", right: 0 }),
@@ -105178,7 +105543,7 @@ function CherryAdventure() {
                 React.createElement(Ico, { n: "friends", size: 25, color: "#fff" }),
                 (ui.onlineCount || 0) > 0 && React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: "#3ac06a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px", padding: "0 4px", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" } }, ui.onlineCount)))),
         ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.usePotion(G.hpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E25\u0E37\u0E2D\u0E14", style: { position: "absolute", ...Rslot(0), display: HUD_HIDE ? "none" : "block", borderRadius: 16, border: "2px solid #f2b6c9", cursor: "pointer", fontSize: 24, background: "#fffaf4", boxShadow: "0 4px 12px rgba(120,60,90,0.22)", zIndex: 24 } },
-            _hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : React.createElement(Ico, { n: "hp", size: 25, color: "#e04a6a" }),
+            _hpBrew ? ((_hpBrew.def || {}).emoji || "🌿") : React.createElement(HIco, { n: "hp", size: 36 }),
             React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _hpBrew ? "#3a8a4a" : "#e0708a", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" } }, _hpCount))),
         ui.mode === "explore" && !ui.equipScreen && ui.inHomeZone && !ui.homeVisitOwner && (React.createElement(React.Fragment, null,
             React.createElement("button", { onClick: () => G.homeToggleDecor(), style: { position: "absolute", right: 12, top: 112, width: 52, height: 52, borderRadius: 16, border: "2px solid rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 25, background: "linear-gradient(135deg,#e8a05a,#d0763a)", color: "#fff", boxShadow: "0 4px 14px rgba(200,130,70,0.45)", zIndex: 26 } }, "\uD83D\uDECB\uFE0F"),
@@ -105229,7 +105594,7 @@ function CherryAdventure() {
                     "\uD83D\uDCB0 ",
                     it.price.toLocaleString())))))),
         ui.mode === "explore" && !ui.equipScreen && (React.createElement("button", { onClick: () => G.useManaPotion(G.mpPotUse), title: "\u0E19\u0E49\u0E33\u0E22\u0E32\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E21\u0E32\u0E19\u0E32", style: { position: "absolute", ...Rslot(1), display: Rfit(1) ? "block" : "none", borderRadius: 16, border: "none", cursor: "pointer", fontSize: 24, background: "#fff", boxShadow: "0 4px 12px rgba(70,110,160,0.3)", zIndex: 24 } },
-            _mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : "💧",
+            _mpBrew ? ((_mpBrew.def || {}).emoji || "🌿") : React.createElement(HIco, { n: "mp", size: 36 }),
             React.createElement("span", { style: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 999, background: _mpBrew ? "#3a8a4a" : "#4a90c0", color: "#fff", fontSize: 11, fontWeight: 800, lineHeight: "18px" } }, _mpCount))),
         ui.mode === "explore" && !ui.equipScreen && Object.keys(ui.mountsOwned || {}).length > 0 && (React.createElement("button", { onClick: () => G.toggleMount(), title: ui.mountId ? "ลงจากหลัง" : "ขี่สัตว์ขี่", style: { position: "absolute", ...Rslot(4), display: Rfit(4) ? "block" : "none", borderRadius: 16, border: ui.mountId ? "2px solid #ffd76a" : "none", cursor: "pointer", fontSize: 24, background: ui.mountId ? "linear-gradient(135deg,#5a8ad0,#7b6ad0)" : "#fff", boxShadow: ui.mountId ? "0 4px 14px rgba(90,110,210,0.5)" : "0 4px 12px rgba(90,120,70,0.3)", zIndex: 24 } },
             ui.mountId ? ((MOUNTS.find((m) => m.id === ui.mountId) || {}).emoji || "🐎") : "🐎",
@@ -105855,7 +106220,7 @@ function CherryAdventure() {
                                     background: "radial-gradient(circle at 35% 30%, #ff8a6a, #d9364a)", color: "#fff", fontSize: ATK * 0.44,
                                     boxShadow: "0 5px 16px rgba(217,54,74,0.55)",
                                 } },
-                                "\u2694\uFE0F",
+                                React.createElement(HIco, { n: "swords", size: Math.round(ATK * 0.56) }),
                                 ui.bufAct === "__atk" && React.createElement("span", { style: { position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed #7cf0b0", animation: "pulse 0.7s ease-in-out infinite alternate", pointerEvents: "none" } })));
                         return (React.createElement("button", { onClick: D.fn, title: D.title, style: {
                                 position: "absolute", right: 0, bottom: 0, width: ATK, height: ATK, borderRadius: "50%", overflow: "visible",
@@ -105869,8 +106234,8 @@ function CherryAdventure() {
                             !D.lock && React.createElement("span", { style: { position: "absolute", inset: -4, borderRadius: "50%", border: "2.5px dashed rgba(255,255,255,0.75)", animation: "pulse 0.9s ease-in-out infinite alternate", pointerEvents: "none" } })));
                     })(),
                     React.createElement("div", { style: { position: "absolute", right: HOPX, bottom: 0, display: "flex", gap: 6, pointerEvents: "none" } },
-                        hopBtn("💨", "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash()),
-                        hopBtn("🦘", "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)),
+                        hopBtn(React.createElement(HIco, { n: "dash", size: Math.round(HOPB * 0.66) }), "พุ่ง (Shift) — กดพร้อมเดินได้", () => G.doDash && G.doDash()),
+                        hopBtn(React.createElement(HIco, { n: "jump", size: Math.round(HOPB * 0.66) }), "กระโดด (Space) — กดพร้อมเดินได้ · กดค้างตอนตกเพื่อร่อน", () => G.doJump && G.doJump(), true)),
                     skills.map((sk, i) => {
                         const cost = G.mpCostOf ? G.mpCostOf(sk) : (sk.cost || 0);
                         const afford = (ui.mp || 0) >= cost;
@@ -107647,7 +108012,7 @@ function CherryAdventure() {
                             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                             boxShadow: on ? "0 0 0 2px rgba(240,207,122,0.45), 0 0 12px rgba(240,207,122,0.5)" : it ? `0 0 8px ${col}55, inset 0 1px 0 rgba(255,255,255,0.12)` : "inset 0 1px 0 rgba(255,255,255,0.06)",
                             transition: "border-color .15s, box-shadow .15s" } },
-                        React.createElement("span", { style: { fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 } }, it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : React.createElement(Ico, { n: SLOT_GI[slot], size: 22, color: "#d8c0d0" })),
+                        React.createElement("span", { style: { fontSize: it || twoLock ? 25 : 20, opacity: it ? 1 : twoLock ? 0.6 : 0.32, lineHeight: 1 } }, it ? it.emoji : twoLock ? "🤲" : slot === "offhand" ? ((ui.cls || G.cls) === "assassin" ? "🗡️" : (ui.cls || G.cls) === "mage" ? "📖" : "🛡️") : React.createElement(Ico, { n: SLOT_GI[slot], size: 22, color: "#d8c0d0", flat: true })),
                         React.createElement("span", { style: { marginTop: 2, fontSize: 7.5, fontWeight: 800, color: it ? col : twoLock ? "#e0b86a" : "#c8b0c0", opacity: it ? 0.95 : 0.8, letterSpacing: 0.2 } }, twoLock ? "สองมือ" : SLOT_NAMES[slot]),
                         it && React.createElement("button", { title: `ถอด${SLOT_NAMES[slot]}`, onClick: (e) => { e.stopPropagation(); G.unequipSlot(slot); }, style: { position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", border: "none", background: "linear-gradient(135deg,#d05050,#9a2c2c)", color: "#fff", fontSize: 10, fontWeight: 800, cursor: "pointer", padding: 0, lineHeight: "17px", boxShadow: "0 2px 6px rgba(0,0,0,0.45)" } }, "\u2715")));
                 };
