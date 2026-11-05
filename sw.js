@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v756";
+const CACHE = "cherry-adventure-v757";
 const SHELL = [
   "./",
   "./index.html",
@@ -13,6 +13,9 @@ const SHELL = [
   "./icon-180.png?v=4",
   "./icon-maskable-512.png?v=4",
   "./icon-32.png?v=4",
+  "./assets/higgsfield/ui/load_land.webp",
+  "./assets/higgsfield/ui/load_port.webp",
+  "./assets/higgsfield/ui/coins.webp",
   "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js",
   "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
   "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
