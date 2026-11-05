@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v752";
+const CACHE = "cherry-adventure-v753";
 const SHELL = [
   "./",
   "./index.html",
@@ -91,7 +91,7 @@ self.addEventListener("fetch", (e) => {
 
   // navigations → network-first (so game updates land), fall back to cached shell offline
   if (req.mode === "navigate") {
-    const KNOWN = ["dashboard.html", "items.html", "classes.html", "heroes.html"];
+    const KNOWN = ["dashboard.html", "items.html", "classes.html", "heroes.html", "privacy.html"];
     const hit = KNOWN.find((p) => url.pathname.endsWith("/" + p));
     const dest = hit ? "./" + hit : "./index.html"; // keep each page in its own cache slot
     // ⚠️ ข้าม HTTP cache ของเบราว์เซอร์ด้วย (GitHub Pages ตั้ง max-age 10 นาที) — ไม่งั้นได้ index.html เก่า → game.js เก่า
