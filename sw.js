@@ -1,5 +1,5 @@
 // 🍒 Cherry Adventure — service worker (offline shell + fast loads)
-const CACHE = "cherry-adventure-v754";
+const CACHE = "cherry-adventure-v755";
 const SHELL = [
   "./",
   "./index.html",
@@ -8,11 +8,11 @@ const SHELL = [
   "./classes.html",
   "./heroes.html",
   "./manifest.webmanifest",
-  "./icon-192.png?v=2",
-  "./icon-512.png?v=2",
-  "./icon-180.png?v=2",
-  "./icon-maskable-512.png?v=2",
-  "./icon-32.png?v=2",
+  "./icon-192.png?v=3",
+  "./icon-512.png?v=3",
+  "./icon-180.png?v=3",
+  "./icon-maskable-512.png?v=3",
+  "./icon-32.png?v=3",
   "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js",
   "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
   "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",

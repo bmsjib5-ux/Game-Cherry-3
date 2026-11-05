@@ -178,6 +178,6 @@ HUD icons (ไอคอนหน้าจอ) — 2026-11-05 · folder ui/
 - Generated: Higgsfield (GPT Image 2.5, transparent background) · processed: faint glow halo suppressed, trimmed, 128px WebP
 
 App icon (ไอคอนแอป PWA / desktop) — 2026-11-05 · repo root icon-*.png
-- Cute glossy cherry pair with a kawaii face and a small golden sword, sakura petals, pastel pink glow
-- Generated: Higgsfield (GPT Image 2.5), chosen from 4 variants · processed: rounded "any" icons with transparent corners
+- Golden heraldic shield with pink gems and a glossy red cherry pair as its emblem (fully inside the shield), sakura blossoms, magenta glow
+- Generated: Higgsfield (GPT Image 2.5): variant "b" of 4, then re-composed from it so the cherries sit inside the shield · processed: rounded "any" icons with transparent corners
   (512 / 192 / 32), opaque 180 apple-touch icon, maskable 512 with the subject inside the 80% safe zone
