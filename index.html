@@ -19,36 +19,86 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />   <!-- ⚡ ไม่บล็อกการวาดหน้าแรก (เดิมรอฟอนต์ = จอขาว) -->
+<link rel="preload" as="image" href="./assets/higgsfield/ui/load_land.webp" media="(orientation: landscape)" />
+<link rel="preload" as="image" href="./assets/higgsfield/ui/load_port.webp" media="(orientation: portrait)" />
 <style>
-  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #eef2df; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fbe3e8; }
   #root { width: 100%; height: 100%; }
+  /* 🌸 หน้าโหลดเกม (v757) — ภาพโลกเชอร์รี่ (Higgsfield) + โลโก้โล่เชอร์รี่ + แถบโหลดกรอบทองมีเหรียญเชอร์รี่วิ่ง + กลีบซากุระร่วง */
   #loading {
-    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    font-family: 'Sarabun', system-ui, -apple-system, sans-serif; color: #5a7a4a; z-index: 99; padding: 24px; box-sizing: border-box; text-align: center;
-    background: radial-gradient(ellipse at 50% 35%, #fbfdf2 0%, #eef2df 55%, #dfe8c8 100%);
+    position: fixed; inset: 0; z-index: 99; overflow: hidden; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(10px, 2.2vh, 22px);
+    padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+    font-family: 'Sarabun', system-ui, -apple-system, sans-serif; text-align: center; color: #6a3346;
+    background: linear-gradient(180deg, #f6d9e6 0%, #fde6d8 55%, #f4d2c2 100%);
+    transition: opacity 0.65s ease;
   }
-  #loading .spin { font-size: 58px; animation: bounce 0.8s infinite alternate ease-in-out; filter: drop-shadow(0 6px 6px rgba(90,122,74,0.25)); }
-  #loading .ttl { font-size: 19px; font-weight: 800; color: #b0455f; letter-spacing: 0.3px; }
-  #loading .bar { width: min(78vw, 340px); height: 14px; border-radius: 999px; background: rgba(90,122,74,0.15); overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.12); }
-  #loading .fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #f07aa8, #ffb35a, #8ad05a); background-size: 200% 100%; animation: flow 1.6s linear infinite; transition: width 0.25s ease-out; }
-  #loading .pct { font-size: 26px; font-weight: 800; color: #4a6a3a; font-variant-numeric: tabular-nums; }
-  #loading .st { font-size: 13.5px; font-weight: 600; min-height: 20px; }
-  #loading .sub { font-size: 11.5px; opacity: 0.75; font-variant-numeric: tabular-nums; min-height: 16px; }
-  #loading .tip { font-size: 12px; margin-top: 10px; max-width: 320px; color: #7a8a6a; min-height: 34px; transition: opacity 0.4s; }
-  #loading button { margin-top: 6px; padding: 10px 22px; border: none; border-radius: 999px; font: 800 14px system-ui, sans-serif; color: #fff; background: linear-gradient(90deg, #e0709a, #c05a86); box-shadow: 0 4px 12px rgba(192,90,134,0.35); cursor: pointer; }
-  @keyframes bounce { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-16px) rotate(6deg); } }
-  @keyframes flow { from { background-position: 0% 0; } to { background-position: -200% 0; } }
+  #loading.ld-out { opacity: 0; pointer-events: none; }
+  #loading .ld-bg { position: absolute; inset: 0; background: url("./assets/higgsfield/ui/load_land.webp") center 42% / cover no-repeat; animation: ldZoom 22s ease-in-out infinite alternate; }
+  @media (orientation: portrait) { #loading .ld-bg { background-image: url("./assets/higgsfield/ui/load_port.webp"); background-position: center 30%; } }
+  #loading .ld-veil { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 55% at 50% 46%, rgba(255,248,240,0.55) 0%, rgba(255,240,236,0.18) 55%, rgba(80,20,40,0) 75%), linear-gradient(180deg, rgba(255,255,255,0) 60%, rgba(120,40,70,0.22) 100%); }
+  #loading .ld-petals { position: absolute; inset: 0; pointer-events: none; }
+  #loading .ld-petals i { position: absolute; top: -6vh; width: 13px; height: 10px; border-radius: 13px 0 13px 0; background: linear-gradient(135deg, #fff0f4, #ff9fbb); box-shadow: 0 1px 2px rgba(160,60,90,0.25); opacity: 0.9; animation: ldFall 11s linear infinite; }
+  #loading .ld-petals i:nth-child(1) { left: 6%; animation-duration: 12s; animation-delay: -1s; }
+  #loading .ld-petals i:nth-child(2) { left: 17%; animation-duration: 9.5s; animation-delay: -6s; transform: scale(0.8); }
+  #loading .ld-petals i:nth-child(3) { left: 28%; animation-duration: 13s; animation-delay: -3s; }
+  #loading .ld-petals i:nth-child(4) { left: 39%; animation-duration: 10.5s; animation-delay: -8s; }
+  #loading .ld-petals i:nth-child(5) { left: 51%; animation-duration: 12.5s; animation-delay: -4.5s; }
+  #loading .ld-petals i:nth-child(6) { left: 62%; animation-duration: 9s; animation-delay: -2s; }
+  #loading .ld-petals i:nth-child(7) { left: 73%; animation-duration: 11.5s; animation-delay: -7s; }
+  #loading .ld-petals i:nth-child(8) { left: 84%; animation-duration: 13.5s; animation-delay: -5s; }
+  #loading .ld-petals i:nth-child(9) { left: 93%; animation-duration: 10s; animation-delay: -9s; }
+  #loading .ld-petals i:nth-child(10) { left: 46%; animation-duration: 14s; animation-delay: -11s; }
+  #loading .ld-main, #loading .ld-card, #loading > button { position: relative; }
+  #loading .ld-logo { position: relative; width: clamp(108px, 17vh, 168px); aspect-ratio: 1; margin: 0 auto; animation: ldFloat 3.2s ease-in-out infinite alternate; }
+  #loading .ld-logo::before { content: ""; position: absolute; inset: -22%; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,170,0.85) 0%, rgba(255,200,150,0.35) 45%, rgba(255,190,200,0) 70%); animation: ldGlow 2.6s ease-in-out infinite alternate; }
+  #loading .ld-logo img { position: relative; width: 100%; height: 100%; border-radius: 24%; box-shadow: 0 10px 26px rgba(150,30,70,0.35), 0 0 0 3px rgba(255,236,190,0.85); }
+  #loading .ttl { margin-top: clamp(8px, 1.6vh, 16px); font-size: clamp(22px, 3.6vh, 34px); font-weight: 800; line-height: 1.25; color: #fff;
+    -webkit-text-stroke: 5px #c8476b; paint-order: stroke fill; text-shadow: 0 3px 0 #9e2e50, 0 6px 14px rgba(120,30,60,0.35); letter-spacing: 0.3px; }
+  #loading .ttl span { white-space: nowrap; }
+  @media (max-width: 560px) { #loading .ttl span { display: block; } #loading .ttl { font-size: clamp(24px, 7.6vw, 34px); } }
+  #loading .ttl-en { display: inline-block; margin-top: 8px; padding: 3px 14px 3px 17px; border-radius: 999px; font-size: clamp(11px, 1.5vh, 13px); font-weight: 800; letter-spacing: 0.3em;
+    color: #fff; background: linear-gradient(90deg, rgba(200,71,107,0.88), rgba(232,120,90,0.88)); box-shadow: 0 2px 8px rgba(150,40,70,0.3); }
+  #loading .ld-card { width: min(88vw, 430px); box-sizing: border-box; padding: 14px 18px 12px; border-radius: 22px;
+    background: rgba(255,250,248,0.62); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
+    border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 10px 30px rgba(120,40,70,0.22); }
+  #loading .pct { font-size: 24px; font-weight: 800; color: #b23f63; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  #loading .bar { position: relative; height: 18px; margin: 9px 6px 8px; border-radius: 999px; background: rgba(140,50,80,0.16);
+    box-shadow: inset 0 2px 4px rgba(100,20,50,0.22), 0 0 0 2px #f3cf7d, 0 0 0 3.5px rgba(160,90,30,0.35); }
+  #loading .fill { position: relative; height: 100%; width: 0%; border-radius: 999px; transition: width 0.25s ease;
+    background: linear-gradient(90deg, #ff7aa6 0%, #ff9f8a 55%, #ffd36a 100%); box-shadow: inset 0 -3px 0 rgba(180,60,80,0.25), inset 0 2px 0 rgba(255,255,255,0.55); }
+  #loading .fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(100deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0) 70%) -150% 0 / 60% 100% no-repeat; animation: ldShine 1.8s linear infinite; }
+  #loading .rider { position: absolute; right: -15px; top: 50%; width: 32px; height: 32px; margin-top: -16px; filter: drop-shadow(0 2px 3px rgba(120,40,40,0.4)); animation: ldSpin 1.4s linear infinite; }
+  #loading .st { font-size: 14px; font-weight: 700; min-height: 20px; color: #7a3550; }
+  #loading .sub { font-size: 12px; opacity: 0.8; font-variant-numeric: tabular-nums; min-height: 16px; }
+  #loading .tip { font-size: 12.5px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(180,80,110,0.3); color: #8a4a62; min-height: 34px; transition: opacity 0.4s; }
+  #loading > button { margin-top: 2px; padding: 11px 24px; border: none; border-radius: 999px; font: 800 14px 'Sarabun', system-ui, sans-serif; color: #fff; background: linear-gradient(90deg, #e0709a, #c05a86); box-shadow: 0 4px 12px rgba(190,80,130,0.45); cursor: pointer; }
+  @keyframes ldZoom { from { transform: scale(1.02); } to { transform: scale(1.08); } }
+  @keyframes ldFloat { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-10px) rotate(2deg); } }
+  @keyframes ldGlow { from { opacity: 0.65; transform: scale(0.95); } to { opacity: 1; transform: scale(1.06); } }
+  @keyframes ldShine { from { background-position: -150% 0; } to { background-position: 250% 0; } }
+  @keyframes ldSpin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+  @keyframes ldFall { 0% { transform: translate3d(0, 0, 0) rotate(0deg); } 25% { transform: translate3d(28px, 28vh, 0) rotate(120deg); } 50% { transform: translate3d(-18px, 56vh, 0) rotate(220deg); } 75% { transform: translate3d(24px, 84vh, 0) rotate(320deg); } 100% { transform: translate3d(-8px, 112vh, 0) rotate(420deg); } }
+  @media (prefers-reduced-motion: reduce) { #loading .ld-bg, #loading .ld-logo, #loading .ld-logo::before, #loading .fill::after, #loading .rider { animation: none; } #loading .ld-petals { display: none; } }
+  @media (max-height: 560px) { #loading .tip { display: none; } #loading .ld-logo { width: 92px; } }
 </style>
 </head>
 <body>
 <div id="loading">
-  <div class="spin">🍒</div>
-  <div class="ttl">น้องเชอร์รี่ผจญภัยแดนมอนสเตอร์</div>
-  <div class="pct" id="ldPct">0%</div>
-  <div class="bar"><div class="fill" id="ldFill"></div></div>
-  <div class="st" id="ldSt">กำลังเตรียมดาวน์โหลดเกม...</div>
-  <div class="sub" id="ldSub"></div>
-  <div class="tip" id="ldTip"></div>
+  <div class="ld-bg"></div><div class="ld-veil"></div>
+  <div class="ld-petals" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="ld-main">
+    <div class="ld-logo"><img src="./icon-512.png?v=4" alt="" /></div>
+    <div class="ttl"><span>น้องเชอร์รี่ผจญภัย</span><span>แดนมอนสเตอร์</span></div>
+    <div class="ttl-en">CHERRY ADVENTURE</div>
+  </div>
+  <div class="ld-card">
+    <div class="pct" id="ldPct">0%</div>
+    <div class="bar"><div class="fill" id="ldFill"><img class="rider" src="./assets/higgsfield/ui/coins.webp" alt="" /></div></div>
+    <div class="st" id="ldSt">กำลังเตรียมดาวน์โหลดเกม...</div>
+    <div class="sub" id="ldSub"></div>
+    <div class="tip" id="ldTip"></div>
+  </div>
 </div>
 <div id="root"></div>
 <script>
@@ -59,8 +109,8 @@
   var LIBS = [["react@18.3.1/umd/react.production.min.js", 11], ["react-dom@18.3.1/umd/react-dom.production.min.js", 132], ["three@0.128.0/build/three.min.js", 604],
     ["three@0.128.0/examples/js/loaders/GLTFLoader.js", 97], ["three@0.128.0/examples/js/utils/SkeletonUtils.js", 12], ["@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js", 111],
     ["canvas-confetti@1.9.3/dist/confetti.browser.min.js", 11]];
-  var GAME_URL = "./game.js?v=035f35792c", GAME_KB = 8249;
-  window.__GAME_VER = "035f35792c";   // 🆕 ให้ตัวเช็กเวอร์ชันใหม่ (ท้ายหน้า) เทียบกับเซิร์ฟเวอร์
+  var GAME_URL = "./game.js?v=7edc84f33c", GAME_KB = 8249;
+  window.__GAME_VER = "7edc84f33c";   // 🆕 ให้ตัวเช็กเวอร์ชันใหม่ (ท้ายหน้า) เทียบกับเซิร์ฟเวอร์
   var TIPS = ["💡 แตะมอนสเตอร์เพื่อเดินเข้าไปตีอัตโนมัติ", "💡 กด 2 ครั้งติดกันเพื่อวิ่ง", "💡 ดันเจี้ยนเขาวงกตอยู่ด่าน 3 · 7 · 13", "💡 ตีบวกอาวุธได้ที่ช่างตีเหล็ก",
     "💡 เปิดออโต้แล้วตัวละครจะล่ามอนให้เอง", "💡 บอสบุกแมพดรอปอาวุธเทพ 1%", "💡 ติดตั้งเกมลงเครื่องเพื่อเปิดเร็วขึ้นครั้งถัดไป"];
   var $ = function (id) { return document.getElementById(id); };
