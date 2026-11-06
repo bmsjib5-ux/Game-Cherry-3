@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v759"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v760"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -14418,7 +14418,8 @@ function CherryAdventure() {
             taara: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.7, y: 0.5, hue: [268, 0.55, 1.45, 0.82], gloss: [0.2, 0.45, 0x1a1030], halo: { bone: "Head", at: [0, 2.1, 0], r: 2.5, tube: 0.13, tilt: 1.1 }, evo: { size: 2.5, y: 0.7 } }, // 💫 ธาราทิพย์ — ดาวหนามย้อมม่วง + วงแหวนเอียงรอบตัว
             garuda: { f: "Big_Birb", c: "big", by: "h", size: 2.1, hue: [28, 0.85, 1.05, 0.7], horn: { bone: "Head", base: [0, 3.25, 0.1], tip: [0, 4.2, 0.1], r: 0.32 } }, // 🦁 ครุฑอสูร — นกใหญ่มีแขนขา ย้อมส้มทอง + ชฎา
             suphan: { f: "Duck", by: "h", size: 1.9, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck", tint: { DuckBodyMaterial: 0xc99a14, DuckBeakMaterial: 0xd8481a, FootMaterial: 0xd8481a }, horn: { bone: "Bone001", base: [0, 1.95, 0.32], tip: [0, 2.55, 0.32], r: 0.17 } }, // 🦢 สุพรรณหงส์ — เป็ดตัวโต (OpenGameArt, CC0) ย้อมทอง + ชฎา
-            kirara: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.6, hue: [46, 0.9, 1.5, 0.64], gloss: [0.3, 0.38, 0x1a1000], evo: { size: 2.4, halo: { bone: "Head3", at: [0, 4.6, 0], r: 1.1, tube: 0.1, tilt: 0.3 } } }, // ⭐ คิราระ — บอลหนามย้อมทอง (ขั้น 2 โนวา ใหญ่ขึ้น + รัศมี)
+            kirara: { f: "../higgsfield/mon_kirara", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.4, atkT: 1.05, glow: 0.22, // ⭐ คิราระ (Higgsfield) — ดาวทองตัวกลม หมุนตัวกระโดดฟาด · เรืองแสงทองนิด ๆ ให้รู้ว่าหายาก
+                evo: { size: 2.4, halo: { bone: "Head", at: [0, 1.1, 0], r: 0.17, tube: 0.02, tilt: 0.3 } } }, // ✨ ร่างวิวัฒน์ "โนวา" — ตัวใหญ่ขึ้น + วงแหวนทองลอยเหนือหัว
             eggdrake: { f: "Dragon", size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
                 tint: { Main: 0x9a5a08, Wings: 0x6e3e05, Belly: 0xd6a63e, Claws: 0x261806 } }, // 🐉 มังกรไข่ทอง — ใช้โมเดลเดียวกับมังกรเยาว์ ย้อมทอง
         };
