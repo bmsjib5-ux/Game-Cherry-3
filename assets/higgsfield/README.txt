@@ -193,3 +193,8 @@ Skill icons (ไอคอนสกิลทุกอาชีพ) — 2026-11-05
 - Style: cute glossy 3D cartoon mobile RPG icons with magical glow and dark plum outline; ultimates are grander with a golden aura
 - Generated: Higgsfield (GPT Image 2.5, transparent background) as 17 sprite sheets of 15 (5x3) + 1 sheet of 4 (2x2)
 - Processed: split on the grid, faint glow halos suppressed, stray fragments from neighbouring cells removed, trimmed, 128px WebP
+
+Kirara remake (คิราระ — rare golden star) — 2026-11-06 · mon_kirara.glb
+- Concept GPT Image 2.5 (A-pose chubby golden five-pointed star with arms + legs) → Meshy 7 image-to-3D (20k) →
+  Meshy rigging + Attack clip #397 360_Power_Spin_Jump; Idle / Walk / Hit / Die borrowed from mon_mochi (hips rescaled),
+  root motion stripped, 7.6k triangles, 1024 JPEG, quantized. Stage 2 "โนวา" = same model ×1.6 + golden halo
