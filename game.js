@@ -477,7 +477,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v762"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v763"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -4703,6 +4703,11 @@ const HERO_COMBO = { warrior: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regu
     aegis: ["Sword_Regular_A", "Sword_Regular_B", "Sword_Regular_C"], lancer: ["Sword_Dash", "Sword_Regular_B", "Sword_Dash"],
     assassin: ["Sword_Regular_A", "Sword_Regular_B", "Melee_Hook"], boxer: ["Punch_Jab", "Punch_Cross", "Melee_Hook"],
     office: ["Spell_Simple_Shoot", "Spell_Simple_Shoot", "OverhandThrow"] };
+// ⚔️ v763 ตีธรรมดาในโลกกว้าง "ให้เหมือนตีเดี่ยว" — สายดาบใช้ท่าฟันท่าเดียวกับในสนามตีเดี่ยว (ท่าแรกของคอมโบ) ทุกครั้ง
+//    ไม่บิดตัว/ไม่หมุนรอบตัว · ก้าวเข้าหาเป้า · รอยฟัน/แสงปะทะ/เส้นแสงดาบออกตอน "ใบดาบผ่านเป้าจริง"
+//    HERO_STRIKE_RT = วินาทีหลังเริ่มท่าที่มือขวาเหวี่ยงเร็วสุด (วัดจากคลิป: Sword_Regular_A 0.26/0.433 วิ เริ่ม 12% เร็ว 1.3 → 0.16 วิ · Sword_Dash 0.32/1.567 เริ่ม 6% เร็ว 2.0 → 0.11 วิ)
+const HERO_SWORD_CLS = { warrior: 1, samurai: 1, aegis: 1, lancer: 1, assassin: 1 };
+const HERO_STRIKE_RT = { warrior: 0.16, samurai: 0.16, aegis: 0.16, assassin: 0.16, lancer: 0.11 };
 const HERO_SKILL = { warrior: "Sword_Heavy_Combo", samurai: "Sword_Heavy_Combo", aegis: "Shield_Dash", lancer: "Sword_Dash", assassin: "Sword_Dash",
     boxer: "Melee_Hook", office: "OverhandThrow" }; // ที่เหลือ = ร่ายเวท (นักธนู = เล็งยิง)
 // from = ข้ามช่วงเงื้อ (สัดส่วนคลิป) · spd = ความเร็วคลิป — วัดจากแผ่นเฟรมทีละคลิป ให้ท่าฟันจริงตกช่วงที่เกมคิดดาเมจ
@@ -20420,7 +20425,8 @@ function CherryAdventure() {
                     const cmb = HERO_COMBO[G.cls];
                     const skId = G._skCast && G._stSk && performance.now() < G._stSk.until ? G._stSk.sk.id : null;
                     const nm = G._skCast ? (HERO_SKILL_BY[skId] && H.acts[HERO_SKILL_BY[skId]] ? HERO_SKILL_BY[skId] : HERO_SKILL[G.cls]) || (G.cls === "archer" ? HERO_ATK.archer : "Spell_Simple_Shoot")
-                        : cmb ? cmb[(G._combo3 || 0) % cmb.length] : HERO_ATK[G.cls];
+                        : cmb ? cmb[HERO_SWORD_CLS[G.cls] ? 0 : (G._combo3 || 0) % cmb.length] : HERO_ATK[G.cls]; // ⚔️ v763 สายดาบ: ท่าเดียวกับตีเดี่ยวเสมอ (ไม่สลับท่า B/C)
+                    H.wSword = !G._skCast && !bat && !!HERO_SWORD_CLS[G.cls] && G.mode === "explore"; // 🌍 ตีธรรมดาในโลกกว้าง → ก้าวเข้า + ซิงก์เส้นแสงดาบกับจังหวะฟันจริง
                     H.atkClip = nm && H.acts[nm] ? nm : null;
                     const T = H.atkClip && HERO_CLIP_T[H.atkClip], a0 = H.atkClip && H.acts[H.atkClip][0];
                     const len = T && a0 ? a0.getClip().duration * (1 - T.from) / T.spd : 0; // ค้างท่าให้เล่นจบจังหวะฟันจริง (ไม่ใช่แค่ 0.4 วิ)
@@ -20429,6 +20435,24 @@ function CherryAdventure() {
                     H.atkAge = 0;
                 }
                 H.atkAge = (H.atkAge || 0) + dt;
+                { // 🦶⚔️ v763 ตีธรรมดาในโลกกว้างแบบตีเดี่ยว: ก้าวเข้าหาเป้า + เงาดาบ/เส้นแสงตรงจังหวะใบดาบผ่านเป้า
+                    const ws = !!H.wSword && G.mode === "explore", age = H.atkAge, stT = HERO_STRIKE_RT[G.cls] || 0.16;
+                    const on = ws && age < 0.42 && !G.mountId && !((G._dashT || 0) > 0) && !((G._jumpT || 0) > 0);
+                    const tz = on ? (G._swLunge || 0) * Math.min(1, age / 0.12) : 0; // พุ่งออกเร็ว (0.12 วิ) ค้างไว้จนจบท่า แล้วค่อยถอยกลับ
+                    H.lungeZ = (H.lungeZ || 0) + (tz - (H.lungeZ || 0)) * Math.min(1, dt * (on ? 20 : 7));
+                    if (Math.abs(H.lungeZ) < 0.002)
+                        H.lungeZ = 0;
+                    H.g.position.z = H.lungeZ; // เลื่อนเฉพาะตัวโมเดลไปข้างหน้า — ตำแหน่งจริง/กล้อง/ชนสิ่งของไม่เปลี่ยน
+                    G._heroSwTrail = ws && age > stT - 0.1 && age < stT + 0.13;
+                    if (ws && G._spawnWpnGhost) {
+                        const pv = H.ghAge == null ? -1 : H.ghAge;
+                        [stT - 0.035, stT + 0.01].forEach((at, i) => { if (pv < at && age >= at)
+                            G._spawnWpnGhost(0.15 + i * 0.03); });
+                    }
+                    H.ghAge = age;
+                    if (age > 0.6)
+                        H.wSword = false;
+                }
                 const has = (n, f) => (n && H.acts[n] ? n : f); // ท่าไหนไม่มีในไฟล์ ให้ถอยไปท่าสำรอง ไม่ค้างท่าเดิม
                 const shield = heroHasShield();
                 // 🔥 ถือคบเพลิงมือซ้ายตอนอยู่ในถ้ำ (มือซ้ายว่าง = ไม่ถือโล่) · ยืนนิ่ง = ท่าชูคบเพลิง
@@ -64202,7 +64226,7 @@ function CherryAdventure() {
                     G._hitStop = Math.max(G._hitStop || 0, hs);
                 else {
                     // ⏱️ จังหวะปะทะผูกกับความยาวของท่าฟันจริง (เดิมตายตัวที่ 0.13 วิ — สายไวดาบฟันจบไปก่อนแล้ว)
-                    const impT = Math.max(0.045, (G._worldSwingDur || 0.2) * 0.46);
+                    const impT = opts.basic && G._swStrikeT > 0 ? G._swStrikeT : Math.max(0.045, (G._worldSwingDur || 0.2) * 0.46); // ⚔️ v763 โมเดลฮีโร่สายดาบ: ตรงจังหวะใบดาบผ่านเป้าจริง
                     G._hitStopIn = G._hitStopIn > 0 ? G._hitStopIn : impT;
                     G._hitStopAmt = Math.max(G._hitStopAmt || 0, hs);
                     if (opts.crit)
@@ -65572,6 +65596,7 @@ function CherryAdventure() {
             G._swPrevS = 0;
             G._swYawApplied = 0;
             G._heroFxDone = 0;
+            G._swStrikeT = !isSkill && G._heroModel && HERO_SWORD_CLS[G.cls] ? (HERO_STRIKE_RT[G.cls] || 0.16) : 0; // ⚔️ v763 ใบดาบผ่านเป้าจริงกี่วิหลังเริ่มท่า (โมเดลฮีโร่สายดาบ)
             G._clothBurst = G._combo3 === 2 ? 0.85 : 0.5;
             if (G._combo3 === 2) {
                 G._camPunch = 1;
@@ -65673,6 +65698,7 @@ function CherryAdventure() {
             }
             catch (e) { }
         };
+        G._spawnWpnGhost = spawnWpnGhost; // ⚔️ v763 ให้ท่าฟันของโมเดลฮีโร่วางเงาดาบตรงจังหวะฟันจริง
         // 👤 เงาซ้อนทั้งตัว (after-image) — ทิ้งร่างจาง ๆ ไว้ตามแนวพุ่ง แบบตัวละครอนิเมะเคลื่อนที่เร็ว
         const spawnBodyGhost = (life, col) => {
             try {
@@ -70918,6 +70944,10 @@ function CherryAdventure() {
             else
                 fireSlash(pos, col);
         };
+        G._gestFx = (m, col) => { worldGestureFx(m.position, col); if (G.cls === "lancer") {
+            burst(m.position, 0xbfe8ff, 0.9);
+            monGlow(m, 0x9fd8ff, 0.8);
+        } }; // ⚔️ v763 เรียกจากเฟรมปะทะ
         G.worldAttack = () => {
             if (G.mode !== "explore" || G.banim || G._skCast)
                 return; // ⛔ ระหว่างร่ายสกิลห้ามแทรกท่าตีธรรมดา
@@ -70947,6 +70977,10 @@ function CherryAdventure() {
                 }
             }
             worldSwing();
+            {
+                const ld = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z) - 0.9 - (m.scale ? m.scale.x : 1) * 0.35;
+                G._swLunge = G._swStrikeT > 0 ? Math.max(0, Math.min(0.85, ld)) : 0;
+            } // 🦶 v763 ก้าวเข้าหาเป้าแบบตีเดี่ยว (ไม่ทะลุตัวมอน)
             const crit = Math.random() < (0.05 + effCrit() / 100 + (G.cls === "assassin" ? 0.25 : G.cls === "archer" ? 0.2 : 0));
             let dmg = (effAtk() + Math.random() * 4) * (crit ? G.critMul() : 1);
             if (G.cls === "tamer")
@@ -70954,6 +70988,7 @@ function CherryAdventure() {
             if (m.userData.boss && talB("bossDmg"))
                 dmg *= 1 + talB("bossDmg") / 100; // 📜 ล่าบอส (โลกกว้าง)
             // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
+            let gestCol = null;
             if (worldRange() > 4 && G.cls !== "tamer") { // 🐾 ผู้ฝึกสัตว์ระยะ 5.2 แต่ใช้ท่าประชิด (เพื่อนซี้พุ่งไปกัด)
                 if (G.cls === "archer") {
                     // 🏹 ยิงธรรมดา — เห็นลูกธนูพุ่งจากคันธนูไปถึงตัวมอน แล้วค่อยแตกตอนปัก
@@ -70986,6 +71021,9 @@ function CherryAdventure() {
                 else
                     spawnSkillFx("orb", m.position, 0xf5d24a);
             }
+            else if (G._swStrikeT > 0) {
+                gestCol = crit ? 0xffd24a : 0xffe08a; // ⚔️ v763 รอยฟันออก "ตอนใบดาบถึงตัว" พร้อมเฟรมปะทะ (เดิมออกทันทีที่กด ก่อนดาบจะเหวี่ยง)
+            }
             else {
                 worldGestureFx(m.position, crit ? 0xffd24a : 0xffe08a);
                 if (G.cls === "lancer") {
@@ -70998,7 +71036,7 @@ function CherryAdventure() {
             // 💥 เฟรมปะทะ (รอยฟัน + เส้นแสงวาบ + กล้องกระเด็น) — ต้องออกตอนดาบถึงตัวจริง (0.13 วิ หลังเริ่มท่า) ไม่ใช่ตอนกดปุ่ม
             if (worldRange() <= 4 && G.cls !== "boxer") {
                 const hy = 0.6 + Math.min(1.6, (m.scale ? m.scale.y : 1) * 0.55);
-                G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0) };
+                G._impactQ = { pos: { x: m.position.x, z: m.position.z }, dir: { x: m.position.x - char.position.x, z: m.position.z - char.position.z }, crit, y: hy, color: crit ? 0xffd24a : ((G.TRAIL_COL && G.TRAIL_COL[G.cls]) || 0xfff1c0), gest: gestCol, mon: gestCol != null ? m : null };
             }
             hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a, basic: true });
             {
@@ -80540,6 +80578,12 @@ function CherryAdventure() {
                                 G._impact(q.pos, q.dir, q);
                             }
                             catch (_) { }
+                            if (q.gest != null && q.mon && G._gestFx) {
+                                try {
+                                    G._gestFx(q.mon, q.gest);
+                                }
+                                catch (_) { }
+                            }
                         }
                     }
                 } // 🚫 ไม่มีแฟลชเต็มจอตอนตี (จอกระพริบ) — คงไว้แค่กล้องสั่น
@@ -84150,7 +84194,8 @@ function CherryAdventure() {
                         const P0 = [armR.rotation.x, armR.rotation.z, armL.rotation.x, armL.rotation.z, legL.rotation.x, legR.rotation.x, kL0, kR0, torso.rotation.y, headG.rotation.y, legL.rotation.z, legR.rotation.z];
                         const melee = !(G.cls === "archer" || G.cls === "mage" || G.cls === "coder" || G.cls === "office");
                         // 👻 วางเงาอาวุธช่วงหวด (เฉพาะสายประชิด · ท่าจบวาง 3 จังหวะ)
-                        if (melee) {
+                        const heroSw = !!(G._heroModel && G._heroModel.wSword); // ⚔️ v763 ท่าฟันของโมเดลฮีโร่ — เงาดาบวางตามจังหวะฟันจริงใน heroModelTick
+                        if (melee && !heroSw) {
                             const pv = G._swPrevS || 0;
                             const pts = cb === 2 ? [0.20, 0.28, 0.36] : (G.cls === "warrior" || G.cls === "samurai") ? [0.22, 0.31] : [0.20, 0.34]; // ⚔️ วางเงาระหว่างช่วงฟาดจริง
                             pts.forEach((pp, pi) => { if (pv < pp && s >= pp)
@@ -84160,7 +84205,7 @@ function CherryAdventure() {
                         // 🌀 หมุนแบบหน่วง (overlapping action): สะโพก/แขนนำ → ลำตัวตาม → หัวตามท้ายสุด
                         {
                             const dir = cb === 1 ? -1 : 1; // ไม้ 2 ฟันย้อนกลับ → หมุนสวนทาง
-                            const spin = cb === 2 && melee && moveAmt < 0.25; // ไม้ 3 หมุนตัวรอบเดียวตอนยืนอยู่กับที่
+                            const spin = false; // ⚔️ v763 เลิกหมุนตัวรอบเดียวในไม้ 3 — ให้เหมือนตีเดี่ยว
                             let tw;
                             if (spin)
                                 tw = s < 0.25 ? 0.5 * (s / 0.25) : s < 0.72 ? 0.5 - (0.5 + Math.PI * 2) * ((s - 0.25) / 0.47) : -Math.PI * 2;
@@ -84173,7 +84218,7 @@ function CherryAdventure() {
                             else
                                 tw = -0.6 * dir * (1 - (s - 0.8) / 0.2);
                             if (!spin)
-                                tw *= G.cls === "lancer" ? 0.25 : melee ? 1 : 0.35; // สายแทง/สายไกลบิดตัวน้อยกว่า
+                                tw *= melee ? 0 : 0.35; // ⚔️ v763 สายประชิดไม่บิดตัวเลย — หันหน้าเข้าหาเป้าตลอดท่าเหมือนตีเดี่ยว · สายไกลบิดนิดหน่อยเหมือนเดิม
                             char.rotation.y += tw - (G._swYawApplied || 0); // ใส่เป็นส่วนต่าง → คลายเองเมื่อจบท่า
                             G._swYawApplied = tw;
                             const lag = spin ? 0 : -tw;
@@ -84192,7 +84237,7 @@ function CherryAdventure() {
                             char.position.y -= 0.06 * stepK; // ย่อตัวลงตอนลงน้ำหนัก
                         }
                         // 💥 เฟรมกระแทก — ยืดอาวุธสั้น ๆ ตอนถึงจุดปะทะ (stretch แบบอนิเมะ)
-                        const impK = melee && s > 0.32 && s < 0.46 ? 1 : 0;
+                        const impK = melee && !heroSw && s > 0.32 && s < 0.46 ? 1 : 0;
                         wand.scale.set(1 - impK * 0.12, 1 + impK * 0.22, 1 - impK * 0.12);
                         let HS = (!G.heroHide && G.heroId) ? HERO_SWING[G.heroId] : null; // 🦸 ใส่ชุดฮีโร่อยู่ = ใช้ท่า/เอฟเฟคประจำชุด
                         // 🗡️🔱 ชุดฮีโร่ที่ "ไม่มีอาวุธประจำตัว" มือยังถือดาบ/คาตานะ/มีด/หอกของอาชีพอยู่
@@ -100908,7 +100953,9 @@ function CherryAdventure() {
                     const battleSwing = A && (A.type === "playerAttack" || A.type === "ult") && meleeClasses.includes(G.cls) && G.mode === "battle";
                     // 🌍 โลกกว้าง: เดิมไม่มีเส้นแสงเลย — เปิดช่วง s 0.12–0.62 ของท่า (ง้าง→ปะทะ→ตามแรง) เฉพาะสายดาบ/มีด และต้องเห็นอาวุธอยู่
                     let worldSwing = false;
-                    if (G.mode === "explore" && (G._worldSwingT || 0) > 0 && wand.visible && (G.cls === "warrior" || G.cls === "samurai" || G.cls === "assassin" || G.cls === "aegis")) {
+                    if (G.mode === "explore" && G._heroModel && G._heroModel.wSword && wand.visible && G.cls !== "lancer")
+                        worldSwing = !!G._heroSwTrail; // ⚔️ v763 โมเดลฮีโร่: เส้นแสงตามช่วงใบดาบเหวี่ยงจริง (เหมือนตีเดี่ยว)
+                    else if (G.mode === "explore" && (G._worldSwingT || 0) > 0 && wand.visible && (G.cls === "warrior" || G.cls === "samurai" || G.cls === "assassin" || G.cls === "aegis")) {
                         const sN = 1 - G._worldSwingT / (G._worldSwingDur || 0.28);
                         worldSwing = sN > 0.08 && sN < 0.52;
                     }
