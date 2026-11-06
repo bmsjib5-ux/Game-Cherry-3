@@ -204,3 +204,10 @@ Phi remake (ผีราตรี — night ghost of the dead-tree grove) — 20
   stubby legs) → Meshy 7 image-to-3D (20k) → Meshy rigging + Attack clip #386 Zombie_Scream; Idle / Walk / Hit / Die
   borrowed from mon_mochi (hips rescaled), root motion stripped, ~7k triangles, 1024 JPEG, quantized.
   Replaces the KayKit Skeleton_Mage stand-in. Stage 2 "ภูตราชัน" = same model ×1.5 with a stronger glow
+
+Taara remake (ธาราทิพย์ — supreme star deity of the floating sky isles) — 2026-11-06 · mon_taara.glb
+- Concept GPT Image 2.5 (A-pose chubby lavender star spirit, indigo galaxy belly with gold stars and a crescent moon,
+  crown of five gold four-pointed stars, pale lilac starlight cape) → Meshy 7 image-to-3D (20k) → Meshy rigging +
+  Attack clip #132 mage_soell_cast_3 (two-handed push); Idle / Walk / Hit / Die borrowed from mon_mochi (hips rescaled),
+  root motion stripped, ~9k triangles, 1024 JPEG, quantized. Replaces the dyed Blob_GreenSpikyBlob stand-in; the tilted
+  gold ring around the body is kept as an in-game halo. Stage 2 "จักรวาลเทพ" = same model ×1.5 with a stronger glow

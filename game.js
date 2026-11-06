@@ -477,7 +477,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v763"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v764"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -14421,7 +14421,9 @@ function CherryAdventure() {
                             ["LowerLegFrontL", "x", 0.3, 1.6], ["LowerLegBackL001", "x", 0.3, 1.6], ["LowerLegFrontL001", "x", 0.3, 1.6 + Math.PI], ["LowerLegBackL", "x", 0.3, 1.6 + Math.PI],
                             ["Bone003", "x", 0.05, 0.8], ["Bone012", "x", 0.14, 2.2], ["Bone013", "x", 0.12, 2.9], ["Tail", "x", 0.2, 0.4], ["Bone", "py", 0.08, 0.3]] } }, tint: { "Material.001": 0xc8c0e4 }, horn: { bone: "Bone003", base: [0, 6.05, 2.1], tip: [0, 7.25, 2.1], r: 0.42 } }, // 🐘 ช้างเอราวัณ — OpenGameArt (syncopika, CC0) ไม่มีท่าเดิน · ตัวขาวอมม่วง
             eggpeacock: { f: "Big_Birb", c: "big", by: "h", size: 1.9, hue: [168, 0.75, 1.05], fan: { bone: "Hips", at: [0, 0.85, -0.5], w: 3.6, h: 2.3, tilt: -0.3 } }, // 🦚 นกยูงทิพย์ — นกใหญ่ย้อมมรกต + หางพัดเจ็ดสีเกาะสะโพก
-            taara: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.7, y: 0.5, hue: [268, 0.55, 1.45, 0.82], gloss: [0.2, 0.45, 0x1a1030], halo: { bone: "Head", at: [0, 2.1, 0], r: 2.5, tube: 0.13, tilt: 1.1 }, evo: { size: 2.5, y: 0.7 } }, // 💫 ธาราทิพย์ — ดาวหนามย้อมม่วง + วงแหวนเอียงรอบตัว
+            taara: { f: "../higgsfield/mon_taara", by: "h", size: 1.75, y: 0.25, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.6, atkT: 1.25, glow: 0.3, // 💫 ธาราทิพย์ (Higgsfield) — เทพดาวสีม่วงลาเวนเดอร์ พุงเป็นกาแล็กซี มงกุฎดาวทอง ผ้าคลุมแสงดาว · ลอยเหนือพื้นนิด ๆ · ผลักสองมือปล่อยพลังดาว
+                halo: { bone: "Spine02", at: [0, 0.42, 0], r: 0.5, tube: 0.02, tilt: 0.45 }, // 🪐 วงแหวนทองเอียงรอบตัว (ซิกเนเจอร์เดิมของธาราทิพย์)
+                evo: { size: 2.6, glow: 0.45 } }, // 🌌 ร่างวิวัฒน์ "จักรวาลเทพ" — ตัวใหญ่ขึ้น เรืองแสงชัดขึ้น
             garuda: { f: "Big_Birb", c: "big", by: "h", size: 2.1, hue: [28, 0.85, 1.05, 0.7], horn: { bone: "Head", base: [0, 3.25, 0.1], tip: [0, 4.2, 0.1], r: 0.32 } }, // 🦁 ครุฑอสูร — นกใหญ่มีแขนขา ย้อมส้มทอง + ชฎา
             suphan: { f: "Duck", by: "h", size: 1.9, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck", tint: { DuckBodyMaterial: 0xc99a14, DuckBeakMaterial: 0xd8481a, FootMaterial: 0xd8481a }, horn: { bone: "Bone001", base: [0, 1.95, 0.32], tip: [0, 2.55, 0.32], r: 0.17 } }, // 🦢 สุพรรณหงส์ — เป็ดตัวโต (OpenGameArt, CC0) ย้อมทอง + ชฎา
             phi: { f: "../higgsfield/mon_phi", by: "h", size: 1.6, y: 0.18, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.2, atkT: 1.05, glow: 0.3, // 👻 ผีราตรี (Higgsfield) — ผีผ้าคลุมตาม่วงเรือง ลอยเหนือพื้นนิด ๆ · กรีดร้องพุ่งใส่
