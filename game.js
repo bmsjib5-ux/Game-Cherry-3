@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v758"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v759"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -1252,6 +1252,74 @@ const HIco = ({ n, size = 22, dim, style }) => {
     return React.createElement("img", { src: src, alt: "", draggable: false, width: size, height: size, style: { display: "inline-block", verticalAlign: "middle", flexShrink: 0, objectFit: "contain", pointerEvents: "none", userSelect: "none", WebkitUserDrag: "none",
             filter: dim ? "grayscale(0.85) opacity(0.6)" : "drop-shadow(0 1px 1.5px rgba(60,20,50,0.32))", ...(style || {}) } });
 };
+// 🧠 v759 แชร์เท็กซ์เจอร์ GLTF ที่ซ้ำกัน — โมเดลหลายไฟล์ฝังรูปเดียวกันมาในตัว (เช่น atlas ชุด KayKit / Quaternius)
+//    เดิมถอดรหัส + อัปโหลด GPU แยกทุกไฟล์ (วัดในเกม ~110MB เป็นรูปซ้ำ ≈ 40% ของเท็กซ์เจอร์ทั้งหมด → มือถือแรมเต็ม เกมเด้ง)
+//    ตอนนี้รูปที่ไบต์ตรงกันทุกไบต์ + sampler เดียวกัน = ใช้ Texture ตัวเดียวกัน (ถอดรหัสครั้งเดียว ขึ้น GPU ครั้งเดียว) · ภาพเหมือนเดิมทุกพิกเซล
+(() => {
+    try {
+        if (typeof window === "undefined" || !window.THREE || !THREE.GLTFLoader)
+            return;
+        const cache = new Map();
+        const fnv = (ab) => { const u = new Uint8Array(ab); let h = 0x811c9dc5, h2 = 0x01000193; for (let i = 0; i < u.length; i++) {
+            h = Math.imul(h ^ u[i], 0x01000193);
+            h2 = Math.imul(h2 ^ u[i], 0x5bd1e995);
+        } return (h >>> 0).toString(36) + (h2 >>> 0).toString(36); };
+        const hashOf = (ab) => {
+            try {
+                if (window.crypto && crypto.subtle && crypto.subtle.digest)
+                    return crypto.subtle.digest("SHA-1", ab).then((d) => Array.from(new Uint8Array(d), (x) => x.toString(16).padStart(2, "0")).join("")).catch(() => fnv(ab));
+            }
+            catch (e) { }
+            return Promise.resolve(fnv(ab));
+        };
+        const patch = (P) => {
+            if (!P || P.__cherryTexShare || typeof P.loadTextureImage !== "function")
+                return;
+            P.__cherryTexShare = true;
+            const orig = P.loadTextureImage;
+            P.loadTextureImage = function (textureIndex, source, loader) {
+                const parser = this;
+                try {
+                    const td = (parser.json.textures || [])[textureIndex] || {}, sm = (parser.json.samplers || [])[td.sampler] || {};
+                    const sk = [sm.magFilter, sm.minFilter, sm.wrapS, sm.wrapT, source.mimeType || ""].join(",");
+                    let kp = null;
+                    if (source.bufferView !== undefined)
+                        kp = parser.getDependency("bufferView", source.bufferView).then((ab) => hashOf(ab).then((h) => "b" + ab.byteLength + ":" + h));
+                    else if (source.uri && !/^(data|blob):/i.test(source.uri))
+                        kp = Promise.resolve("u:" + new URL(source.uri, new URL(parser.options.path || "./", location.href)).href);
+                    if (kp)
+                        return kp.then((k) => {
+                            const key = k + "|" + sk;
+                            let pr = cache.get(key);
+                            if (!pr) {
+                                pr = orig.call(parser, textureIndex, source, loader);
+                                cache.set(key, pr);
+                                pr.then((t) => { if (t && t.addEventListener)
+                                    t.addEventListener("dispose", () => { if (cache.get(key) === pr)
+                                        cache.delete(key); }); }, () => { if (cache.get(key) === pr)
+                                    cache.delete(key); });
+                            }
+                            return pr.then((t) => { try {
+                                parser.associations.set(t, { type: "textures", index: textureIndex });
+                            }
+                            catch (e) { } return t; });
+                        }, () => orig.call(parser, textureIndex, source, loader));
+                }
+                catch (e) { }
+                return orig.call(this, textureIndex, source, loader);
+            };
+        };
+        const L = new THREE.GLTFLoader();
+        if (L.register) { // ปลั๊กอินถูกเรียกพร้อมตัว parser ทันทีตอน parse → แก้ที่ prototype ของ GLTFParser ครั้งเดียว ใช้ได้กับทุกตัวโหลดในเกม
+            L.register((parser) => { try {
+                patch(Object.getPrototypeOf(parser));
+            }
+            catch (e) { } return { name: "cherry_tex_share" }; });
+            L.parse('{"asset":{"version":"2.0"}}', "", () => { }, () => { });
+        }
+    }
+    catch (e) { }
+})();
 // 🎴 painted skill icons (Higgsfield · assets/higgsfield/skills/<id>.webp) — every class skill, path skill, advanced skill and ultimate
 const SKI_SET = new Set("a_multi a_poison a_power a_snipe a_weak advult_a_gun advult_a_range advult_a_sharp advult_b_king advult_b_muay advult_b_wch advult_c_ai advult_c_bot advult_c_hacker advult_g_kil advult_g_nova advult_g_titan advult_k_iai advult_k_kensei advult_k_twn advult_l_dragoon advult_l_frost advult_l_guard advult_l_thn advult_m_arc advult_m_elem advult_m_priest advult_o_ceo advult_o_chf advult_o_work advult_s_rea advult_s_shade advult_s_venom advult_t_beast advult_t_div advult_t_druid advult_w_ber advult_w_pal advult_w_war b_combo b_iron b_jab b_kick b_knee c_crash c_drone c_inject c_matrix c_wall g_dash g_drone g_grav g_over k_double k_iai k_moon k_slash l_charge l_quake l_sweep l_thrust m_bolt m_fire m_heal m_ice o_ceo o_coffee o_deadline o_paper o_smash p_alpha p_bless p_bulwark p_burnout p_dive p_execute p_flash p_fortress p_frenzy p_frostpierce p_grove p_ironfist p_koblow p_merger p_nova p_pierce p_plague p_railgun p_singularity p_thousand p_tiger p_volley p_zeroday s_double s_evade s_poison s_shadow t_bite t_bond t_roar t_stampede t_wild ult_aegis ult_archer ult_assassin ult_boxer ult_coder ult_lancer ult_mage ult_office ult_samurai ult_tamer ult_warrior ultalt_lancer ultalt_samurai w_bash w_cleave w_quake w_rage x_ai_1 x_ai_2 x_ai_3 x_ai_4 x_arc_1 x_arc_2 x_arc_3 x_arc_4 x_ber_1 x_ber_2 x_ber_3 x_ber_4 x_bot_1 x_bot_2 x_bot_3 x_bot_4 x_box_1 x_box_2 x_box_3 x_box_4 x_bst_1 x_bst_2 x_bst_3 x_bst_4 x_ceo_1 x_ceo_2 x_ceo_3 x_ceo_4 x_chf_1 x_chf_2 x_chf_3 x_chf_4 x_div_1 x_div_2 x_div_3 x_div_4 x_drg_1 x_drg_2 x_drg_3 x_drg_4 x_elm_1 x_elm_2 x_elm_3 x_elm_4 x_frz_1 x_frz_2 x_frz_3 x_frz_4 x_grd_1 x_grd_2 x_grd_3 x_grd_4 x_grv_1 x_grv_2 x_grv_3 x_grv_4 x_grv_5 x_gun_1 x_gun_2 x_gun_3 x_gun_4 x_hck_1 x_hck_2 x_hck_3 x_hck_4 x_iai_1 x_iai_2 x_iai_3 x_iai_4 x_ken_1 x_ken_2 x_ken_3 x_ken_4 x_kil_1 x_kil_2 x_kil_3 x_kil_4 x_mua_1 x_mua_2 x_mua_3 x_mua_4 x_nov_1 x_nov_2 x_nov_3 x_nov_4 x_pal_1 x_pal_2 x_pal_3 x_pal_4 x_pri_1 x_pri_2 x_pri_3 x_pri_4 x_rea_1 x_rea_2 x_rea_3 x_rea_4 x_rng_1 x_rng_2 x_rng_3 x_rng_4 x_shd_1 x_shd_2 x_shd_3 x_shd_4 x_shp_1 x_shp_2 x_shp_3 x_shp_4 x_thn_1 x_thn_2 x_thn_3 x_thn_4 x_ttn_1 x_ttn_2 x_ttn_3 x_ttn_4 x_twn_1 x_twn_2 x_twn_3 x_twn_4 x_vnm_1 x_vnm_2 x_vnm_3 x_vnm_4 x_war_1 x_war_2 x_war_3 x_war_4 x_wch_1 x_wch_2 x_wch_3 x_wch_4 x_wrk_1 x_wrk_2 x_wrk_3 x_wrk_4".split(" "));
 let _skiUlt = null;
@@ -13534,6 +13602,7 @@ function CherryAdventure() {
             };
         };
         // 🌳 ป่าขอบแมพทุ่งซากุระ — InstancedMesh แบ่งเป็นเสี้ยววง (กล้องตัดเสี้ยวที่มองไม่เห็นทิ้งได้) · geometry ยืมของจริง ไม่ก๊อปข้อมูล
+        const natG2 = {}; // ♻️ เรขาคณิตตัวแทนต่อ (ต้นแบบ × เสี้ยว) ของแนวป่าขอบแมพ
         G.natBorderTrees = (grp, R, nearGap, opt) => {
             opt = opt || {};
             const ps = !!G.powerSave, pool = (opt.names ? (ps ? opt.names.slice(-2) : opt.names) : ps ? ["CommonTree_3", "CommonTree_4"] : NAT_SLOT.tree).map((n) => natLib[n]).filter(Boolean);
@@ -13567,12 +13636,16 @@ function CherryAdventure() {
                 L2.obj.traverse((o) => {
                     if (!o.isMesh)
                         return;
-                    const g2 = new THREE.BufferGeometry();
-                    g2.setIndex(o.geometry.index);
-                    for (const k in o.geometry.attributes)
-                        g2.setAttribute(k, o.geometry.attributes[k]);
-                    g2.boundingSphere = sph;
-                    g2.userData._shared = true; // บัฟเฟอร์เป็นของต้นแบบ — ห้าม dispose
+                    const gk = o.geometry.uuid + "|" + sec + "|" + R.toFixed(2); // ♻️ v759 ใช้ตัวเดิมซ้ำทุกครั้งที่สร้างแนวป่าใหม่ (เดิมสร้างใหม่ทุกครั้งที่วาร์ป ค้างสะสม)
+                    let g2 = natG2[gk];
+                    if (!g2) {
+                        g2 = natG2[gk] = new THREE.BufferGeometry();
+                        g2.setIndex(o.geometry.index);
+                        for (const k in o.geometry.attributes)
+                            g2.setAttribute(k, o.geometry.attributes[k]);
+                        g2.boundingSphere = sph;
+                        g2.userData._shared = true; // บัฟเฟอร์เป็นของต้นแบบ — ห้าม dispose
+                    }
                     const mat = pink && altMat[o.material.uuid] ? altMat[o.material.uuid] : o.material;
                     const im = new THREE.InstancedMesh(g2, mat, mats.length), loc = o.matrixWorld.clone();
                     mats.forEach((M, k) => im.setMatrixAt(k, M.clone().multiply(loc)));
@@ -44077,6 +44150,8 @@ function CherryAdventure() {
             if (gi >= 0)
                 wilds.splice(gi, 1);
             scene.remove(ghostMesh);
+            if (G._disposeObj3D)
+                G._disposeObj3D(ghostMesh);
             ghostMesh = null;
             toast("🌄 ผีราตรีสลายไปกับแสงเช้า...");
         };
@@ -44170,6 +44245,8 @@ function CherryAdventure() {
                 const gi = wilds.indexOf(G.event.mesh);
                 if (gi >= 0) {
                     scene.remove(G.event.mesh);
+                    if (G._disposeObj3D)
+                        G._disposeObj3D(G.event.mesh);
                     wilds.splice(gi, 1);
                     toast("💨 มอนสเตอร์ทองหนีไปแล้ว!");
                 }
@@ -57394,6 +57471,15 @@ function CherryAdventure() {
         // 🧹 free GPU memory when an FX ends — scene.remove alone leaks geometries/materials/textures (mobile freeze)
         const disposeObj3D = (grp) => {
             grp.traverse((o) => {
+                if (o.isInstancedMesh) {
+                    try {
+                        if (o.dispose)
+                            o.dispose();
+                        else
+                            o.dispatchEvent({ type: "dispose" });
+                    }
+                    catch (_) { }
+                } // 🧹 v759 บัฟเฟอร์เมทริกซ์อินสแตนซ์ (เดิมค้างทุกครั้งที่สร้างแนวป่าขอบแมพใหม่)
                 if (o.isSkinnedMesh && o.skeleton && o.skeleton.boneTexture) {
                     o.skeleton.boneTexture.dispose();
                     o.skeleton.boneTexture = null;
@@ -64077,10 +64163,14 @@ function CherryAdventure() {
                 const dx = m.position.x - char.position.x, dz = m.position.z - char.position.z, dl = Math.hypot(dx, dz) || 1, v = big ? 2.2 : 6.5;
                 deathFly.push({ m, vx: (dx / dl) * v, vz: (dz / dl) * v, vy: big ? 3 : 7, y0: m.position.y, t: 0, s0: m.scale.x, spin: (Math.random() < 0.5 ? -1 : 1) * (big ? 3 : 11) });
             }
-            else if (m.parent)
-                m.parent.remove(m);
-            else
-                scene.remove(m);
+            else {
+                if (m.parent)
+                    m.parent.remove(m);
+                else
+                    scene.remove(m);
+                if (G._disposeObj3D)
+                    G._disposeObj3D(m);
+            } // 🧹 v759 คืนหน่วยความจำ (ป้ายชื่อ/เรขาคณิตของตัวนี้) — เดิมรั่วทุกตัวที่ฆ่า
             const idx = wilds.indexOf(m);
             if (idx >= 0)
                 wilds.splice(idx, 1);
@@ -64466,6 +64556,8 @@ function CherryAdventure() {
                     dustPuff(m.position.x, m.position.z, 1.1);
                     if (m.parent)
                         m.parent.remove(m);
+                    if (G._disposeObj3D)
+                        G._disposeObj3D(m);
                     deathFly.splice(i, 1);
                 }
             }
@@ -76017,6 +76109,14 @@ function CherryAdventure() {
                 G._cloudPush(); // ☁️ mirror the save to the cloud when logged in
         };
         G.saveGame = saveGame;
+        try {
+            window.__cherrySave = () => { try {
+                if (G.mode && G.mode !== "create" && G.mode !== "title")
+                    saveGame();
+            }
+            catch (e) { } };
+        }
+        catch (e) { } // 💾 ให้แถบ "มีเวอร์ชันใหม่" เซฟก่อนโหลดหน้าใหม่
         // ---------- 🌐 ONLINE (async) — a real shared backend via Supabase REST ----------
         const CN = {
             cfg: ONLINE_CONFIG,
@@ -76434,13 +76534,14 @@ function CherryAdventure() {
                     return null;
                 try {
                     const res = await fetch(this._authUrl("token?grant_type=refresh_token"), { method: "POST", headers: { apikey: this.cfg.anonKey, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token }) });
-                    if (!res.ok)
-                        return null;
-                    return await res.json();
+                    if (res.ok)
+                        return await res.json();
+                    // 🔑 v759: 400/401/403 = เซิร์ฟเวอร์ปฏิเสธโทเคนนี้จริง (หมดอายุ/ถูกเพิกถอน) → ต้องล็อกอินใหม่ · 429/5xx = ชั่วคราว ลองใหม่ทีหลัง
+                    return (res.status === 400 || res.status === 401 || res.status === 403) ? { _dead: true } : null;
                 }
                 catch (e) {
                     return null;
-                }
+                } // 📶 เน็ตหลุด/เพิ่งปลุกเครื่อง — เก็บ session ไว้ ไม่เด้งออกจากบัญชี
             },
             async signOutRemote(access_token) {
                 if (!this.enabled() || !access_token)
@@ -76519,20 +76620,31 @@ function CherryAdventure() {
                 G.startPresence();
             return true;
         };
+        // 🔑 v759: ต่ออายุโทเคนทีละครั้ง (หลายระบบเรียกพร้อมกันตอนหมดอายุ = ใช้ผลเดียวกัน) · ออกจากระบบเฉพาะตอนเซิร์ฟเวอร์ปฏิเสธโทเคนจริง
+        //    เดิม: เน็ตสะดุดแค่ครั้งเดียวตอนต่ออายุ (เช่น เพิ่งสลับแอปกลับมา) = ลบ session ทิ้ง เด้งออกจากบัญชีทันที
+        let _refreshing = null;
         G._authToken = async () => {
             if (!G._session)
                 return null;
             if (Date.now() < (G._session.exp || 0))
                 return G._session.access_token;
-            const j = await CN.refresh(G._session.refresh_token);
-            if (j && j.access_token) {
-                _applySession(j);
-                return G._session.access_token;
+            if (!_refreshing) {
+                const rt = G._session.refresh_token;
+                _refreshing = (async () => {
+                    const j = await CN.refresh(rt);
+                    if (j && j.access_token) {
+                        _applySession(j);
+                        return G._session.access_token;
+                    }
+                    if (j && j._dead && G._session && G._session.refresh_token === rt) {
+                        _clearSession();
+                        G.auth = { status: "out", email: null, uid: null };
+                        _setAuthUi();
+                    }
+                    return null;
+                })().finally(() => { _refreshing = null; });
             }
-            _clearSession();
-            G.auth = { status: "out", email: null, uid: null };
-            _setAuthUi();
-            return null;
+            return _refreshing;
         };
         // pick the save blob to upload: the active slot if it holds a character, else the strongest non-empty slot
         // pick the slot to sync: the active slot if it holds a character, else the strongest non-empty slot (-1 = none)
