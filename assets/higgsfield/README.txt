@@ -198,3 +198,9 @@ Kirara remake (คิราระ — rare golden star) — 2026-11-06 · mon_ki
 - Concept GPT Image 2.5 (A-pose chubby golden five-pointed star with arms + legs) → Meshy 7 image-to-3D (20k) →
   Meshy rigging + Attack clip #397 360_Power_Spin_Jump; Idle / Walk / Hit / Die borrowed from mon_mochi (hips rescaled),
   root motion stripped, 7.6k triangles, 1024 JPEG, quantized. Stage 2 "โนวา" = same model ×1.6 + golden halo
+
+Phi remake (ผีราตรี — night ghost of the dead-tree grove) — 2026-11-06 · mon_phi.glb
+- Concept GPT Image 2.5 (hooded lavender-white sheet ghost, glowing violet eyes, blue spirit flame on the hood tip, A-pose,
+  stubby legs) → Meshy 7 image-to-3D (20k) → Meshy rigging + Attack clip #386 Zombie_Scream; Idle / Walk / Hit / Die
+  borrowed from mon_mochi (hips rescaled), root motion stripped, ~7k triangles, 1024 JPEG, quantized.
+  Replaces the KayKit Skeleton_Mage stand-in. Stage 2 "ภูตราชัน" = same model ×1.5 with a stronger glow
