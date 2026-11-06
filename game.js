@@ -66,7 +66,8 @@ const BIOMES = [
 // ============ 🏔️ ภูมิประเทศประจำแมพ — ภูเขา · ที่ราบสูง · พื้นเอียง · หน้าผา ============
 // พื้นโลกเป็นสนามความสูงจริง เดินขึ้น-ลงได้ · กลางแมพ (หมู่บ้าน/ถนน/NPC) เรียบเสมอ แล้วค่อยไล่ระดับออกไป
 const TERR_FLAT_R = 15; // รัศมีลานกลางแมพที่พื้นเรียบสนิท
-const WORLD_S = 2; // 🗺️ ขยายทุกด่าน ×2 (รัศมี 34 → 68) — ภูมิประเทศยืดตาม ความสูงคงเดิม (ลาดชันนุ่มลง)
+const WORLD_S = 2 * Math.SQRT2; // 🗺️ v762 พื้นที่ทุกด่าน ×2 อีกรอบ (รัศมี 68 → 96 · เดิม ×2 จาก 34 → 68) — ภูมิประเทศยืดตาม ความสูงคงเดิม (ลาดชันนุ่มลง)
+const MAP_K = WORLD_S / 2; // 🗺️ อัตราขยายเทียบขนาดแมพก่อน v762 (√2) — ใช้เพิ่มจำนวนแคมป์/มอนตามแมพที่กว้างขึ้น
 const TERR_RAMP = 8; // ระยะไล่ระดับจากลานกลางออกไปหาภูมิประเทศเต็มรูป
 // รูปทรงพื้นฐานที่เอามาบวกกันเป็นภูมิประเทศ
 //  hill=เนินกลม · ridge=สันเขายาว · mesa=ที่ราบสูงยอดตัด(ขอบเป็นหน้าผา) · drop=ขอบที่ราบดิ่งลง
@@ -476,7 +477,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v761"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v762"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -6277,7 +6278,7 @@ function CherryAdventure() {
         };
         G.GATE_POS = GATE_POS;
         const FIELD_R = 34 * WORLD_S; // 🗺️ playable field radius — ×1.5 ของเดิม (28 → 34, พื้นที่ ≈ 1.5 เท่า)
-        const TARGET_WILDS = 48; // 🐾 มอนสเตอร์ในแมพ ×2 (กระจายตามแคมป์มากขึ้น)
+        const TARGET_WILDS = Math.round(48 * MAP_K); // 🐾 มอนสเตอร์ในแมพ (48 → 68 ตามแมพที่กว้างขึ้น v762 · ไม่ถึง ×2 เพื่อไม่ให้มือถือหนักเกิน)
         // 🌲 ขอบแมพไม่ใช้เส้นวงกลมแล้ว — สร้างเป็นป่า/แม่น้ำ/กำแพง/รั้ว/เหว ตามแต่ละแมพ (ดู G.buildBorder)
         // ---------- World decorations + colliders ----------
         const colliders = []; // { x, z, r } — solid objects
@@ -38330,7 +38331,7 @@ function CherryAdventure() {
         const wilds = [];
         // 🏕️ MONSTER CAMPS — group monsters into a handful of camps spread across the map, each owning a
         // level band (lower Lv near the middle, higher Lv further out) so they cluster by level at points.
-        const CAMP_COUNT = 20; // 🏕️ จุดแคมป์มอนสเตอร์ ×2 — กระจายทั่วแมพมากขึ้น
+        const CAMP_COUNT = Math.round(20 * MAP_K); // 🏕️ จุดแคมป์มอนสเตอร์ (20 → 28 ตามแมพที่กว้างขึ้น v762) — กระจายทั่วแมพ
         const makeCamps = () => {
             const lo = G.biomeLvMin != null ? G.biomeLvMin : 1;
             const hi = G.biomeLvMax != null ? G.biomeLvMax : lo + 9;
@@ -41475,7 +41476,7 @@ function CherryAdventure() {
                 o.receiveShadow = true;
                 o.geometry.userData = Object.assign(o.geometry.userData || {}, { _shared: true });
             });
-            const TAU = Math.PI * 2, R = FIELD_R, WL = -0.12; // WL = ระดับผิวน้ำทะเล (ขอบแมพ)
+            const TAU = Math.PI * 2, R = FIELD_R, WL = -0.12, RK = R / 68; // WL = ระดับผิวน้ำทะเล (ขอบแมพ) · 🗺️ v762 RK: ผังท่าเรือออกแบบไว้ที่ขอบแมพ 68 → ยืดระยะทั้งหมดตามขนาดแมพจริง
             const pol = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
             const tan = (a) => [-Math.sin(a), Math.cos(a)]; // ทิศเลียบฝั่ง ณ มุม a
             const hAt = (x, z) => (Math.hypot(x, z) < R + 0.6 ? terrainAt(x, z) : WL);
@@ -41576,44 +41577,44 @@ function CherryAdventure() {
             const aN = -Math.PI / 2, aS = Math.PI / 2, aE = 0, aNW = -2.42;
             // ===== ⚓ โซน 1: ท่าเรือหลักฝั่งเหนือ =====
             const aA = aN - 0.13, aB = aN + 0.17;
-            pier("harbor", aA, 52, 86, true);
-            pier("harbor", aB, 54, 82, true);
+            pier("harbor", aA, 52 * RK, 86 * RK, true);
+            pier("harbor", aB, 54 * RK, 82 * RK, true);
             {
-                const [x, z] = pol(aA, 82.5), [tx, tz] = tan(aA);
+                const [x, z] = pol(aA, 82.5 * RK), [tx, tz] = tan(aA);
                 ship("ship-pirate-large", x - tx * 7.4, z - tz * 7.4, Math.atan2(...pol(aA, 1)), 1.85, 0.95);
             }
             {
-                const [x, z] = pol(aB, 80), [tx, tz] = tan(aB);
+                const [x, z] = pol(aB, 80 * RK), [tx, tz] = tan(aB);
                 ship("ship-pirate-medium", x + tx * 7.0, z + tz * 7.0, Math.atan2(...pol(aB, 1)) + Math.PI, 1.7, 0.95);
             }
             {
-                const [x, z] = pol(aN + 0.52, 97);
+                const [x, z] = pol(aN + 0.52, 97 * RK);
                 ship("ship-pirate-small", x, z, aN + 0.52 + 0.9, 1.6, 0.95);
             }
             {
-                const [x, z] = pol(aN - 0.34, 84);
+                const [x, z] = pol(aN - 0.34, 84 * RK);
                 ship("boat-row-large", x, z, 0.6, 1.4, 0.25);
             }
             {
-                const [x, z] = pol(aA, 70), [tx, tz] = tan(aA);
+                const [x, z] = pol(aA, 70 * RK), [tx, tz] = tan(aA);
                 ship("boat-row-small", x + tx * 3.6, z + tz * 3.6, Math.atan2(...pol(aA, 1)), 1.35, 0.25);
             }
             {
-                const [x, z] = pol(aB, 69.5), [tx, tz] = tan(aB);
+                const [x, z] = pol(aB, 69.5 * RK), [tx, tz] = tan(aB);
                 ship("boat-row-small", x - tx * 3.6, z - tz * 3.6, Math.atan2(...pol(aB, 1)) + 0.3, 1.35, 0.25);
             }
             // ของบนท่า: ถัง ลัง กองลูกปืนใหญ่ ปืนใหญ่ ธง ตะเกียง
-            [[aA, 60], [aA, 66], [aA, 82], [aB, 62], [aB, 78]].forEach(([a, r], i) => {
+            [[aA, 60 * RK], [aA, 66 * RK], [aA, 82 * RK], [aB, 62 * RK], [aB, 78 * RK]].forEach(([a, r], i) => {
                 const [x, z] = pol(a, r), [tx, tz] = tan(a), sd = i % 2 ? 1 : -1;
                 const bx = x + tx * sd * 1.25, bz = z + tz * sd * 1.25, cx = x - tx * sd * 1.3, cz = z - tz * sd * 1.3;
                 small("harbor", "barrel", bx, bz, rnd(0, 6), 1.0, 0, deckTop(bx, bz) - hAt(bx, bz));
                 small("harbor", i % 2 ? "crate" : "crate-bottles", cx, cz, rnd(0, 6), 1.0, 0, deckTop(cx, cz) - hAt(cx, cz));
             });
-            [[aA, 54.5], [aB, 56.5], [aA, 84.5], [aB, 80.5]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); lantern("harbor", x + tx * 1.7, z + tz * 1.7, 2.6); lantern("harbor", x - tx * 1.7, z - tz * 1.7, 2.6); });
-            [[aA, 85], [aB, 81]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); const fx = x + tx * 3.4, fz = z + tz * 3.4; const f = mk("flag-pirate-high", fx, deckTop(fx, fz), fz, Math.random() * 6, 1.4); if (f)
+            [[aA, 54.5 * RK], [aB, 56.5 * RK], [aA, 84.5 * RK], [aB, 80.5 * RK]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); lantern("harbor", x + tx * 1.7, z + tz * 1.7, 2.6); lantern("harbor", x - tx * 1.7, z - tz * 1.7, 2.6); });
+            [[aA, 85 * RK], [aB, 81 * RK]].forEach(([a, r]) => { const [x, z] = pol(a, r), [tx, tz] = tan(a); const fx = x + tx * 3.4, fz = z + tz * 3.4; const f = mk("flag-pirate-high", fx, deckTop(fx, fz), fz, Math.random() * 6, 1.4); if (f)
                 sea.add(f); });
             // โกดัง/เพิงหลังคามุงจากริมฝั่ง + กองสินค้า
-            [[aN - 0.02, 50], [aN + 0.07, 49], [aN - 0.27, 54], [aN + 0.32, 55]].forEach(([a, r], i) => {
+            [[aN - 0.02, 50 * RK], [aN + 0.07, 49 * RK], [aN - 0.27, 54 * RK], [aN + 0.32, 55 * RK]].forEach(([a, r], i) => {
                 const [x, z] = pol(a, r);
                 big("structure-roof", x, z, a + Math.PI / 2 + rnd(-0.3, 0.3), 1.55, 2.3);
                 reserve(x, z, 4.2);
@@ -41623,7 +41624,7 @@ function CherryAdventure() {
                 }
             });
             {
-                const [x, z] = pol(aN - 0.45, 62);
+                const [x, z] = pol(aN - 0.45, 62 * RK);
                 big("tower-complete-large", x, z, 0.4, 1.45, 2.8);
                 reserve(x, z, 5); // 🗼 ประภาคาร — โคมหมุนส่องทะเล
                 const bc = new THREE.Group();
@@ -41654,7 +41655,7 @@ function CherryAdventure() {
                 pirAnim.lamps.push({ glow, beamPiv: piv, beams: piv.children });
             }
             {
-                const [x, z] = pol(aN + 0.45, 60);
+                const [x, z] = pol(aN + 0.45, 60 * RK);
                 big("tower-watch", x, z, 0, 1.5, 2.4);
                 big("flag-pirate-high-pennant", x, z, 1.2, 1.5, 0, 2.79 * 1.5);
                 reserve(x, z, 4.5);
@@ -41701,7 +41702,7 @@ function CherryAdventure() {
             }
             // ===== ☠️ โซน 3: หาดซากเรืออับปาง + หลุมสมบัติ (ฝั่งใต้) =====
             {
-                const [x, z] = pol(aS - 0.07, 62.5), ry = -(aS - 0.07);
+                const [x, z] = pol(aS - 0.07, 62.5 * RK), ry = -(aS - 0.07);
                 const w = big("ship-wreck", x, z, ry, 1.45, 0, -0.85);
                 if (w) {
                     w.rotation.order = "YXZ";
@@ -41713,7 +41714,7 @@ function CherryAdventure() {
                 reserve(x, z, 10);
             }
             {
-                const [x, z] = pol(aS + 0.24, 56.5);
+                const [x, z] = pol(aS + 0.24, 56.5 * RK);
                 reserve(x, z, 4.5); // 💰 หลุมสมบัติ + พลั่วปัก + หีบเปิดปิด เรืองแสงทอง
                 small("beach", "hole", x, z, 0.5, 1.2, 0, 0.02);
                 small("beach", "tool-shovel", x + 1.9, z - 0.6, 0.6, 1.0, 0.3, 0, 0.32, 0.12);
@@ -41729,7 +41730,7 @@ function CherryAdventure() {
                 }
             }
             for (let k = 0; k < 14; k++) {
-                const p = spot(0.8, 54, 64, aS, 0.9);
+                const p = spot(0.8, 54 * RK, 64 * RK, aS, 0.9);
                 if (!p)
                     continue;
                 const nm = pick(["barrel", "barrel", "crate", "bottle", "bottle-large", "cannon-ball", "crate-bottles"]);
@@ -41737,12 +41738,12 @@ function CherryAdventure() {
                 small("beach", nm, p[0], p[1], rnd(0, 6), rnd(0.9, 1.1), nm === "bottle" || nm === "bottle-large" || nm === "cannon-ball" ? 0 : 0.6, tip ? 0.62 : 0, 0, tip ? Math.PI / 2 : 0);
             }
             {
-                const p = spot(2, 55, 62, aS - 0.32, 0.25);
+                const p = spot(2, 55 * RK, 62 * RK, aS - 0.32, 0.25);
                 if (p)
                     big("cannon", p[0], p[1], rnd(0, 6), 1.1, 0.9);
             }
             {
-                const p = spot(2, 56, 63, aS + 0.5, 0.25);
+                const p = spot(2, 56 * RK, 63 * RK, aS + 0.5, 0.25);
                 if (p) {
                     const m = big("mast-ropes", p[0], p[1], rnd(0, 6), 1.3, 0, 0.4);
                     if (m) {
@@ -41752,7 +41753,7 @@ function CherryAdventure() {
                 }
             }
             for (let k = 0; k < 6; k++) {
-                const p = spot(1.2, 58, 65, aS, 1.1);
+                const p = spot(1.2, 58 * RK, 65 * RK, aS, 1.1);
                 if (p)
                     big(pick(["rocks-sand-a", "rocks-sand-b", "rocks-sand-c"]), p[0], p[1], rnd(0, 6), rnd(0.8, 1.2), 2.0);
             }
@@ -41777,27 +41778,27 @@ function CherryAdventure() {
                 }
             }
             // ===== 🎣 โซน 4: หมู่บ้านชาวประมงฝั่งตะวันตกเฉียงเหนือ =====
-            pier("cove", aNW, 59, 74, false);
+            pier("cove", aNW, 59 * RK, 74 * RK, false);
             {
-                const [x, z] = pol(aNW, 71.5), [tx, tz] = tan(aNW);
+                const [x, z] = pol(aNW, 71.5 * RK), [tx, tz] = tan(aNW);
                 ship("boat-row-large", x + tx * 3.7, z + tz * 3.7, Math.atan2(...pol(aNW, 1)), 1.4, 0.25);
             }
-            [[aNW - 0.1, 57], [aNW + 0.1, 58.5], [aNW + 0.02, 52]].forEach(([a, r], i) => { const [x, z] = pol(a, r); big("structure-roof", x, z, a + rnd(-0.4, 0.4), 1.5, 2.2); reserve(x, z, 4); });
+            [[aNW - 0.1, 57 * RK], [aNW + 0.1, 58.5 * RK], [aNW + 0.02, 52 * RK]].forEach(([a, r], i) => { const [x, z] = pol(a, r); big("structure-roof", x, z, a + rnd(-0.4, 0.4), 1.5, 2.2); reserve(x, z, 4); });
             {
-                const [x, z] = pol(aNW + 0.2, 63);
+                const [x, z] = pol(aNW + 0.2, 63 * RK);
                 small("cove", "boat-row-small", x, z, 1.1, 1.3, 1.6);
                 small("cove", "tool-paddle", x + 1.8, z + 0.8, 0.4, 1.0, 0, 0.12, Math.PI / 2);
                 reserve(x, z, 3);
             }
             for (let k = 0; k < 6; k++) {
-                const p = spot(0.8, 52, 63, aNW, 0.5);
+                const p = spot(0.8, 52 * RK, 63 * RK, aNW, 0.5);
                 if (p)
                     small("cove", pick(["barrel", "crate", "crate-bottles"]), p[0], p[1], rnd(0, 6), 1.0, 0.6);
             }
-            [[aNW - 0.05, 62], [aNW + 0.08, 62.5]].forEach(([a, r]) => { const [x, z] = pol(a, r); lantern("cove", x, z, 2.4); });
+            [[aNW - 0.05, 62 * RK], [aNW + 0.08, 62.5 * RK]].forEach(([a, r]) => { const [x, z] = pol(a, r); lantern("cove", x, z, 2.4); });
             // ===== 🌴 โซน 5: ในแผ่นดิน — ต้นมะพร้าว · หิน · ค่ายโจรสลัด · เสากระโดงธง · ของเกลื่อน =====
             for (let k = 0; k < 3; k++) { // ⛺ ค่ายโจรสลัด: เพิงมุงจาก + ปืนใหญ่ + ธง + ลังสินค้า
-                const p = spot(6, 28, 52);
+                const p = spot(6, 28 * RK, 52 * RK);
                 if (!p)
                     continue;
                 const [x, z] = p, a = Math.atan2(z, x);
@@ -41813,7 +41814,7 @@ function CherryAdventure() {
                 }
             }
             for (let k = 0; k < 3; k++) {
-                const p = spot(3, 24, 50);
+                const p = spot(3, 24 * RK, 50 * RK);
                 if (!p)
                     continue;
                 big("mast-ropes", p[0], p[1], rnd(0, 6), 1.3, 0.5);
@@ -41821,33 +41822,33 @@ function CherryAdventure() {
                 reserve(p[0], p[1], 3);
             }
             for (let k = 0; k < 38; k++) {
-                const p = spot(1.6, 22, 64);
+                const p = spot(1.6, 22 * RK, 64 * RK);
                 if (!p)
                     continue;
                 const nm = pick(["palm-bend", "palm-straight", "palm-detailed-bend", "palm-detailed-straight"]);
                 big(nm, p[0], p[1], rnd(0, TAU), rnd(1.25, 1.75), 0.55);
             }
             for (let k = 0; k < 9; k++) {
-                const p = spot(3.2, 26, 62);
+                const p = spot(3.2, 26 * RK, 62 * RK);
                 if (!p)
                     continue;
                 const s = rnd(0.9, 1.35);
                 big(pick(["rocks-a", "rocks-b", "rocks-c", "rocks-sand-a", "rocks-sand-b"]), p[0], p[1], rnd(0, TAU), s, 2.2 * s);
             }
             for (let k = 0; k < 22; k++) {
-                const p = spot(1, 22, 62);
+                const p = spot(1, 22 * RK, 62 * RK);
                 if (!p)
                     continue;
                 small("inland", pick(["barrel", "crate", "crate-bottles", "barrel", "bottle-large"]), p[0], p[1], rnd(0, 6), rnd(0.9, 1.1), 0.6);
             }
             for (let k = 0; k < 16; k++) {
-                const p = spot(2.5, 22, 63);
+                const p = spot(2.5, 22 * RK, 63 * RK);
                 if (!p)
                     continue;
                 small("ground", Math.random() < 0.6 ? "patch-sand-foliage" : "patch-grass-foliage", p[0], p[1], rnd(0, TAU), rnd(0.8, 1.2), 0, -0.06);
             }
             for (let k = 0; k < 34; k++) {
-                const p = spot(0.6, 22, 64);
+                const p = spot(0.6, 22 * RK, 64 * RK);
                 if (!p)
                     continue;
                 small("ground", Math.random() < 0.5 ? "grass-plant" : "grass-patch", p[0], p[1], rnd(0, TAU), rnd(0.9, 1.3), 0, -0.02);
@@ -41865,7 +41866,7 @@ function CherryAdventure() {
                 const wl = new THREE.Mesh(wingG, gullM), wr = new THREE.Mesh(wingG, gullM);
                 wr.scale.x = -1;
                 g.add(wl, wr);
-                const [cx, cz] = pol(k < 5 ? aN + rnd(-0.4, 0.4) : aS + rnd(-0.4, 0.4), rnd(56, 74));
+                const [cx, cz] = pol(k < 5 ? aN + rnd(-0.4, 0.4) : aS + rnd(-0.4, 0.4), rnd(56 * RK, 74 * RK));
                 pirDecor.add(g);
                 pirAnim.gulls.push({ g, wl, wr, cx, cz, r: rnd(6, 14), y: rnd(9, 15), a: rnd(0, TAU), w: (Math.random() < 0.5 ? -1 : 1) * rnd(0.25, 0.45), ph: rnd(0, 6) });
             }
@@ -41999,7 +42000,7 @@ function CherryAdventure() {
         };
         // 👑🍄 ต้นเห็ดแม่เรืองแสงยักษ์ — โมเดลจาก Higgsfield (วาดภาพคอนเซ็ปต์ → แปลงเป็น 3D) ลดเหลือ 16k สามเหลี่ยม + เท็กซ์เจอร์ 1024 (770KB)
         //    โหลดแยกเฉพาะตอนเข้าแมพนี้ครั้งแรก · สูงราว 2 เท่าของเห็ดยักษ์ต้นอื่น ตั้งเด่นเหนือลำธารทางทิศเหนือของลานกลาง
-        const MOM = { x: 2, z: -33, h: 28, file: "assets/higgsfield/mother_mushroom.glb" };
+        const MOM = { x: 2 * MAP_K, z: -33 * MAP_K, h: 28, file: "assets/higgsfield/mother_mushroom.glb" }; // 🗺️ v762 ตำแหน่งยืดตามขนาดแมพ
         let momGl = null, momLoading = null, momBuilt = false, momTry = 0;
         const momAnim = { mat: null, ring: null, spores: null, sp: null, gy: 0 };
         const momPlace = () => {
@@ -42086,7 +42087,7 @@ function CherryAdventure() {
                 return;
             const rnd = (a, b) => a + Math.random() * (b - a), pick = (arr) => arr[(Math.random() * arr.length) | 0];
             // 💧 ลำธารเรืองแสง — ริบบิ้นแบนตามเส้นโค้ง แนบพื้นทุกจุด (กลุ่มนี้ไม่ถูกซ่อนตอนต่อสู้)
-            const ctrl = [[-66, -34], [-44, -24], [-22, -31], [0, -20], [22, -27], [44, -14], [66, -22]].map(([x, z]) => new THREE.Vector3(x, 0, z));
+            const ctrl = [[-66, -34], [-44, -24], [-22, -31], [0, -20], [22, -27], [44, -14], [66, -22]].map(([x, z]) => new THREE.Vector3(x * MAP_K, 0, z * MAP_K)); // 🗺️ v762 ลำธารยาวตามแมพที่กว้างขึ้น
             const curve = new THREE.CatmullRomCurve3(ctrl, false, "catmullrom", 0.5);
             const N = 120, pts = curve.getSpacedPoints(N), pos = new Float32Array((N + 1) * 6), idx = [];
             for (let i = 0; i <= N; i++) {
@@ -42136,7 +42137,7 @@ function CherryAdventure() {
             const LB = new THREE.Box3().setFromObject(L.obj), LRX = Math.max(-LB.min.x, LB.max.x, -LB.min.z, LB.max.z), LH = LB.max.y - LB.min.y; // ขนาดโมเดลต้นแบบ (รัศมีหมวก/ความสูง)
             const glowPos = [], glowCol = []; // ✨ แสงฟุ้งใต้หมวกเห็ด — รวมเป็น Points ก้อนเดียว (วาดครั้งเดียวทั้งด่าน)
             for (let k = 0; k < 34; k++) {
-                const p = spot(k < 10 ? 3.5 : 2.4, 13, 62);
+                const p = spot(k < 10 ? 3.5 : 2.4, 13 * MAP_K, 62 * MAP_K);
                 if (!p)
                     continue;
                 const s = rnd(13, 26) * (k % 6 === 0 ? 1.3 : 1), col = pick(MUSH_COLS); // โมเดลต้นแบบสูง 0.45 → เห็ดสูงราว 6–15 หน่วย (ตัวละครสูง 4)
@@ -42189,7 +42190,7 @@ function CherryAdventure() {
             // 🪨 หินก้อนใหญ่
             if (Rks.length)
                 for (let k = 0; k < 14; k++) {
-                    const p = spot(1.5, 14, 64);
+                    const p = spot(1.5, 14 * MAP_K, 64 * MAP_K);
                     if (!p)
                         continue;
                     const R2 = pick(Rks), s = rnd(0.9, 1.7), g = new THREE.Group();
@@ -42207,7 +42208,7 @@ function CherryAdventure() {
             const chunk = new THREE.Group();
             chunk.userData.noHide = true;
             for (let k = 0; k < 70; k++) {
-                const p = spot(0.8, 6, 64);
+                const p = spot(0.8, 6 * MAP_K, 64 * MAP_K);
                 if (!p)
                     continue;
                 const s = rnd(3, 7), o = L.obj.clone();
@@ -42221,7 +42222,7 @@ function CherryAdventure() {
             }
             if (Fe)
                 for (let k = 0; k < 26; k++) {
-                    const p = spot(0.8, 6, 64);
+                    const p = spot(0.8, 6 * MAP_K, 64 * MAP_K);
                     if (!p)
                         continue;
                     const s = rnd(0.22, 0.42), o = Fe.obj.clone();
