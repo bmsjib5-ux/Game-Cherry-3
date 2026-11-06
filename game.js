@@ -476,7 +476,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v760"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v761"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -13947,7 +13947,7 @@ function CherryAdventure() {
         // 💀 KayKit Skeletons (CC0 — Kay Lousberg) — มอนสเตอร์อันเดดใช้โมเดลมีโครงกระดูกจริง + อนิเมชัน
         //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
         //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
-        const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", phi: "Skeleton_Mage", skelguard: "Skeleton_Warrior", pirskel: "Skeleton_Minion", pirgunner: "Skeleton_Minion" }; // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
+        const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", skelguard: "Skeleton_Warrior", pirskel: "Skeleton_Minion", pirgunner: "Skeleton_Minion" }; // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
         const KK_SKEL_H = 1.5;
         // 🎨 ย้อมสีเฉพาะสายพันธุ์ (ใช้ร่างเดียวกันแต่คนละด่าน) — hue = ย้อม texture รักษาลายเดิม · glow = เรืองแสงอ่อน ๆ
         const KK_SKEL_TINT = { skelguard: { hue: [168, 0.55, 1.45, 0.92, 0, 0.25], glow: 0x10483a, gi: 0.7 } }; // 🏚️ ทหารโครงกระดูกเมืองร้าง — กระดูกเขียวหยกผีสิง
@@ -14418,6 +14418,8 @@ function CherryAdventure() {
             taara: { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.7, y: 0.5, hue: [268, 0.55, 1.45, 0.82], gloss: [0.2, 0.45, 0x1a1030], halo: { bone: "Head", at: [0, 2.1, 0], r: 2.5, tube: 0.13, tilt: 1.1 }, evo: { size: 2.5, y: 0.7 } }, // 💫 ธาราทิพย์ — ดาวหนามย้อมม่วง + วงแหวนเอียงรอบตัว
             garuda: { f: "Big_Birb", c: "big", by: "h", size: 2.1, hue: [28, 0.85, 1.05, 0.7], horn: { bone: "Head", base: [0, 3.25, 0.1], tip: [0, 4.2, 0.1], r: 0.32 } }, // 🦁 ครุฑอสูร — นกใหญ่มีแขนขา ย้อมส้มทอง + ชฎา
             suphan: { f: "Duck", by: "h", size: 1.9, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck", tint: { DuckBodyMaterial: 0xc99a14, DuckBeakMaterial: 0xd8481a, FootMaterial: 0xd8481a }, horn: { bone: "Bone001", base: [0, 1.95, 0.32], tip: [0, 2.55, 0.32], r: 0.17 } }, // 🦢 สุพรรณหงส์ — เป็ดตัวโต (OpenGameArt, CC0) ย้อมทอง + ชฎา
+            phi: { f: "../higgsfield/mon_phi", by: "h", size: 1.6, y: 0.18, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.2, atkT: 1.05, glow: 0.3, // 👻 ผีราตรี (Higgsfield) — ผีผ้าคลุมตาม่วงเรือง ลอยเหนือพื้นนิด ๆ · กรีดร้องพุ่งใส่
+                evo: { size: 2.4, glow: 0.45 } }, // 👑 ร่างวิวัฒน์ "ภูตราชัน" — ตัวใหญ่ขึ้น เรืองแสงชัดขึ้น
             kirara: { f: "../higgsfield/mon_kirara", by: "h", size: 1.5, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.4, atkT: 1.05, glow: 0.22, // ⭐ คิราระ (Higgsfield) — ดาวทองตัวกลม หมุนตัวกระโดดฟาด · เรืองแสงทองนิด ๆ ให้รู้ว่าหายาก
                 evo: { size: 2.4, halo: { bone: "Head", at: [0, 1.1, 0], r: 0.17, tube: 0.02, tilt: 0.3 } } }, // ✨ ร่างวิวัฒน์ "โนวา" — ตัวใหญ่ขึ้น + วงแหวนทองลอยเหนือหัว
             eggdrake: { f: "Dragon", size: 2.8, y: 0.60, idle: "Dragon_Flying", walk: "Dragon_Flying", run: "Dragon_Flying", atk: "Dragon_Attack", hit: "Dragon_Hit", die: "Dragon_Death",
