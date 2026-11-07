@@ -418,7 +418,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v766";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v767";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -24949,13 +24949,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const ox2 = gx + O.cx, oz2 = gz + O.cz, u2 = ((ox2 - hx) * dx + (oz2 - hz) * dz) / L2;
             if (u2 > 0.45 && u2 < 1.3) { const q = Math.min(1, u2); if (Math.hypot(ox2 - (hx + dx * q), oz2 - (hz + dz * q)) < O.rr + 2.2) block = true; }
           }
+          if (!block && G.equipScreen && O.top > 0.25) { const ox3 = gx + O.cx, oz3 = gz + O.cz; if (Math.abs(ox3 - hx) < (O.rr || 1) + 1.8 && oz3 > hz + 0.8 && oz3 < cz + 1.5) block = true; }   // 🎒 v767 หน้ากระเป๋า: ของเตี้ยระหว่างกล้องกับตัวละคร (กระถาง/พุ่มไม้) ก็ซ่อนด้วย ไม่บังขา
         }
         if (!block && !O.fade) return;
         if (!O.meshes) { O.meshes = []; g.traverse((o) => { if (o.isMesh && o.material && !Array.isArray(o.material)) O.meshes.push(o); }); }
         if (!O.fade) { O.fade = true; for (const m of O.meshes) { const om = m.userData._ocOrig || m.material;
             if (!m.userData._ocFm || m.userData._ocOrig !== om) { const fm = om.clone(); fm.transparent = true; fm.depthWrite = false; fm.userData = Object.assign({}, om.userData); m.userData._ocOrig = om; m.userData._ocFm = fm; }
             m.material = m.userData._ocFm; } }
-        O.op += ((block ? 0.22 : 1) - O.op) * k;
+        O.op += ((block ? (G.equipScreen ? 0 : 0.22) : 1) - O.op) * k;   // 🎒 v767 หน้ากระเป๋า: ของที่บังตัวละครหายไปทั้งชิ้น (โชว์ชุดชัด ๆ)
         for (const m of O.meshes) { const fm = m.userData._ocFm, om = m.userData._ocOrig; if (fm && om) fm.opacity = O.op * (om.transparent ? om.opacity : 1); }
         if (!block && O.op > 0.97) { O.fade = false; O.op = 1; for (const m of O.meshes) if (m.userData._ocOrig) m.material = m.userData._ocOrig; }
       };
@@ -35322,7 +35323,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       // 🧍 จอแนวนอนกว้าง = ผังแบบเกม MMO โชว์ตัวละครยืนกลางจอระหว่างแผงซ้าย-ขวา
       //    จอแคบยังเป็นป๊อปอัปเต็มจอเหมือนเดิม จึงซ่อนตัวละครไว้
       G._eqWide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
-      if (char) { char.position.set(0, 0, 0); char.rotation.y = G._eqWide ? (G.dressRotY != null ? G.dressRotY : 0) : Math.PI; char.visible = !!G._eqWide; }
+      // 🏰 v767 ในเมือง จุดกำเนิดโลก = กลางน้ำพุ → ตัวละครไปยืนในอ่างน้ำพุ โดนน้ำพุบังทั้งตัว — ยืนหน้าน้ำพุแทน
+      if (char) { char.position.set(0, 0, G.inTownZone ? (G._townFountR || 6) + 4.5 : 0); char.rotation.y = G._eqWide ? (G.dressRotY != null ? G.dressRotY : 0) : Math.PI; char.visible = !!G._eqWide; }
       G.mode = "create"; // หยุดโลกไว้ (ไม่โดนมอนตีระหว่างเปิดกระเป๋า) — React creator UI ยังซ่อนอยู่ เพราะมันเช็ค ui.mode
       G.equipOpen = true;
       if (G.vel) { G.vel.x = 0; G.vel.z = 0; }
@@ -63065,7 +63067,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._twoHandGrip(0);
         } catch (_) {}
       }
-      if (G.mode === "explore" && G.occlTick) { try { G.occlTick(dt); } catch (eOc) {} }   // 👀 ของที่บังตัวละครจางโปร่ง
+      if ((G.mode === "explore" || (G.equipScreen && G._eqWide)) && G.occlTick) { try { G.occlTick(dt); } catch (eOc) {} }   // 👀 v767 หน้ากระเป๋า (คอม) ก็จางของที่บังตัวละครด้วย   // 👀 ของที่บังตัวละครจางโปร่ง
       if (dtForce == null) {   // ข้ามการวาดตอนซิมพื้นหลัง
         const _bl = !G._bloomOff && !!(BIOMES[G.curBiome] || {}).bloom && !G.equipScreen && G.mode !== "create" && G.mode !== "class";   // ✨ แสงเรืองฟุ้ง เฉพาะแมพที่ตั้งไว้
         G._bloomOn = _bl;
@@ -70573,6 +70575,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
             const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
             const eqTab = ui.eqTab || "bag";
+            if (G.bagView == null) { try { G.bagView = localStorage.getItem("cherry-bag-view") || "grid"; } catch (e) { G.bagView = "grid"; } }
+            const bagView = ui.bagView || G.bagView || "grid";   // 🎒 v767 ตาราง (ไอคอน) / รายการ (ชื่อ + ค่าพลัง)
             // 📱 แนวนอนมือถือ: กว้างพอจะเข้าผัง MMO แต่เตี้ยและแคบกว่าคอมมาก
             //    ถ้าใช้ความกว้างคอลัมน์ชุดคอม กระเป๋าจะถูกดันจนล้นออกนอกจอ
             const _vw = window.innerWidth, _vh = window.innerHeight;
@@ -70590,7 +70594,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const _minCell = tight ? 36 : 44;
             const bagCols = wide ? Math.max(3, Math.min(8, Math.floor((bagW - 24 + 6) / (_minCell + 6)))) : 6;
             const bagCell = wide ? Math.max(_minCell, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
-            const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 152)) + 6) / (bagCell + 6)))) : 4;
+            const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 196)) + 6) / (bagCell + 6)))) : 4;   // v767: แท็บประเภทของขึ้นได้ 2 แถวบนคอม → กันที่เพิ่ม (196)
             const railBtn = (k, ic, label) => (
               <button key={k} onClick={() => setUi((u) => ({ ...u, eqTab: k }))} style={{
                 display: "flex", alignItems: "center", gap: 7, width: "100%", padding: "9px 10px", marginBottom: 6,
@@ -70654,7 +70658,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             const eqSort = ui.equipSort || G.equipSort || "none";
             const qkey = (id) => { const it = LOOT.find((x) => x.id === id); return (TIER[it.rarity] || 1) * 100 + ((ui.plus || {})[id] || 0) + ((ui.awk || {})[id] || 0) * 5; }; // ✨ ของที่ปลุกพลังแล้วขึ้นก่อนของระดับเดียวกัน
             const sortedIds = eqSort === "qual" ? [...allIds].sort((a, b) => qkey(b) - qkey(a)) : eqSort === "qualAsc" ? [...allIds].sort((a, b) => qkey(a) - qkey(b)) : allIds;
-            const PER = wide ? bagCols * bagRows : 24; // 🖥️ คอม = คำนวณจากขนาดจอ · มือถือ = 24 ช่อง/หน้า (นับยาด้วย) เติมช่องว่างให้ครบ
+            const PER = bagView === "list" ? (wide ? Math.max(5, Math.floor((bagRows * (bagCell + 6) - 6) / 58)) * (bagW >= 560 ? 2 : 1) : 12) : wide ? bagCols * bagRows : 24; // 🖥️ คอม = คำนวณจากขนาดจอ · มือถือ = 24 ช่อง/หน้า (นับยาด้วย) เติมช่องว่างให้ครบ
             const potCells = [];   // 🧪 ยาย้ายไปแท็บ "ยา" ของกระเป๋าแล้ว (ไม่ปนกับอุปกรณ์)
             const allCells = [...potCells, ...sortedIds.map((id) => ({ id }))];
             const totalPages = Math.max(1, Math.ceil(allCells.length / PER));
@@ -70673,7 +70677,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               const PT = plusTier(plus);            // ⚒️✨ ขั้นออร่าตีบวก — ขาว/เขียว/ม่วง/ทอง
               const locked = it.req && ui.level < it.req;
               return (
-                <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
+                <button key={id} title={`${it.name}${plus > 0 ? " +" + plus : ""} · ${RARITY[it.rarity].name}`} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0, overflow: "hidden",
                   border: aw > 0 ? "1.5px solid #ffd76a" : PT ? `1.5px solid ${PT.css}` : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : `1.5px solid ${RARITY[it.rarity].color}88`,
                   background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `radial-gradient(circle at 50% 35%, ${RARITY[it.rarity].color}55, rgba(0,0,0,0.45) 78%)`,
                   boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(120,60,90,0.18)`
@@ -70688,6 +70692,33 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   {equipped && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, fontSize: 8.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: "0 0 11px 11px", letterSpacing: 0.3, padding: "1px 0" }}>✓ สวมใส่</span>}
                   {(ui.itemLock || {})[id] && <span style={{ position: "absolute", bottom: 12, left: 3, fontSize: 9 }} title="ล็อกไว้ — ขาย/แยกชิ้นส่วนไม่ได้">🔐</span>}
                   {locked && <span style={{ position: "absolute", top: 1, left: 3, fontSize: 9 }}>🔒</span>}
+                  {!equipped && <span style={{ position: "absolute", left: 6, right: 6, bottom: 3, height: 3, borderRadius: 2, background: RARITY[it.rarity].color, opacity: 0.9 }} />}   {/* 🎨 v767 แถบสีระดับของ — ดูออกทันทีว่าของระดับไหน */}
+                </button>
+              );
+            };
+            // ☰ v767 มุมมองรายการ — ชื่อของ · ระดับ · ช่อง · ค่าพลังหลัก · ตีบวก/สวมอยู่ (อ่านง่ายบนมือถือ)
+            const itemRow = (id) => {
+              const it = LOOT.find((x) => x.id === id);
+              const info = G.itemInfo ? G.itemInfo(id) : null, st = (info && info.stats) || {};
+              const count = (ui.inv || []).filter((x) => x === id).length;
+              const equipped = ui.equip && ui.equip[it.slot] === id;
+              const plus = (ui.plus || {})[id] || 0, aw = (ui.awk || {})[id] || 0;
+              const locked = it.req && ui.level < it.req, rc = RARITY[it.rarity].color;
+              const statTxt = [st.atk ? `⚔️${st.atk}` : null, st.def ? `🛡️${st.def}` : null, st.hp ? `❤️${st.hp}` : null, st.crit ? `🎯${st.crit}%` : null, st.spd ? `👟${st.spd}%` : null].filter(Boolean).slice(0, 3).join("  ");
+              return (
+                <button key={id} onClick={() => setUi((u) => ({ ...u, invSel: id }))} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", minWidth: 0, textAlign: "left", padding: "5px 8px 5px 5px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                  border: `1.5px solid ${equipped ? "#8ae0a0" : rc + "88"}`, background: `linear-gradient(90deg, ${rc}38, rgba(0,0,0,0.30) 60%)`, opacity: locked ? 0.55 : 1, boxSizing: "border-box" }}>
+                  <span style={{ position: "relative", width: 38, height: 38, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+                    background: `radial-gradient(circle at 50% 35%, ${rc}77, rgba(0,0,0,0.45) 80%)`, border: `1px solid ${rc}aa` }}>{it.emoji}
+                    {count > 1 && <span style={{ position: "absolute", right: -4, bottom: -4, fontSize: 9, fontWeight: 900, color: "#fff", background: "rgba(40,30,60,0.9)", borderRadius: 7, padding: "0 4px" }}>×{count}</span>}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 12, fontWeight: 900, color: rc, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {it.name}{plus > 0 && <span style={{ color: "#f5c542" }}> +{plus}</span>}{aw > 0 && <span style={{ color: "#ffd76a" }}> ★{aw}</span>}</span>
+                    <span style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "#c8c0c8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {RARITY[it.rarity].name} · {SLOT_NAMES[it.slot]}{locked ? ` · 🔒 Lv.${it.req}` : ""}{statTxt ? " · " + statTxt : ""}</span>
+                  </span>
+                  {equipped && <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: 999, padding: "2px 7px" }}>✓ สวม</span>}
+                  {(ui.itemLock || {})[id] && <span style={{ flexShrink: 0, fontSize: 11 }}>🔐</span>}
                 </button>
               );
             };
@@ -70710,14 +70741,27 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               );
             };
             const catChip = (ck, label) => (
-              <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ padding: "4px 10px", borderRadius: 999, cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font,
+              <button key={ck} onClick={() => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 }))} style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font,
                 border: (ui.invCat || "all") === ck ? "1px solid #f0cf7a" : "1px solid rgba(232,128,158,0.35)",
                 background: (ui.invCat || "all") === ck ? "linear-gradient(135deg,#e0bb62,#b78d38)" : "rgba(255,255,255,0.06)",
                 color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0",
                 boxShadow: (ui.invCat || "all") === ck ? "0 2px 8px rgba(201,162,74,0.35)" : "none" }}>{label}</button>
             );
             const emptyTile = (i) => <div key={"e" + i} style={{ aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.22)" }} />;
-            const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? itemTile(cell.id) : emptyTile(i);
+            const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? (bagView === "list" ? itemRow(cell.id) : itemTile(cell.id)) : (bagView === "list" ? null : emptyTile(i));
+            // 👗 v767 ปุ่มการแสดงผลชุด (รูปลักษณ์/ซ่อนชุด/ชายกระโปรง/ผ้าคลุม/ชุดฮีโร่) — ย้ายออกจากแถวกรองของในกระเป๋า ไปอยู่ใต้ตัวละคร (คอม) / ในแท็บแฟชั่น (มือถือ)
+            const dressRow = (center) => (
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: center ? "center" : "flex-start", alignItems: "center", gap: 4, pointerEvents: "auto" }}>
+                    <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
+                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
+                    {/* 👗🧣 ชุด = เสื้อ + ชายกระโปรง + ผ้าคลุม — แยกเปิดปิดได้ทีละส่วน */}
+                    <button key="eqskirt" onClick={() => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }} title="ชายกระโปรงที่ติดมากับชุด — ปิดไว้จะเหลือแค่เสื้อ ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" }}>{ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"}</button>
+                    <button key="eqcape" onClick={() => setUi((u) => ({ ...u, capeMode: G.cycleCape() }))} title="ผ้าคลุมหลัง — แตะวนเลือก: ไม่ใส่ · ตามชุด · ผ้าคลุม KayKit · ผ้าคลุมไหล่ KayKit" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.capeMode !== "off" ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.capeMode !== "off" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.capeMode !== "off" ? "#e0ecff" : "#c8d0c0" }}>{ui.capeMode === "off" ? "🧣 ผ้าคลุม" : ui.capeMode === "kk" ? "🧣 KayKit ✓" : ui.capeMode === "kk2" ? "🧣 คลุมไหล่ ✓" : "🧣 ตามชุด ✓"}</button>
+                    {(ui.heroPick || ui.heroId) && (
+                      <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
+                    )}
+              </div>
+            );
             return (
               <div key="eqscr" onClick={() => G.closeEquip()} style={{
                 position: "absolute", inset: 0, zIndex: 45, display: "flex", alignItems: "center", justifyContent: "center",
@@ -70773,12 +70817,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         {eqTab === "fashion"
                           ? <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 7 }}>👗 ลุคแฟชั่นที่ใส่อยู่ <span style={{ color: "#c8b0c0", fontWeight: 700 }}>· แตะช่องเพื่อเลือก</span></div>
                           : <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 7 }}>🧥 ชุดที่สวมอยู่ <span style={{ color: "#c8b0c0", fontWeight: 700 }}>· แตะช่องเพื่อกรอง</span></div>}
-                        <div style={{ display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: tight ? 5 : 7 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : `repeat(${eqTab === "fashion" ? 5 : GEAR.length}, minmax(0, 1fr))`, gap: tight || !two ? 5 : 7 }}>
                           {eqTab === "fashion" ? fashionCells() : GEAR.map(slotCell)}
                         </div>
                       </div>
                       {/* ⚔️ อาวุธที่ถืออยู่ตอนนี้ — ของที่สวมจริง หรืออาวุธประจำตัวฮีโร่ที่โชว์ทับ (แตะ = กรองเฉพาะอาวุธ + เปิดรายละเอียด) */}
-                      {(() => {
+                      {(wide || two) && (() => {   // 📱 v767 จอตั้งมือถือ: ไม่ซ้ำการ์ดอาวุธ (มีช่องอาวุธด้านบนอยู่แล้ว) — ให้ตารางของขึ้นมาเร็วขึ้น
                         const wid = (ui.equip || {}).weapon;
                         const wit = wid ? LOOT.find((x) => x.id === wid) : null;
                         const hw = G.heroId ? HERO_WPN_INFO[G.heroId] : null;
@@ -70826,11 +70870,24 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       {(() => {
                         const SI = G.setInfo ? G.setInfo() : null;
                         if (!SI) return null;
+                        if (!wide && !ui.setOpen) {   // 📱 v767 มือถือ: พับไว้เป็นแถวเดียว แตะเพื่อดูรายละเอียด
+                          const best = SI.rows[0];
+                          return (
+                            <button onClick={() => setUi((u) => ({ ...u, setOpen: true }))} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "7px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                              border: "1px solid rgba(232,128,158,0.18)", background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))", color: "#ffe0ec", fontSize: 11, fontWeight: 900 }}>
+                              <span>🧩 โบนัสเซ็ต</span>
+                              <span style={{ flex: 1, minWidth: 0, fontSize: 10, fontWeight: 700, color: SI.totalTxt ? "#9ae86a" : "#a89aa8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {SI.totalTxt ? SI.totalTxt : best ? `${best.emoji} ${best.name} ${best.worn}/${SI.slots}` : "ยังไม่มีโบนัส"}</span>
+                              <span style={{ color: "#c8b0c0" }}>▾</span>
+                            </button>
+                          );
+                        }
                         return (
                           <div style={{ borderRadius: 16, padding: "9px 10px 10px", maxHeight: 250, overflowY: "auto",
                             background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))",
                             border: "1px solid rgba(232,128,158,0.09)" }}>
-                            <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 2 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></div>
+                            <div style={{ fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 2, display: "flex", alignItems: "center" }}><span style={{ flex: 1 }}>🧩 คุณสมบัติเซ็ต <span style={{ color: "#8a9a88", fontWeight: 700 }}>· ครบ 3 / 5 / 7 ชิ้น</span></span>
+                              {!wide && <button onClick={() => setUi((u) => ({ ...u, setOpen: false }))} style={{ border: "none", background: "rgba(255,255,255,0.1)", color: "#e0c8d8", borderRadius: 8, padding: "1px 8px", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800 }}>พับ ▴</button>}</div>
                             <div style={{ fontSize: 8.5, color: "#8a9a88", marginBottom: 6 }}>ใส่ของ “ระดับเดียวกัน” ให้ครบตามจำนวน · ได้โบนัสขั้นสูงสุดที่ถึง</div>
                             {!SI.rows.length && <div style={{ fontSize: 10, color: "#8a9080", textAlign: "center", padding: "6px 0" }}>ยังไม่ได้ใส่ของ — สวมของระดับเดียวกัน 3 ชิ้นขึ้นไปเพื่อรับโบนัสเซ็ต</div>}
                             {SI.rows.map((r) => (
@@ -70868,11 +70925,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         <span style={{ fontSize: 11, fontWeight: 900, color: "#fff7ec", background: "rgba(20,28,22,0.55)", borderRadius: 999, padding: "3px 13px", border: "1px solid rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                           🧍 {G.playerName || "เชอร์รี่"} · Lv.{ui.level || 1}
                         </span>
+                        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "auto", maxWidth: "100%" }}>
+                        <span style={{ background: "rgba(20,28,22,0.50)", borderRadius: 12, padding: 5, border: "1px solid rgba(255,255,255,0.22)", maxWidth: "100%", boxSizing: "border-box" }}>{dressRow(true)}</span>
                         <span style={{ display: "flex", gap: 7, pointerEvents: "auto" }}>
                           {[["↺", -0.5], ["↻", 0.5]].map(([ic, d]) => (
                             <button key={ic} onClick={() => G.spinChar(d)} title="หมุนตัวละคร" style={{ width: 40, height: 32, borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 900,
                               border: "1px solid rgba(255,255,255,0.55)", background: "rgba(20,28,22,0.52)", color: "#fff7ec" }}>{ic}</button>
                           ))}
+                        </span>
                         </span>
                       </div>
                     )}
@@ -70937,15 +70997,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                     {eqTab === "fashion" && (
                       <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box",
                         ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
+                        {!wide && <div style={{ marginBottom: 8, padding: 7, borderRadius: 12, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(232,128,158,0.18)" }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 900, color: "#ffe0ec", marginBottom: 5 }}>👁️ การแสดงผลชุดบนตัวละคร</div>{dressRow(false)}</div>}
                         <FashionTab G={G} ui={ui} font={font} wide={wide} setUi={setUi} onBack={() => setUi((u) => ({ ...u, eqTab: "bag" }))} />
                       </div>
                     )}
                     {/* กระเป๋า */}
                     <div style={{ flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: (wide && eqTab !== "bag") || (!wide && eqTab === "fashion") ? "none" : "flex", flexDirection: "column", gap: 7,
                       ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) }}>
-                      {!wide && (
-                        <button onClick={() => setUi((u) => ({ ...u, eqTab: "fashion" }))} style={{ width: "100%", padding: "8px 0", borderRadius: 12, border: "1px solid #f0cf7a", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 900, color: "#2a2416", background: "linear-gradient(135deg,rgba(224,187,98,0.95),rgba(183,141,56,0.95))" }}>👗 แฟชั่น — ปีก · เซ็ตชุด · ฮีโร่ · รูปลักษณ์ · ย้อมสี</button>
-                      )}
                       {/* 🗂️ แท็บประเภทของ (แบบตลาดออนไลน์) — อุปกรณ์ · ยา · อาหาร · สมุนไพร · แร่ · ปลา · ฟาร์ม */}
                       {(() => {
                         const BD = G.bagData ? G.bagData() : { pot: [], food: [], herb: [], mat: [], fish: [], farm: [] };
@@ -70954,7 +71013,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                           ["herb", "🌿", "สมุนไพร", cnt("herb"), "#3ad0a0", "#1a7a5a"], ["mat", "⛏️", "แร่", cnt("mat"), "#d0a06a", "#7a5a2a"], ["fish", "🐟", "ปลา", cnt("fish"), "#4ab8f0", "#1a68b0"], ["farm", "🌾", "ฟาร์ม", cnt("farm"), "#7ad04a", "#3a8a2a"]];
                         const bagK = ui.bagKind || "gear";
                         return (
-                          <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 3, flexShrink: 0 }}>
+                          <div style={{ display: "flex", gap: 5, flexWrap: wide && !tight ? "wrap" : "nowrap", overflowX: wide && !tight ? "visible" : "auto", paddingBottom: 3, flexShrink: 0 }}>   {/* 🗂️ v767 คอม: ขึ้นบรรทัดใหม่ได้ ไม่โดนตัด · มือถือ: เลื่อนแนวนอน */}
+                            {!wide && (   // 👗 v767 มือถือ: ปุ่มแฟชั่นย้ายมาอยู่หัวแถวแท็บ (เดิมเป็นแถบยาวเต็มความกว้าง กินที่ตารางของ)
+                              <button key="fashion" onClick={() => setUi((u) => ({ ...u, eqTab: "fashion" }))} title="แฟชั่น — ปีก · เซ็ตชุด · ฮีโร่ · รูปลักษณ์ · ย้อมสี" style={{
+                                flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                border: "1.5px solid #f0cf7a", color: "#2a2416", background: "linear-gradient(135deg,rgba(224,187,98,0.95),rgba(183,141,56,0.95))" }}><span style={{ fontSize: 14 }}>👗</span>แฟชั่น</button>
+                            )}
                             {KINDS.map(([k, ic, nm, n, c1, c2]) => { const on = bagK === k; return (
                               <button key={k} onClick={() => setUi((u) => ({ ...u, bagKind: k, invSel: null, bagSel: null }))} style={{
                                 flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: tight ? "4px 8px" : "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: tight ? 10.5 : 11.5, fontWeight: 900,
@@ -70966,24 +71030,20 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                         );
                       })()}
                       {(ui.bagKind || "gear") === "gear" && (<>
-                      <div style={{ display: "flex", flexWrap: tight ? "nowrap" : "wrap", alignItems: "center", gap: 4, overflowX: tight ? "auto" : "visible", paddingBottom: tight ? 2 : 0, minHeight: tight ? 30 : undefined }}>
-                    {[["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1]))}
-                    <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
-                    <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
-                    <button key="eqlook" onClick={() => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }} title="แก้หน้า ทรงผม สีผม สีผิว ของตัวละครเดิม — ไม่กระทบเลเวล/ไอเทม" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" }}>💇 รูปลักษณ์</button>
-                    <button key="eqhide" onClick={() => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden) G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }} title="ซ่อน/แสดงชุดที่สวมบนตัวละคร" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" }}>{ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"}</button>
-                    {/* 👗🧣 ชุด = เสื้อ + ชายกระโปรง + ผ้าคลุม — แยกเปิดปิดได้ทีละส่วน */}
-                    <button key="eqskirt" onClick={() => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }} title="ชายกระโปรงที่ติดมากับชุด — ปิดไว้จะเหลือแค่เสื้อ ท่อนล่างใช้กางเกง/กระโปรงที่เลือกเอง" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" }}>{ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"}</button>
-                    <button key="eqcape" onClick={() => setUi((u) => ({ ...u, capeMode: G.cycleCape() }))} title="ผ้าคลุมหลัง — แตะวนเลือก: ไม่ใส่ · ตามชุด · ผ้าคลุม KayKit · ผ้าคลุมไหล่ KayKit" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.capeMode !== "off" ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.capeMode !== "off" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.capeMode !== "off" ? "#e0ecff" : "#c8d0c0" }}>{ui.capeMode === "off" ? "🧣 ผ้าคลุม" : ui.capeMode === "kk" ? "🧣 KayKit ✓" : ui.capeMode === "kk2" ? "🧣 คลุมไหล่ ✓" : "🧣 ตามชุด ✓"}</button>
-                    {(ui.heroPick || ui.heroId) && (
-                      <button key="eqhero" onClick={() => G.setHeroHidden(!ui.hideHero)} title="ซ่อน/แสดงชุดฮีโร่ในตำนาน (ซ่อนแล้วใส่ชุดปกติ ฮีโร่ยังถูกเลือกไว้)" style={{ marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" }}>{ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"}</button>
-                    )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, minHeight: 30, flexShrink: 0 }}>   {/* 🧭 v767 แถวกรองแถวเดียว — ชิปเลื่อนแนวนอน · ปุ่ม ⚡ ⇅ ☰ ติดขวาเสมอ */}
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 2 }}>
+                    {[["all", `📦 ทั้งหมด ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s] + (wide && !tight ? " " + SLOT_NAMES[s] : "")])].map((pair) => catChip(pair[0], pair[1]))}
+                    </div>
+                    <button key="eqview" onClick={() => { const nv = bagView === "list" ? "grid" : "list"; G.bagView = nv; try { localStorage.setItem("cherry-bag-view", nv); } catch (e) {} setUi((u) => ({ ...u, bagView: nv, equipPage: 0 })); }} title={bagView === "list" ? "แสดงแบบตาราง" : "แสดงแบบรายการ (เห็นชื่อ + ค่าพลัง)"} style={{ flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #6a9ad0", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: bagView === "list" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: "#e0ecff" }}>{bagView === "list" ? "▦" : "☰"}</button>
+                    {two && !wide && <button key="eqtools" onClick={() => setUi((u) => ({ ...u, bagTools: !u.bagTools }))} title="เครื่องมือ: ขายออโต้ · แยกของซ้ำ · ระดับที่ขาย · ลำดับ" style={{ flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: ui.bagTools ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: "#f5e2b0" }}>🧰</button>}
+                    <button key="eqauto" onClick={() => G.autoEquip()} title="⚡ สวมของแรงสุดให้อัตโนมัติ" style={{ flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" }}>⚡</button>
+                    <button key="eqsort" onClick={() => { G.equipSort = nextSort; if (G.saveGame) G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }} title={`เรียงของ: ${sortLabel}`} style={{ flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" }}>{sortIcon}</button>
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
-                    <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
-                    <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบของซ้ำทุกชนิดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น · ข้ามของที่ล็อก 🔐)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
-                    <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(232,128,158,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
-                    <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
+                      <div style={{ display: two && !wide && !ui.bagTools ? "none" : "flex", flexWrap: "nowrap", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 2, flexShrink: 0, minHeight: 28 }}>
+                    <button onClick={() => G.autoSell()} title="ขายของเกินอัตโนมัติ (เก็บของดีสุด + สำรอง 1 ชิ้นไว้ตีบวก · ข้ามของที่ล็อก 🔐)" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" }}>💰 ขายออโต้</button>
+                    <button onClick={() => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }} title="ทุบของซ้ำทุกชนิดเป็นผงเพชร (เก็บไว้แบบละ 1 ชิ้น · ข้ามของที่ล็อก 🔐)" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" }}>💠 แยกของซ้ำ {ui.gemDust || 0}</button>
+                    <button onClick={() => G.cycleSellRarity()} title="ขายเฉพาะระดับไม่เกินนี้ (แตะเปลี่ยน)" style={{ flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(232,128,158,0.08)", color: "#e0d0a0" }}>🏷️ ≤{RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"}</button>
+                    <button onClick={() => setUi((u) => ({ ...u, sellSetup: !u.sellSetup }))} title="ตั้งลำดับการขายแต่ละช่อง" style={{ flexShrink: 0, whiteSpace: "nowrap", marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" }}>⚙️ ลำดับ</button>
                       </div>
                   {ui.sellSetup && (
                     <div style={{ background: "rgba(20,26,20,0.6)", borderRadius: 10, padding: "8px 10px", marginBottom: 7, border: "1px solid #c9a24a33" }}>
@@ -70998,14 +71058,15 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                       ))}
                     </div>
                   )}
-                      <div style={{ borderRadius: 16, padding: 9,
+                      <div style={{ borderRadius: 16, padding: 9, flexShrink: 0,
                         background: "linear-gradient(170deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15))",
                         border: "1px solid rgba(255,200,220,0.14)" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: bagView === "list" ? (wide && bagW >= 560 ? "1fr 1fr" : "1fr") : `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 }}>
                           {pageCells.map(renderCell)}
+                          {bagView === "list" && !pageCells.some((c) => c.id != null) && <div style={{ textAlign: "center", padding: "22px 0", color: "#c8b0c0", fontSize: 12, fontWeight: 700 }}>ยังไม่มีของในช่องนี้</div>}
                         </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, flexShrink: 0 }}>
                     {totalPages > 1 ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <button onClick={() => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) }))} style={{ width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#fff", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font }}>‹</button>
@@ -73356,9 +73417,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           s.eva && ["💨 หลบหลีก", `+${s.eva}%`], s.crit && ["🎯 คริติคอล", `+${s.crit}%`],
         ].filter(Boolean);
         const close = () => setUi((u) => ({ ...u, invSel: null }));
+        const popCols = window.innerHeight < 520 && window.innerWidth > window.innerHeight * 1.2;
         return (
           <div onClick={close} style={{ position: "absolute", inset: 0, background: "rgba(10,14,10,0.72)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ width: "86%", maxWidth: 340, background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${info.rarityColor}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: popCols ? "94%" : "86%", maxWidth: popCols ? 640 : 340, maxHeight: "calc(100% - 16px - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", boxSizing: "border-box", background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${info.rarityColor}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" }}>
               {/* header: image + name — แถบไล่สีตามระดับของ + ไอคอนเรืองแสง */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "-16px -16px 12px", padding: "12px 14px", background: `linear-gradient(135deg, #1a1426, ${info.rarityColor})`, borderBottom: `2px solid ${info.rarityColor}` }}>
                 <div style={{ width: 62, height: 62, borderRadius: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, background: `radial-gradient(circle,#fff 0%,${info.rarityColor}88 62%,${info.rarityColor}33 100%)`, boxShadow: `0 0 18px ${info.rarityColor}` }}>{info.emoji}</div>
@@ -73372,6 +73434,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   {info.locked2 && <div style={{ display: "inline-block", fontSize: 10, fontWeight: 900, color: "#ffd76a", background: "rgba(245,197,66,0.16)", borderRadius: 999, padding: "1px 9px", marginTop: 2, marginLeft: 4 }}>🔐 ล็อกไว้</div>}
                 </div>
               </div>
+              <div style={popCols ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" } : undefined}><div style={{ minWidth: 0 }}>   {/* 📱 v767 จอเตี้ยแนวนอน: ข้อมูลซ้าย · ปุ่มขวา เห็นปุ่มครบโดยไม่ต้องเลื่อน */}
               {info.elem && ELEM_META[info.elem] && (
                 <div style={{ display: "inline-block", fontSize: 10.5, fontWeight: 800, color: "#f5a05a", background: "rgba(245,120,60,0.16)", borderRadius: 999, padding: "2px 9px", marginTop: 8 }}>
                   {ELEM_META[info.elem].emoji} ธาตุ{ELEM_META[info.elem].name}
@@ -73432,18 +73495,21 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 );
               })()}
               {!info.cmp && !info.equipped && <div style={{ fontSize: 10, color: "#8a9080", marginTop: 8 }}>⚖️ ช่อง{info.slotName}ยังว่างอยู่ — ใส่ได้เลย ไม่มีของให้เทียบ</div>}
+              </div><div style={{ minWidth: 0 }}>
               {/* actions: equip / unequip / enhance */}
               <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
-                <button onClick={() => { G.equipItem(id); }} disabled={info.equipped || info.locked} style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
-                  cursor: (info.equipped || info.locked) ? "not-allowed" : "pointer", color: "#fff",
-                  background: (info.equipped || info.locked) ? "#5a6450" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
-                }}>🎽 สวมใส่</button>
-                <button onClick={() => { G.unequipSlot(info.slot); }} disabled={!info.equipped} style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
-                  cursor: info.equipped ? "pointer" : "not-allowed", color: "#fff",
-                  background: info.equipped ? "linear-gradient(90deg,#b06a4a,#c08a5a)" : "#5a6450",
-                }}>👕 ถอด</button>
+                {!info.equipped ? (   // 🎽 v767 ปุ่มเดียวตามสถานะ — ยังไม่สวม = สวมใส่ · สวมอยู่ = ถอด (เดิมมีสองปุ่มซึ่งปุ่มหนึ่งกดไม่ได้เสมอ)
+                <button onClick={() => { G.equipItem(id); }} disabled={info.locked} style={{
+                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13.5, fontWeight: 900,
+                  cursor: info.locked ? "not-allowed" : "pointer", color: "#fff",
+                  background: info.locked ? "#5a6450" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
+                }}>{info.locked ? `🔒 ต้องเลเวล ${info.req}` : "🎽 สวมใส่"}</button>
+                ) : (
+                <button onClick={() => { G.unequipSlot(info.slot); }} style={{
+                  flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13.5, fontWeight: 900,
+                  cursor: "pointer", color: "#fff", background: "linear-gradient(90deg,#b06a4a,#c08a5a)",
+                }}>👕 ถอดออก</button>
+                )}
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                 <button onClick={() => { G.enhance(id); }} disabled={!info.canEnhance} title={info.canEnhance ? "" : "ต้องมีของชิ้นเดียวกันซ้ำอีก 1 ชิ้น · เพดานตามเลเวล"} style={{
@@ -73481,6 +73547,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 }}>{info.locked2 ? "🔐 ล็อกอยู่ — แตะเพื่อปลดล็อก" : "🔓 ล็อกไอเทมนี้ (กันขาย/ย่อย)"}</button>
               )}
               <button onClick={close} style={{ width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" }}>ปิด</button>
+              </div></div>
             </div>
           </div>
         );

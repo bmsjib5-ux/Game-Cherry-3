@@ -477,7 +477,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v766"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v767"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -42530,6 +42530,11 @@ function CherryAdventure() {
                                 block = true;
                         }
                     }
+                    if (!block && G.equipScreen && O.top > 0.25) {
+                        const ox3 = gx + O.cx, oz3 = gz + O.cz;
+                        if (Math.abs(ox3 - hx) < (O.rr || 1) + 1.8 && oz3 > hz + 0.8 && oz3 < cz + 1.5)
+                            block = true;
+                    } // 🎒 v767 หน้ากระเป๋า: ของเตี้ยระหว่างกล้องกับตัวละคร (กระถาง/พุ่มไม้) ก็ซ่อนด้วย ไม่บังขา
                 }
                 if (!block && !O.fade)
                     return;
@@ -42553,7 +42558,7 @@ function CherryAdventure() {
                         m.material = m.userData._ocFm;
                     }
                 }
-                O.op += ((block ? 0.22 : 1) - O.op) * k;
+                O.op += ((block ? (G.equipScreen ? 0 : 0.22) : 1) - O.op) * k; // 🎒 v767 หน้ากระเป๋า: ของที่บังตัวละครหายไปทั้งชิ้น (โชว์ชุดชัด ๆ)
                 for (const m of O.meshes) {
                     const fm = m.userData._ocFm, om = m.userData._ocOrig;
                     if (fm && om)
@@ -59253,8 +59258,9 @@ function CherryAdventure() {
             // 🧍 จอแนวนอนกว้าง = ผังแบบเกม MMO โชว์ตัวละครยืนกลางจอระหว่างแผงซ้าย-ขวา
             //    จอแคบยังเป็นป๊อปอัปเต็มจอเหมือนเดิม จึงซ่อนตัวละครไว้
             G._eqWide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
+            // 🏰 v767 ในเมือง จุดกำเนิดโลก = กลางน้ำพุ → ตัวละครไปยืนในอ่างน้ำพุ โดนน้ำพุบังทั้งตัว — ยืนหน้าน้ำพุแทน
             if (char) {
-                char.position.set(0, 0, 0);
+                char.position.set(0, 0, G.inTownZone ? (G._townFountR || 6) + 4.5 : 0);
                 char.rotation.y = G._eqWide ? (G.dressRotY != null ? G.dressRotY : 0) : Math.PI;
                 char.visible = !!G._eqWide;
             }
@@ -101733,12 +101739,12 @@ function CherryAdventure() {
                     }
                     catch (_) { }
                 }
-                if (G.mode === "explore" && G.occlTick) {
+                if ((G.mode === "explore" || (G.equipScreen && G._eqWide)) && G.occlTick) {
                     try {
                         G.occlTick(dt);
                     }
                     catch (eOc) { }
-                } // 👀 ของที่บังตัวละครจางโปร่ง
+                } // 👀 v767 หน้ากระเป๋า (คอม) ก็จางของที่บังตัวละครด้วย   // 👀 ของที่บังตัวละครจางโปร่ง
                 if (dtForce == null) { // ข้ามการวาดตอนซิมพื้นหลัง
                     const _bl = !G._bloomOff && !!(BIOMES[G.curBiome] || {}).bloom && !G.equipScreen && G.mode !== "create" && G.mode !== "class"; // ✨ แสงเรืองฟุ้ง เฉพาะแมพที่ตั้งไว้
                     G._bloomOn = _bl;
@@ -108471,6 +108477,15 @@ function CherryAdventure() {
                 // 🖥️ จอแนวนอนกว้างพอ → ผังแบบเกม MMO: แท็บซ้าย · ช่องอุปกรณ์ · ตัวละครโชว์ตรงกลาง · แผงขวา
                 const wide = window.innerWidth > 900 && window.innerWidth > window.innerHeight * 1.35;
                 const eqTab = ui.eqTab || "bag";
+                if (G.bagView == null) {
+                    try {
+                        G.bagView = localStorage.getItem("cherry-bag-view") || "grid";
+                    }
+                    catch (e) {
+                        G.bagView = "grid";
+                    }
+                }
+                const bagView = ui.bagView || G.bagView || "grid"; // 🎒 v767 ตาราง (ไอคอน) / รายการ (ชื่อ + ค่าพลัง)
                 // 📱 แนวนอนมือถือ: กว้างพอจะเข้าผัง MMO แต่เตี้ยและแคบกว่าคอมมาก
                 //    ถ้าใช้ความกว้างคอลัมน์ชุดคอม กระเป๋าจะถูกดันจนล้นออกนอกจอ
                 const _vw = window.innerWidth, _vh = window.innerHeight;
@@ -108487,7 +108502,7 @@ function CherryAdventure() {
                 const _minCell = tight ? 36 : 44;
                 const bagCols = wide ? Math.max(3, Math.min(8, Math.floor((bagW - 24 + 6) / (_minCell + 6)))) : 6;
                 const bagCell = wide ? Math.max(_minCell, (bagW - 24 - (bagCols - 1) * 6) / bagCols) : 0;
-                const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 152)) + 6) / (bagCell + 6)))) : 4;
+                const bagRows = wide ? Math.max(3, Math.min(16, Math.floor((Math.max(160, _vh * 0.94 - 106 - (tight ? 68 : 196)) + 6) / (bagCell + 6)))) : 4; // v767: แท็บประเภทของขึ้นได้ 2 แถวบนคอม → กันที่เพิ่ม (196)
                 const railBtn = (k, ic, label) => (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, eqTab: k })), style: {
                         display: "flex", alignItems: "center", gap: 7, width: "100%", padding: "9px 10px", marginBottom: 6,
                         borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 12, fontWeight: 900, textAlign: "left",
@@ -108543,7 +108558,7 @@ function CherryAdventure() {
                 const eqSort = ui.equipSort || G.equipSort || "none";
                 const qkey = (id) => { const it = LOOT.find((x) => x.id === id); return (TIER[it.rarity] || 1) * 100 + ((ui.plus || {})[id] || 0) + ((ui.awk || {})[id] || 0) * 5; }; // ✨ ของที่ปลุกพลังแล้วขึ้นก่อนของระดับเดียวกัน
                 const sortedIds = eqSort === "qual" ? [...allIds].sort((a, b) => qkey(b) - qkey(a)) : eqSort === "qualAsc" ? [...allIds].sort((a, b) => qkey(a) - qkey(b)) : allIds;
-                const PER = wide ? bagCols * bagRows : 24; // 🖥️ คอม = คำนวณจากขนาดจอ · มือถือ = 24 ช่อง/หน้า (นับยาด้วย) เติมช่องว่างให้ครบ
+                const PER = bagView === "list" ? (wide ? Math.max(5, Math.floor((bagRows * (bagCell + 6) - 6) / 58)) * (bagW >= 560 ? 2 : 1) : 12) : wide ? bagCols * bagRows : 24; // 🖥️ คอม = คำนวณจากขนาดจอ · มือถือ = 24 ช่อง/หน้า (นับยาด้วย) เติมช่องว่างให้ครบ
                 const potCells = []; // 🧪 ยาย้ายไปแท็บ "ยา" ของกระเป๋าแล้ว (ไม่ปนกับอุปกรณ์)
                 const allCells = [...potCells, ...sortedIds.map((id) => ({ id }))];
                 const totalPages = Math.max(1, Math.ceil(allCells.length / PER));
@@ -108562,7 +108577,7 @@ function CherryAdventure() {
                     const aw = (ui.awk || {})[id] || 0; // ✨ ปลุกพลังแล้ว = กรอบทองพิเศษ
                     const PT = plusTier(plus); // ⚒️✨ ขั้นออร่าตีบวก — ขาว/เขียว/ม่วง/ทอง
                     const locked = it.req && ui.level < it.req;
-                    return (React.createElement("button", { key: id, onClick: () => setUi((u) => ({ ...u, invSel: id })), style: { position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0,
+                    return (React.createElement("button", { key: id, title: `${it.name}${plus > 0 ? " +" + plus : ""} · ${RARITY[it.rarity].name}`, onClick: () => setUi((u) => ({ ...u, invSel: id })), style: { position: "relative", aspectRatio: "1", borderRadius: 13, cursor: "pointer", fontFamily: font, padding: 0, overflow: "hidden",
                             border: aw > 0 ? "1.5px solid #ffd76a" : PT ? `1.5px solid ${PT.css}` : equipped ? `1.5px solid ${RARITY[it.rarity].color}` : `1.5px solid ${RARITY[it.rarity].color}88`,
                             background: aw > 0 ? `linear-gradient(150deg, #f5c54244, ${RARITY[it.rarity].color}33 55%, rgba(38,30,14,0.94))` : `radial-gradient(circle at 50% 35%, ${RARITY[it.rarity].color}55, rgba(0,0,0,0.45) 78%)`,
                             boxShadow: aw > 0 ? `0 0 0 2px #f5c54255, 0 0 ${6 + aw * 3}px #ffd76a${aw >= 3 ? "aa" : "77"}, 0 3px 10px rgba(120,60,90,0.18)`
@@ -108581,7 +108596,44 @@ function CherryAdventure() {
                             count),
                         equipped && React.createElement("span", { style: { position: "absolute", left: 0, right: 0, bottom: 0, fontSize: 8.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: "0 0 11px 11px", letterSpacing: 0.3, padding: "1px 0" } }, "\u2713 \u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48"),
                         (ui.itemLock || {})[id] && React.createElement("span", { style: { position: "absolute", bottom: 12, left: 3, fontSize: 9 }, title: "\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E27\u0E49 \u2014 \u0E02\u0E32\u0E22/\u0E41\u0E22\u0E01\u0E0A\u0E34\u0E49\u0E19\u0E2A\u0E48\u0E27\u0E19\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49" }, "\uD83D\uDD10"),
-                        locked && React.createElement("span", { style: { position: "absolute", top: 1, left: 3, fontSize: 9 } }, "\uD83D\uDD12")));
+                        locked && React.createElement("span", { style: { position: "absolute", top: 1, left: 3, fontSize: 9 } }, "\uD83D\uDD12"),
+                        !equipped && React.createElement("span", { style: { position: "absolute", left: 6, right: 6, bottom: 3, height: 3, borderRadius: 2, background: RARITY[it.rarity].color, opacity: 0.9 } }),
+                        "   "));
+                };
+                // ☰ v767 มุมมองรายการ — ชื่อของ · ระดับ · ช่อง · ค่าพลังหลัก · ตีบวก/สวมอยู่ (อ่านง่ายบนมือถือ)
+                const itemRow = (id) => {
+                    const it = LOOT.find((x) => x.id === id);
+                    const info = G.itemInfo ? G.itemInfo(id) : null, st = (info && info.stats) || {};
+                    const count = (ui.inv || []).filter((x) => x === id).length;
+                    const equipped = ui.equip && ui.equip[it.slot] === id;
+                    const plus = (ui.plus || {})[id] || 0, aw = (ui.awk || {})[id] || 0;
+                    const locked = it.req && ui.level < it.req, rc = RARITY[it.rarity].color;
+                    const statTxt = [st.atk ? `⚔️${st.atk}` : null, st.def ? `🛡️${st.def}` : null, st.hp ? `❤️${st.hp}` : null, st.crit ? `🎯${st.crit}%` : null, st.spd ? `👟${st.spd}%` : null].filter(Boolean).slice(0, 3).join("  ");
+                    return (React.createElement("button", { key: id, onClick: () => setUi((u) => ({ ...u, invSel: id })), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", minWidth: 0, textAlign: "left", padding: "5px 8px 5px 5px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                            border: `1.5px solid ${equipped ? "#8ae0a0" : rc + "88"}`, background: `linear-gradient(90deg, ${rc}38, rgba(0,0,0,0.30) 60%)`, opacity: locked ? 0.55 : 1, boxSizing: "border-box" } },
+                        React.createElement("span", { style: { position: "relative", width: 38, height: 38, flexShrink: 0, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
+                                background: `radial-gradient(circle at 50% 35%, ${rc}77, rgba(0,0,0,0.45) 80%)`, border: `1px solid ${rc}aa` } },
+                            it.emoji,
+                            count > 1 && React.createElement("span", { style: { position: "absolute", right: -4, bottom: -4, fontSize: 9, fontWeight: 900, color: "#fff", background: "rgba(40,30,60,0.9)", borderRadius: 7, padding: "0 4px" } },
+                                "\u00D7",
+                                count)),
+                        React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("span", { style: { display: "block", fontSize: 12, fontWeight: 900, color: rc, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                                it.name,
+                                plus > 0 && React.createElement("span", { style: { color: "#f5c542" } },
+                                    " +",
+                                    plus),
+                                aw > 0 && React.createElement("span", { style: { color: "#ffd76a" } },
+                                    " \u2605",
+                                    aw)),
+                            React.createElement("span", { style: { display: "block", fontSize: 9.5, fontWeight: 700, color: "#c8c0c8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+                                RARITY[it.rarity].name,
+                                " \u00B7 ",
+                                SLOT_NAMES[it.slot],
+                                locked ? ` · 🔒 Lv.${it.req}` : "",
+                                statTxt ? " · " + statTxt : "")),
+                        equipped && React.createElement("span", { style: { flexShrink: 0, fontSize: 9.5, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: 999, padding: "2px 7px" } }, "\u2713 \u0E2A\u0E27\u0E21"),
+                        (ui.itemLock || {})[id] && React.createElement("span", { style: { flexShrink: 0, fontSize: 11 } }, "\uD83D\uDD10")));
                 };
                 const SZ_LABEL = { s: "S", m: "M", l: "L" };
                 const potTile = (pot, sz) => {
@@ -108598,13 +108650,21 @@ function CherryAdventure() {
                         React.createElement("span", { style: { position: "absolute", top: 1, left: 3, fontSize: 8.5, fontWeight: 900, color: pot === "hp" ? "#f0a0a0" : "#8ecbff" } }, SZ_LABEL[sz]),
                         React.createElement("span", { style: { position: "absolute", bottom: 1, right: 3, fontSize: 9, fontWeight: 800, color: "#cfe0c0" } }, n)));
                 };
-                const catChip = (ck, label) => (React.createElement("button", { key: ck, onClick: () => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 })), style: { padding: "4px 10px", borderRadius: 999, cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font,
+                const catChip = (ck, label) => (React.createElement("button", { key: ck, onClick: () => setUi((u) => ({ ...u, invCat: ck, invSel: null, equipPage: 0 })), style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font,
                         border: (ui.invCat || "all") === ck ? "1px solid #f0cf7a" : "1px solid rgba(232,128,158,0.35)",
                         background: (ui.invCat || "all") === ck ? "linear-gradient(135deg,#e0bb62,#b78d38)" : "rgba(255,255,255,0.06)",
                         color: (ui.invCat || "all") === ck ? "#2a2416" : "#c8d0c0",
                         boxShadow: (ui.invCat || "all") === ck ? "0 2px 8px rgba(201,162,74,0.35)" : "none" } }, label));
                 const emptyTile = (i) => React.createElement("div", { key: "e" + i, style: { aspectRatio: "1", borderRadius: 13, border: "1.5px dashed rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.22)" } });
-                const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? itemTile(cell.id) : emptyTile(i);
+                const renderCell = (cell, i) => cell.pot ? potTile(cell.pot, cell.sz) : cell.id != null ? (bagView === "list" ? itemRow(cell.id) : itemTile(cell.id)) : (bagView === "list" ? null : emptyTile(i));
+                // 👗 v767 ปุ่มการแสดงผลชุด (รูปลักษณ์/ซ่อนชุด/ชายกระโปรง/ผ้าคลุม/ชุดฮีโร่) — ย้ายออกจากแถวกรองของในกระเป๋า ไปอยู่ใต้ตัวละคร (คอม) / ในแท็บแฟชั่น (มือถือ)
+                const dressRow = (center) => (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", justifyContent: center ? "center" : "flex-start", alignItems: "center", gap: 4, pointerEvents: "auto" } },
+                    React.createElement("button", { key: "eqlook", onClick: () => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }, title: "\u0E41\u0E01\u0E49\u0E2B\u0E19\u0E49\u0E32 \u0E17\u0E23\u0E07\u0E1C\u0E21 \u0E2A\u0E35\u0E1C\u0E21 \u0E2A\u0E35\u0E1C\u0E34\u0E27 \u0E02\u0E2D\u0E07\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E40\u0E14\u0E34\u0E21 \u2014 \u0E44\u0E21\u0E48\u0E01\u0E23\u0E30\u0E17\u0E1A\u0E40\u0E25\u0E40\u0E27\u0E25/\u0E44\u0E2D\u0E40\u0E17\u0E21", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" } }, "\uD83D\uDC87 \u0E23\u0E39\u0E1B\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C"),
+                    React.createElement("button", { key: "eqhide", onClick: () => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden)
+                            G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }, title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"),
+                    React.createElement("button", { key: "eqskirt", onClick: () => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }, title: "\u0E0A\u0E32\u0E22\u0E01\u0E23\u0E30\u0E42\u0E1B\u0E23\u0E07\u0E17\u0E35\u0E48\u0E15\u0E34\u0E14\u0E21\u0E32\u0E01\u0E31\u0E1A\u0E0A\u0E38\u0E14 \u2014 \u0E1B\u0E34\u0E14\u0E44\u0E27\u0E49\u0E08\u0E30\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E41\u0E04\u0E48\u0E40\u0E2A\u0E37\u0E49\u0E2D \u0E17\u0E48\u0E2D\u0E19\u0E25\u0E48\u0E32\u0E07\u0E43\u0E0A\u0E49\u0E01\u0E32\u0E07\u0E40\u0E01\u0E07/\u0E01\u0E23\u0E30\u0E42\u0E1B\u0E23\u0E07\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E2D\u0E07", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" } }, ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"),
+                    React.createElement("button", { key: "eqcape", onClick: () => setUi((u) => ({ ...u, capeMode: G.cycleCape() })), title: "\u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21\u0E2B\u0E25\u0E31\u0E07 \u2014 \u0E41\u0E15\u0E30\u0E27\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01: \u0E44\u0E21\u0E48\u0E43\u0E2A\u0E48 \u00B7 \u0E15\u0E32\u0E21\u0E0A\u0E38\u0E14 \u00B7 \u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21 KayKit \u00B7 \u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21\u0E44\u0E2B\u0E25\u0E48 KayKit", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.capeMode !== "off" ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.capeMode !== "off" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.capeMode !== "off" ? "#e0ecff" : "#c8d0c0" } }, ui.capeMode === "off" ? "🧣 ผ้าคลุม" : ui.capeMode === "kk" ? "🧣 KayKit ✓" : ui.capeMode === "kk2" ? "🧣 คลุมไหล่ ✓" : "🧣 ตามชุด ✓"),
+                    (ui.heroPick || ui.heroId) && (React.createElement("button", { key: "eqhero", onClick: () => G.setHeroHidden(!ui.hideHero), title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19 (\u0E0B\u0E48\u0E2D\u0E19\u0E41\u0E25\u0E49\u0E27\u0E43\u0E2A\u0E48\u0E0A\u0E38\u0E14\u0E1B\u0E01\u0E15\u0E34 \u0E2E\u0E35\u0E42\u0E23\u0E48\u0E22\u0E31\u0E07\u0E16\u0E39\u0E01\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E27\u0E49)", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" } }, ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"))));
                 return (React.createElement("div", { key: "eqscr", onClick: () => G.closeEquip(), style: {
                         position: "absolute", inset: 0, zIndex: 45, display: "flex", alignItems: "center", justifyContent: "center",
                         padding: "8px", fontFamily: font, pointerEvents: "auto",
@@ -108656,8 +108716,8 @@ function CherryAdventure() {
                                         : React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 7 } },
                                             "\uD83E\uDDE5 \u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E2D\u0E22\u0E39\u0E48 ",
                                             React.createElement("span", { style: { color: "#c8b0c0", fontWeight: 700 } }, "\u00B7 \u0E41\u0E15\u0E30\u0E0A\u0E48\u0E2D\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E01\u0E23\u0E2D\u0E07")),
-                                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : "repeat(7, 1fr)", gap: tight ? 5 : 7 } }, eqTab === "fashion" ? fashionCells() : GEAR.map(slotCell))),
-                                (() => {
+                                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: wide ? (tight ? "repeat(3, 1fr)" : "repeat(2, 1fr)") : two ? "repeat(4, 1fr)" : `repeat(${eqTab === "fashion" ? 5 : GEAR.length}, minmax(0, 1fr))`, gap: tight || !two ? 5 : 7 } }, eqTab === "fashion" ? fashionCells() : GEAR.map(slotCell))),
+                                (wide || two) && (() => {
                                     const wid = (ui.equip || {}).weapon;
                                     const wit = wid ? LOOT.find((x) => x.id === wid) : null;
                                     const hw = G.heroId ? HERO_WPN_INFO[G.heroId] : null;
@@ -108701,12 +108761,22 @@ function CherryAdventure() {
                                     const SI = G.setInfo ? G.setInfo() : null;
                                     if (!SI)
                                         return null;
+                                    if (!wide && !ui.setOpen) { // 📱 v767 มือถือ: พับไว้เป็นแถวเดียว แตะเพื่อดูรายละเอียด
+                                        const best = SI.rows[0];
+                                        return (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, setOpen: true })), style: { display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "7px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font,
+                                                border: "1px solid rgba(232,128,158,0.18)", background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))", color: "#ffe0ec", fontSize: 11, fontWeight: 900 } },
+                                            React.createElement("span", null, "\uD83E\uDDE9 \u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E40\u0E0B\u0E47\u0E15"),
+                                            React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 10, fontWeight: 700, color: SI.totalTxt ? "#9ae86a" : "#a89aa8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, SI.totalTxt ? SI.totalTxt : best ? `${best.emoji} ${best.name} ${best.worn}/${SI.slots}` : "ยังไม่มีโบนัส"),
+                                            React.createElement("span", { style: { color: "#c8b0c0" } }, "\u25BE")));
+                                    }
                                     return (React.createElement("div", { style: { borderRadius: 16, padding: "9px 10px 10px", maxHeight: 250, overflowY: "auto",
                                             background: "linear-gradient(170deg, rgba(232,128,158,0.06), rgba(120,60,90,0.22))",
                                             border: "1px solid rgba(232,128,158,0.09)" } },
-                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 2 } },
-                                            "\uD83E\uDDE9 \u0E04\u0E38\u0E13\u0E2A\u0E21\u0E1A\u0E31\u0E15\u0E34\u0E40\u0E0B\u0E47\u0E15 ",
-                                            React.createElement("span", { style: { color: "#8a9a88", fontWeight: 700 } }, "\u00B7 \u0E04\u0E23\u0E1A 3 / 5 / 7 \u0E0A\u0E34\u0E49\u0E19")),
+                                        React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: "#ffe0ec", marginBottom: 2, display: "flex", alignItems: "center" } },
+                                            React.createElement("span", { style: { flex: 1 } },
+                                                "\uD83E\uDDE9 \u0E04\u0E38\u0E13\u0E2A\u0E21\u0E1A\u0E31\u0E15\u0E34\u0E40\u0E0B\u0E47\u0E15 ",
+                                                React.createElement("span", { style: { color: "#8a9a88", fontWeight: 700 } }, "\u00B7 \u0E04\u0E23\u0E1A 3 / 5 / 7 \u0E0A\u0E34\u0E49\u0E19")),
+                                            !wide && React.createElement("button", { onClick: () => setUi((u) => ({ ...u, setOpen: false })), style: { border: "none", background: "rgba(255,255,255,0.1)", color: "#e0c8d8", borderRadius: 8, padding: "1px 8px", cursor: "pointer", fontFamily: font, fontSize: 10, fontWeight: 800 } }, "\u0E1E\u0E31\u0E1A \u25B4")),
                                         React.createElement("div", { style: { fontSize: 8.5, color: "#8a9a88", marginBottom: 6 } }, "\u0E43\u0E2A\u0E48\u0E02\u0E2D\u0E07 \u201C\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19\u201D \u0E43\u0E2B\u0E49\u0E04\u0E23\u0E1A\u0E15\u0E32\u0E21\u0E08\u0E33\u0E19\u0E27\u0E19 \u00B7 \u0E44\u0E14\u0E49\u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E02\u0E31\u0E49\u0E19\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E16\u0E36\u0E07"),
                                         !SI.rows.length && React.createElement("div", { style: { fontSize: 10, color: "#8a9080", textAlign: "center", padding: "6px 0" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E43\u0E2A\u0E48\u0E02\u0E2D\u0E07 \u2014 \u0E2A\u0E27\u0E21\u0E02\u0E2D\u0E07\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E40\u0E14\u0E35\u0E22\u0E27\u0E01\u0E31\u0E19 3 \u0E0A\u0E34\u0E49\u0E19\u0E02\u0E36\u0E49\u0E19\u0E44\u0E1B\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E23\u0E31\u0E1A\u0E42\u0E1A\u0E19\u0E31\u0E2A\u0E40\u0E0B\u0E47\u0E15"),
                                         SI.rows.map((r) => (React.createElement("div", { key: r.rar, style: { marginBottom: 7, background: "rgba(120,60,90,0.24)", borderRadius: 10, padding: "6px 8px", border: `1px solid ${r.color}44` } },
@@ -108756,8 +108826,10 @@ function CherryAdventure() {
                                     G.playerName || "เชอร์รี่",
                                     " \u00B7 Lv.",
                                     ui.level || 1),
-                                React.createElement("span", { style: { display: "flex", gap: 7, pointerEvents: "auto" } }, [["↺", -0.5], ["↻", 0.5]].map(([ic, d]) => (React.createElement("button", { key: ic, onClick: () => G.spinChar(d), title: "\u0E2B\u0E21\u0E38\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { width: 40, height: 32, borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 900,
-                                        border: "1px solid rgba(255,255,255,0.55)", background: "rgba(20,28,22,0.52)", color: "#fff7ec" } }, ic)))))),
+                                React.createElement("span", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "auto", maxWidth: "100%" } },
+                                    React.createElement("span", { style: { background: "rgba(20,28,22,0.50)", borderRadius: 12, padding: 5, border: "1px solid rgba(255,255,255,0.22)", maxWidth: "100%", boxSizing: "border-box" } }, dressRow(true)),
+                                    React.createElement("span", { style: { display: "flex", gap: 7, pointerEvents: "auto" } }, [["↺", -0.5], ["↻", 0.5]].map(([ic, d]) => (React.createElement("button", { key: ic, onClick: () => G.spinChar(d), title: "\u0E2B\u0E21\u0E38\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { width: 40, height: 32, borderRadius: 11, cursor: "pointer", fontFamily: font, fontSize: 15, fontWeight: 900,
+                                            border: "1px solid rgba(255,255,255,0.55)", background: "rgba(20,28,22,0.52)", color: "#fff7ec" } }, ic))))))),
                             wide && eqTab === "char" && (() => {
                                 const P = G.profileInfo ? G.profileInfo() : null;
                                 if (!P)
@@ -108813,49 +108885,60 @@ function CherryAdventure() {
                             })(),
                             eqTab === "fashion" && (React.createElement("div", { style: { flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box",
                                     ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) } },
+                                !wide && React.createElement("div", { style: { marginBottom: 8, padding: 7, borderRadius: 12, background: "rgba(0,0,0,0.22)", border: "1px solid rgba(232,128,158,0.18)" } },
+                                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#ffe0ec", marginBottom: 5 } }, "\uD83D\uDC41\uFE0F \u0E01\u0E32\u0E23\u0E41\u0E2A\u0E14\u0E07\u0E1C\u0E25\u0E0A\u0E38\u0E14\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23"),
+                                    dressRow(false)),
                                 React.createElement(FashionTab, { G: G, ui: ui, font: font, wide: wide, setUi: setUi, onBack: () => setUi((u) => ({ ...u, eqTab: "bag" })) }))),
                             React.createElement("div", { style: { flex: wide ? `0 0 ${bagW}px` : 1, minWidth: 0, boxSizing: "border-box", display: (wide && eqTab !== "bag") || (!wide && eqTab === "fashion") ? "none" : "flex", flexDirection: "column", gap: 7,
                                     ...(wide ? { maxHeight: "calc(94vh - var(--sa-t, 0px) - var(--sa-b, 0px) - 106px)", overflowY: "auto", background: "linear-gradient(170deg, rgba(20,28,22,0.86), rgba(14,20,16,0.80))", border: "1px solid rgba(232,128,158,0.20)", borderRadius: 16, padding: "10px 11px 12px" } : {}) } },
-                                !wide && (React.createElement("button", { onClick: () => setUi((u) => ({ ...u, eqTab: "fashion" })), style: { width: "100%", padding: "8px 0", borderRadius: 12, border: "1px solid #f0cf7a", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 900, color: "#2a2416", background: "linear-gradient(135deg,rgba(224,187,98,0.95),rgba(183,141,56,0.95))" } }, "\uD83D\uDC57 \u0E41\u0E1F\u0E0A\u0E31\u0E48\u0E19 \u2014 \u0E1B\u0E35\u0E01 \u00B7 \u0E40\u0E0B\u0E47\u0E15\u0E0A\u0E38\u0E14 \u00B7 \u0E2E\u0E35\u0E42\u0E23\u0E48 \u00B7 \u0E23\u0E39\u0E1B\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C \u00B7 \u0E22\u0E49\u0E2D\u0E21\u0E2A\u0E35")),
                                 (() => {
                                     const BD = G.bagData ? G.bagData() : { pot: [], food: [], herb: [], mat: [], fish: [], farm: [] };
                                     const cnt = (k) => (BD[k] || []).reduce((a, x) => a + (x.n || 0), 0);
                                     const KINDS = [["gear", "⚔️", "อุปกรณ์", new Set(ui.inv || []).size, "#ff7a6a", "#b0302a"], ["pot", "🧪", "ยา", cnt("pot"), "#b07aff", "#6a30c0"], ["food", "🍳", "อาหาร", (BD.food || []).length, "#ffa84a", "#c0601a"],
                                         ["herb", "🌿", "สมุนไพร", cnt("herb"), "#3ad0a0", "#1a7a5a"], ["mat", "⛏️", "แร่", cnt("mat"), "#d0a06a", "#7a5a2a"], ["fish", "🐟", "ปลา", cnt("fish"), "#4ab8f0", "#1a68b0"], ["farm", "🌾", "ฟาร์ม", cnt("farm"), "#7ad04a", "#3a8a2a"]];
                                     const bagK = ui.bagKind || "gear";
-                                    return (React.createElement("div", { style: { display: "flex", gap: 5, overflowX: "auto", paddingBottom: 3, flexShrink: 0 } }, KINDS.map(([k, ic, nm, n, c1, c2]) => {
-                                        const on = bagK === k;
-                                        return (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, bagKind: k, invSel: null, bagSel: null })), style: {
-                                                flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: tight ? "4px 8px" : "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: tight ? 10.5 : 11.5, fontWeight: 900,
-                                                border: on ? "1.5px solid #fff" : "1.5px solid rgba(255,255,255,0.14)", color: on ? "#fff" : "#d8c8d0", // 📱 จอมือถือพื้นสว่าง — ตัวหนังสือแท็บที่ไม่ได้เลือกต้องเข้มพออ่านออก
-                                                background: on ? `linear-gradient(180deg,${c1},${c2})` : "rgba(255,255,255,0.07)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "none", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none"
+                                    return (React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: wide && !tight ? "wrap" : "nowrap", overflowX: wide && !tight ? "visible" : "auto", paddingBottom: 3, flexShrink: 0 } },
+                                        "   ",
+                                        !wide && ( // 👗 v767 มือถือ: ปุ่มแฟชั่นย้ายมาอยู่หัวแถวแท็บ (เดิมเป็นแถบยาวเต็มความกว้าง กินที่ตารางของ)
+                                        React.createElement("button", { key: "fashion", onClick: () => setUi((u) => ({ ...u, eqTab: "fashion" })), title: "\u0E41\u0E1F\u0E0A\u0E31\u0E48\u0E19 \u2014 \u0E1B\u0E35\u0E01 \u00B7 \u0E40\u0E0B\u0E47\u0E15\u0E0A\u0E38\u0E14 \u00B7 \u0E2E\u0E35\u0E42\u0E23\u0E48 \u00B7 \u0E23\u0E39\u0E1B\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C \u00B7 \u0E22\u0E49\u0E2D\u0E21\u0E2A\u0E35", style: {
+                                                flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                                border: "1.5px solid #f0cf7a", color: "#2a2416", background: "linear-gradient(135deg,rgba(224,187,98,0.95),rgba(183,141,56,0.95))"
                                             } },
-                                            React.createElement("span", { style: { fontSize: 14 } }, ic),
-                                            nm,
-                                            n > 0 && React.createElement("span", { style: { fontSize: 9.5, background: on ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.12)", borderRadius: 999, padding: "0 6px" } }, n > 999 ? "999+" : n)));
-                                    })));
+                                            React.createElement("span", { style: { fontSize: 14 } }, "\uD83D\uDC57"),
+                                            "\u0E41\u0E1F\u0E0A\u0E31\u0E48\u0E19")),
+                                        KINDS.map(([k, ic, nm, n, c1, c2]) => {
+                                            const on = bagK === k;
+                                            return (React.createElement("button", { key: k, onClick: () => setUi((u) => ({ ...u, bagKind: k, invSel: null, bagSel: null })), style: {
+                                                    flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: tight ? "4px 8px" : "5px 10px", borderRadius: 12, cursor: "pointer", fontFamily: font, fontSize: tight ? 10.5 : 11.5, fontWeight: 900,
+                                                    border: on ? "1.5px solid #fff" : "1.5px solid rgba(255,255,255,0.14)", color: on ? "#fff" : "#d8c8d0", // 📱 จอมือถือพื้นสว่าง — ตัวหนังสือแท็บที่ไม่ได้เลือกต้องเข้มพออ่านออก
+                                                    background: on ? `linear-gradient(180deg,${c1},${c2})` : "rgba(255,255,255,0.07)", boxShadow: on ? `0 3px 0 ${c2}, 0 0 12px ${c1}88` : "none", textShadow: on ? "0 1px 1px rgba(0,0,0,0.35)" : "none"
+                                                } },
+                                                React.createElement("span", { style: { fontSize: 14 } }, ic),
+                                                nm,
+                                                n > 0 && React.createElement("span", { style: { fontSize: 9.5, background: on ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.12)", borderRadius: 999, padding: "0 6px" } }, n > 999 ? "999+" : n)));
+                                        })));
                                 })(),
                                 (ui.bagKind || "gear") === "gear" && (React.createElement(React.Fragment, null,
-                                    React.createElement("div", { style: { display: "flex", flexWrap: tight ? "nowrap" : "wrap", alignItems: "center", gap: 4, overflowX: tight ? "auto" : "visible", paddingBottom: tight ? 2 : 0, minHeight: tight ? 30 : undefined } },
-                                        [["all", `📦 ทั่วไป ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s]])].map((pair) => catChip(pair[0], pair[1])),
-                                        React.createElement("button", { key: "eqauto", onClick: () => G.autoEquip(), title: "\u26A1 \u0E2A\u0E27\u0E21\u0E02\u0E2D\u0E07\u0E41\u0E23\u0E07\u0E2A\u0E38\u0E14\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34", style: { marginLeft: "auto", width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" } }, "\u26A1"),
+                                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, minHeight: 30, flexShrink: 0 } },
+                                        "   ",
+                                        React.createElement("div", { style: { flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 2 } }, [["all", `📦 ทั้งหมด ${(ui.inv || []).length}`], ...SLOTS.filter((sl) => sl !== "offhand" || hasOff).map((s) => [s, SLOT_ICON[s] + (wide && !tight ? " " + SLOT_NAMES[s] : "")])].map((pair) => catChip(pair[0], pair[1]))),
+                                        React.createElement("button", { key: "eqview", onClick: () => { const nv = bagView === "list" ? "grid" : "list"; G.bagView = nv; try {
+                                                localStorage.setItem("cherry-bag-view", nv);
+                                            }
+                                            catch (e) { } setUi((u) => ({ ...u, bagView: nv, equipPage: 0 })); }, title: bagView === "list" ? "แสดงแบบตาราง" : "แสดงแบบรายการ (เห็นชื่อ + ค่าพลัง)", style: { flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #6a9ad0", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: bagView === "list" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: "#e0ecff" } }, bagView === "list" ? "▦" : "☰"),
+                                        two && !wide && React.createElement("button", { key: "eqtools", onClick: () => setUi((u) => ({ ...u, bagTools: !u.bagTools })), title: "\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E21\u0E37\u0E2D: \u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49 \u00B7 \u0E41\u0E22\u0E01\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33 \u00B7 \u0E23\u0E30\u0E14\u0E31\u0E1A\u0E17\u0E35\u0E48\u0E02\u0E32\u0E22 \u00B7 \u0E25\u0E33\u0E14\u0E31\u0E1A", style: { flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: ui.bagTools ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: "#f5e2b0" } }, "\uD83E\uDDF0"),
+                                        React.createElement("button", { key: "eqauto", onClick: () => G.autoEquip(), title: "\u26A1 \u0E2A\u0E27\u0E21\u0E02\u0E2D\u0E07\u0E41\u0E23\u0E07\u0E2A\u0E38\u0E14\u0E43\u0E2B\u0E49\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34", style: { flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #4a9a5e", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: "linear-gradient(135deg,#3a8a52,#296b3c)", color: "#e6f7d8" } }, "\u26A1"),
                                         React.createElement("button", { key: "eqsort", onClick: () => { G.equipSort = nextSort; if (G.saveGame)
-                                                G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }, title: `เรียงของ: ${sortLabel}`, style: { marginLeft: 4, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" } }, sortIcon),
-                                        React.createElement("button", { key: "eqlook", onClick: () => { G.closeEquip && G.closeEquip(); setTimeout(() => G.openEditLook && G.openEditLook(), 50); }, title: "\u0E41\u0E01\u0E49\u0E2B\u0E19\u0E49\u0E32 \u0E17\u0E23\u0E07\u0E1C\u0E21 \u0E2A\u0E35\u0E1C\u0E21 \u0E2A\u0E35\u0E1C\u0E34\u0E27 \u0E02\u0E2D\u0E07\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23\u0E40\u0E14\u0E34\u0E21 \u2014 \u0E44\u0E21\u0E48\u0E01\u0E23\u0E30\u0E17\u0E1A\u0E40\u0E25\u0E40\u0E27\u0E25/\u0E44\u0E2D\u0E40\u0E17\u0E21", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: "1px solid #d06ab066", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#a24a86,#d06ab0)", color: "#ffeaf6" } }, "\uD83D\uDC87 \u0E23\u0E39\u0E1B\u0E25\u0E31\u0E01\u0E29\u0E13\u0E4C"),
-                                        React.createElement("button", { key: "eqhide", onClick: () => { const nv = !ui.hideGear; G.dressHideGear = nv; if (G.setGearHidden)
-                                                G.setGearHidden(nv); setUi((u) => ({ ...u, hideGear: nv })); }, title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E17\u0E35\u0E48\u0E2A\u0E27\u0E21\u0E1A\u0E19\u0E15\u0E31\u0E27\u0E25\u0E30\u0E04\u0E23", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideGear ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideGear ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.hideGear ? "#ffdff0" : "#c8d0c0" } }, ui.hideGear ? "🙈 ซ่อนชุด ✓" : "🙈 ซ่อนชุด"),
-                                        React.createElement("button", { key: "eqskirt", onClick: () => { const nv = !ui.fitSkirt; G.setFitPart("skirt", nv); setUi((u) => ({ ...u, fitSkirt: nv })); }, title: "\u0E0A\u0E32\u0E22\u0E01\u0E23\u0E30\u0E42\u0E1B\u0E23\u0E07\u0E17\u0E35\u0E48\u0E15\u0E34\u0E14\u0E21\u0E32\u0E01\u0E31\u0E1A\u0E0A\u0E38\u0E14 \u2014 \u0E1B\u0E34\u0E14\u0E44\u0E27\u0E49\u0E08\u0E30\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E41\u0E04\u0E48\u0E40\u0E2A\u0E37\u0E49\u0E2D \u0E17\u0E48\u0E2D\u0E19\u0E25\u0E48\u0E32\u0E07\u0E43\u0E0A\u0E49\u0E01\u0E32\u0E07\u0E40\u0E01\u0E07/\u0E01\u0E23\u0E30\u0E42\u0E1B\u0E23\u0E07\u0E17\u0E35\u0E48\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E40\u0E2D\u0E07", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.fitSkirt ? "1px solid #d06ab0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.fitSkirt ? "linear-gradient(135deg,#a24a86,#7a3a66)" : "rgba(232,128,158,0.08)", color: ui.fitSkirt ? "#ffdff0" : "#c8d0c0" } }, ui.fitSkirt ? "👗 ชายกระโปรง ✓" : "👗 ชายกระโปรง"),
-                                        React.createElement("button", { key: "eqcape", onClick: () => setUi((u) => ({ ...u, capeMode: G.cycleCape() })), title: "\u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21\u0E2B\u0E25\u0E31\u0E07 \u2014 \u0E41\u0E15\u0E30\u0E27\u0E19\u0E40\u0E25\u0E37\u0E2D\u0E01: \u0E44\u0E21\u0E48\u0E43\u0E2A\u0E48 \u00B7 \u0E15\u0E32\u0E21\u0E0A\u0E38\u0E14 \u00B7 \u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21 KayKit \u00B7 \u0E1C\u0E49\u0E32\u0E04\u0E25\u0E38\u0E21\u0E44\u0E2B\u0E25\u0E48 KayKit", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.capeMode !== "off" ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.capeMode !== "off" ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.capeMode !== "off" ? "#e0ecff" : "#c8d0c0" } }, ui.capeMode === "off" ? "🧣 ผ้าคลุม" : ui.capeMode === "kk" ? "🧣 KayKit ✓" : ui.capeMode === "kk2" ? "🧣 คลุมไหล่ ✓" : "🧣 ตามชุด ✓"),
-                                        (ui.heroPick || ui.heroId) && (React.createElement("button", { key: "eqhero", onClick: () => G.setHeroHidden(!ui.hideHero), title: "\u0E0B\u0E48\u0E2D\u0E19/\u0E41\u0E2A\u0E14\u0E07\u0E0A\u0E38\u0E14\u0E2E\u0E35\u0E42\u0E23\u0E48\u0E43\u0E19\u0E15\u0E33\u0E19\u0E32\u0E19 (\u0E0B\u0E48\u0E2D\u0E19\u0E41\u0E25\u0E49\u0E27\u0E43\u0E2A\u0E48\u0E0A\u0E38\u0E14\u0E1B\u0E01\u0E15\u0E34 \u0E2E\u0E35\u0E42\u0E23\u0E48\u0E22\u0E31\u0E07\u0E16\u0E39\u0E01\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E27\u0E49)", style: { marginLeft: 4, padding: "4px 10px", borderRadius: 999, border: ui.hideHero ? "1px solid #7a9ad0" : "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.hideHero ? "linear-gradient(135deg,#4a6ab0,#33497a)" : "rgba(232,128,158,0.08)", color: ui.hideHero ? "#e0ecff" : "#c8d0c0" } }, ui.hideHero ? "🙈 ชุดฮีโร่: ซ่อน" : "🦸 ชุดฮีโร่"))),
-                                    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 } },
-                                        React.createElement("button", { onClick: () => G.autoSell(), title: "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E40\u0E01\u0E34\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E14\u0E35\u0E2A\u0E38\u0E14 + \u0E2A\u0E33\u0E23\u0E2D\u0E07 1 \u0E0A\u0E34\u0E49\u0E19\u0E44\u0E27\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01 \u00B7 \u0E02\u0E49\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E25\u0E47\u0E2D\u0E01 \uD83D\uDD10)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
-                                        React.createElement("button", { onClick: () => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }, title: "\u0E17\u0E38\u0E1A\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33\u0E17\u0E38\u0E01\u0E0A\u0E19\u0E34\u0E14\u0E40\u0E1B\u0E47\u0E19\u0E1C\u0E07\u0E40\u0E1E\u0E0A\u0E23 (\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E27\u0E49\u0E41\u0E1A\u0E1A\u0E25\u0E30 1 \u0E0A\u0E34\u0E49\u0E19 \u00B7 \u0E02\u0E49\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E25\u0E47\u0E2D\u0E01 \uD83D\uDD10)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" } },
+                                                G.saveGame(); setUi((u) => ({ ...u, equipSort: nextSort, equipPage: 0 })); }, title: `เรียงของ: ${sortLabel}`, style: { flexShrink: 0, width: 30, height: 26, padding: 0, borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 13, lineHeight: "24px", fontFamily: font, background: eqSort === "none" ? "rgba(232,128,158,0.08)" : "linear-gradient(135deg,#7a5a26,#5a4420)", color: eqSort === "none" ? "#c8d0c0" : "#f5e2b0" } }, sortIcon)),
+                                    React.createElement("div", { style: { display: two && !wide && !ui.bagTools ? "none" : "flex", flexWrap: "nowrap", alignItems: "center", gap: 4, overflowX: "auto", paddingBottom: 2, flexShrink: 0, minHeight: 28 } },
+                                        React.createElement("button", { onClick: () => G.autoSell(), title: "\u0E02\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E40\u0E01\u0E34\u0E19\u0E2D\u0E31\u0E15\u0E42\u0E19\u0E21\u0E31\u0E15\u0E34 (\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E14\u0E35\u0E2A\u0E38\u0E14 + \u0E2A\u0E33\u0E23\u0E2D\u0E07 1 \u0E0A\u0E34\u0E49\u0E19\u0E44\u0E27\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01 \u00B7 \u0E02\u0E49\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E25\u0E47\u0E2D\u0E01 \uD83D\uDD10)", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #d0a83e", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#c0902a,#8a6418)", color: "#fdf0c8" } }, "\uD83D\uDCB0 \u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49"),
+                                        React.createElement("button", { onClick: () => { G.salvageDupes(); setUi((u) => ({ ...u, inv: [...G.inv], gemDust: G.gemDust || 0 })); }, title: "\u0E17\u0E38\u0E1A\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33\u0E17\u0E38\u0E01\u0E0A\u0E19\u0E34\u0E14\u0E40\u0E1B\u0E47\u0E19\u0E1C\u0E07\u0E40\u0E1E\u0E0A\u0E23 (\u0E40\u0E01\u0E47\u0E1A\u0E44\u0E27\u0E49\u0E41\u0E1A\u0E1A\u0E25\u0E30 1 \u0E0A\u0E34\u0E49\u0E19 \u00B7 \u0E02\u0E49\u0E32\u0E21\u0E02\u0E2D\u0E07\u0E17\u0E35\u0E48\u0E25\u0E47\u0E2D\u0E01 \uD83D\uDD10)", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #6a7ad0", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "linear-gradient(135deg,#5a5ac0,#3a6ab0)", color: "#e0ecff" } },
                                             "\uD83D\uDCA0 \u0E41\u0E22\u0E01\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33 ",
                                             ui.gemDust || 0),
-                                        React.createElement("button", { onClick: () => G.cycleSellRarity(), title: "\u0E02\u0E32\u0E22\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E19\u0E35\u0E49 (\u0E41\u0E15\u0E30\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19)", style: { padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(232,128,158,0.08)", color: "#e0d0a0" } },
+                                        React.createElement("button", { onClick: () => G.cycleSellRarity(), title: "\u0E02\u0E32\u0E22\u0E40\u0E09\u0E1E\u0E32\u0E30\u0E23\u0E30\u0E14\u0E31\u0E1A\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19\u0E19\u0E35\u0E49 (\u0E41\u0E15\u0E30\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19)", style: { flexShrink: 0, whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: "rgba(232,128,158,0.08)", color: "#e0d0a0" } },
                                             "\uD83C\uDFF7\uFE0F \u2264",
                                             RARITY[ui.sellMaxRarity] ? RARITY[ui.sellMaxRarity].name : "หายาก"),
-                                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellSetup: !u.sellSetup })), title: "\u0E15\u0E31\u0E49\u0E07\u0E25\u0E33\u0E14\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E02\u0E32\u0E22\u0E41\u0E15\u0E48\u0E25\u0E30\u0E0A\u0E48\u0E2D\u0E07", style: { marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" } }, "\u2699\uFE0F \u0E25\u0E33\u0E14\u0E31\u0E1A")),
+                                        React.createElement("button", { onClick: () => setUi((u) => ({ ...u, sellSetup: !u.sellSetup })), title: "\u0E15\u0E31\u0E49\u0E07\u0E25\u0E33\u0E14\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E02\u0E32\u0E22\u0E41\u0E15\u0E48\u0E25\u0E30\u0E0A\u0E48\u0E2D\u0E07", style: { flexShrink: 0, whiteSpace: "nowrap", marginLeft: "auto", padding: "4px 10px", borderRadius: 999, border: "1px solid #c9a24a66", cursor: "pointer", fontSize: 10.5, fontWeight: 800, fontFamily: font, background: ui.sellSetup ? "linear-gradient(135deg,#7a5a26,#5a4420)" : "rgba(232,128,158,0.08)", color: ui.sellSetup ? "#f5e2b0" : "#c8d0c0" } }, "\u2699\uFE0F \u0E25\u0E33\u0E14\u0E31\u0E1A")),
                                     ui.sellSetup && (React.createElement("div", { style: { background: "rgba(20,26,20,0.6)", borderRadius: 10, padding: "8px 10px", marginBottom: 7, border: "1px solid #c9a24a33" } },
                                         React.createElement("div", { style: { fontSize: 10, color: "#b8c0a8", marginBottom: 6, lineHeight: 1.5 } }, "\u2699\uFE0F \u0E25\u0E33\u0E14\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E02\u0E32\u0E22 (\u0E1A\u0E19\u0E01\u0E48\u0E2D\u0E19) \u2014 \u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E01\u0E47\u0E1A\u0E02\u0E2D\u0E07\u0E14\u0E35\u0E2A\u0E38\u0E14 + \u0E2A\u0E33\u0E23\u0E2D\u0E07 1 \u0E0A\u0E34\u0E49\u0E19\u0E44\u0E27\u0E49\u0E15\u0E35\u0E1A\u0E27\u0E01 \u0E41\u0E25\u0E49\u0E27\u0E02\u0E32\u0E22\u0E17\u0E35\u0E48\u0E40\u0E2B\u0E25\u0E37\u0E2D"),
                                         (ui.sellPriority || SLOTS).map((slot, i) => (React.createElement("div", { key: slot, style: { display: "flex", alignItems: "center", gap: 6, padding: "3px 6px", background: "rgba(232,128,158,0.05)", borderRadius: 8, marginBottom: 4 } },
@@ -108865,11 +108948,13 @@ function CherryAdventure() {
                                             React.createElement("span", { style: { flex: 1, fontSize: 11.5, fontWeight: 700, color: "#d8dcc8" } }, SLOT_NAMES[slot]),
                                             React.createElement("button", { onClick: () => G.moveSellPriority(slot, -1), disabled: i === 0, style: { width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === 0 ? "default" : "pointer", fontSize: 12, background: i === 0 ? "rgba(232,128,158,0.05)" : "rgba(232,128,158,0.3)", color: "#5a3a5a", fontWeight: 800 } }, "\u25B2"),
                                             React.createElement("button", { onClick: () => G.moveSellPriority(slot, 1), disabled: i === (ui.sellPriority || SLOTS).length - 1, style: { width: 24, height: 24, borderRadius: 6, border: "none", cursor: i === (ui.sellPriority || SLOTS).length - 1 ? "default" : "pointer", fontSize: 12, background: i === (ui.sellPriority || SLOTS).length - 1 ? "rgba(232,128,158,0.05)" : "rgba(232,128,158,0.3)", color: "#5a3a5a", fontWeight: 800 } }, "\u25BC")))))),
-                                    React.createElement("div", { style: { borderRadius: 16, padding: 9,
+                                    React.createElement("div", { style: { borderRadius: 16, padding: 9, flexShrink: 0,
                                             background: "linear-gradient(170deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15))",
                                             border: "1px solid rgba(255,200,220,0.14)" } },
-                                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 } }, pageCells.map(renderCell))),
-                                    React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 } },
+                                        React.createElement("div", { style: { display: "grid", gridTemplateColumns: bagView === "list" ? (wide && bagW >= 560 ? "1fr 1fr" : "1fr") : `repeat(${wide ? bagCols : 6}, 1fr)`, gap: 6 } },
+                                            pageCells.map(renderCell),
+                                            bagView === "list" && !pageCells.some((c) => c.id != null) && React.createElement("div", { style: { textAlign: "center", padding: "22px 0", color: "#c8b0c0", fontSize: 12, fontWeight: 700 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E43\u0E19\u0E0A\u0E48\u0E2D\u0E07\u0E19\u0E35\u0E49"))),
+                                    React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, flexShrink: 0 } },
                                         totalPages > 1 ? (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },
                                             React.createElement("button", { onClick: () => setUi((u) => ({ ...u, equipPage: Math.max(0, page - 1) })), style: { width: 28, height: 26, borderRadius: 8, border: "1px solid #c9a24a55", cursor: page <= 0 ? "default" : "pointer", background: page <= 0 ? "rgba(232,128,158,0.04)" : "rgba(232,128,158,0.28)", color: "#fff", fontSize: 15, fontWeight: 800, opacity: page <= 0 ? 0.4 : 1, fontFamily: font } }, "\u2039"),
                                             React.createElement("span", { style: { fontSize: 11.5, fontWeight: 800, color: "#d8c898", minWidth: 34, textAlign: "center" } }, `${page + 1}/${totalPages}`),
@@ -111227,8 +111312,9 @@ function CherryAdventure() {
                 s.eva && ["💨 หลบหลีก", `+${s.eva}%`], s.crit && ["🎯 คริติคอล", `+${s.crit}%`],
             ].filter(Boolean);
             const close = () => setUi((u) => ({ ...u, invSel: null }));
+            const popCols = window.innerHeight < 520 && window.innerWidth > window.innerHeight * 1.2;
             return (React.createElement("div", { onClick: close, style: { position: "absolute", inset: 0, background: "rgba(10,14,10,0.72)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: font } },
-                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "86%", maxWidth: 340, background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${info.rarityColor}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" } },
+                React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: popCols ? "94%" : "86%", maxWidth: popCols ? 640 : 340, maxHeight: "calc(100% - 16px - var(--sa-t, 0px) - var(--sa-b, 0px))", overflowY: "auto", boxSizing: "border-box", background: "linear-gradient(180deg,#2c362e,#20281f)", borderRadius: 16, padding: 16, border: `2px solid ${info.rarityColor}`, boxShadow: "0 10px 40px rgba(0,0,0,0.6)", maxHeight: "88%", overflowY: "auto" } },
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, margin: "-16px -16px 12px", padding: "12px 14px", background: `linear-gradient(135deg, #1a1426, ${info.rarityColor})`, borderBottom: `2px solid ${info.rarityColor}` } },
                         React.createElement("div", { style: { width: 62, height: 62, borderRadius: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38, background: `radial-gradient(circle,#fff 0%,${info.rarityColor}88 62%,${info.rarityColor}33 100%)`, boxShadow: `0 0 18px ${info.rarityColor}` } }, info.emoji),
                         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
@@ -111255,121 +111341,123 @@ function CherryAdventure() {
                                 ? React.createElement("div", { style: { display: "inline-block", fontSize: 10, fontWeight: 900, color: "#0e1a10", background: "linear-gradient(90deg,#8ae0a0,#5fc47c)", borderRadius: 999, padding: "1px 9px", marginTop: 2 } }, "\u2713 \u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48\u0E2D\u0E22\u0E39\u0E48")
                                 : React.createElement("div", { style: { display: "inline-block", fontSize: 10, fontWeight: 800, color: "#c8d0b8", background: "rgba(255,255,255,0.10)", borderRadius: 999, padding: "1px 9px", marginTop: 2 } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48"),
                             info.locked2 && React.createElement("div", { style: { display: "inline-block", fontSize: 10, fontWeight: 900, color: "#ffd76a", background: "rgba(245,197,66,0.16)", borderRadius: 999, padding: "1px 9px", marginTop: 2, marginLeft: 4 } }, "\uD83D\uDD10 \u0E25\u0E47\u0E2D\u0E01\u0E44\u0E27\u0E49"))),
-                    info.elem && ELEM_META[info.elem] && (React.createElement("div", { style: { display: "inline-block", fontSize: 10.5, fontWeight: 800, color: "#f5a05a", background: "rgba(245,120,60,0.16)", borderRadius: 999, padding: "2px 9px", marginTop: 8 } },
-                        ELEM_META[info.elem].emoji,
-                        " \u0E18\u0E32\u0E15\u0E38",
-                        ELEM_META[info.elem].name)),
-                    React.createElement("div", { style: { background: "rgba(0,0,0,0.28)", borderRadius: 10, padding: "9px 11px", marginTop: 10 } },
-                        rows.length ? rows.map(([lb, val]) => (React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "2px 0" } },
-                            React.createElement("span", { style: { color: "#b8c0a8", fontWeight: 700 } }, lb),
-                            React.createElement("span", { style: { color: "#9ae86a", fontWeight: 900 } }, val)))) : React.createElement("div", { style: { fontSize: 11, color: "#8a9080" } }, "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E04\u0E48\u0E32\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29"),
-                        info.plus > 0 && React.createElement("div", { style: { fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" } },
-                            "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 +",
-                            info.plus,
-                            (info.awk || 0) > 0 && ` · ✨ ${awkStars(info.awk)}`),
-                        (info.awk || 0) > 0 && (React.createElement("div", { style: { marginTop: 5, background: "rgba(245,197,66,0.12)", border: "1px solid #e8b93a55", borderRadius: 9, padding: "6px 8px" } },
-                            React.createElement("div", { style: { fontSize: 10, fontWeight: 900, color: "#f5d88a", marginBottom: 3 } },
-                                "\u2728 \u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29 ",
-                                awkStars(info.awk)),
-                            React.createElement("div", { style: { fontSize: 10, color: "#e6dcc0", lineHeight: 1.6 } }, AWK_PERK.slice(0, info.awk).map((k) => `${k.emoji} ${k.name} +${k.val}${k.unit}`).join(" · "))))),
-                    info.trial && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#ffc860", marginTop: 7 } },
-                        "\u23F3 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E17\u0E14\u0E25\u0E2D\u0E07 \u2014 \u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E27\u0E25\u0E32 ",
-                        info.trialLeft || "-",
-                        " \u00B7 \u0E41\u0E23\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E32\u0E21\u0E40\u0E25\u0E40\u0E27\u0E25 \u00B7 \u0E02\u0E32\u0E22/\u0E15\u0E35\u0E1A\u0E27\u0E01/\u0E25\u0E07\u0E15\u0E25\u0E32\u0E14\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49")),
-                    info.req > 0 && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: info.locked ? "#e08080" : "#8ae0a0", marginTop: 7 } }, info.locked ? `🔒 ต้องถึงเลเวล ${info.req} จึงจะสวมได้` : `✅ ใช้ได้ (Lv.${info.req})`)),
-                    info.cmp && (() => {
-                        const c = info.cmp;
-                        const keys = ["atk", "hp", "def", "spd", "eva", "crit"].filter((k) => (s[k] || 0) || (c.stats[k] || 0));
-                        const up = keys.filter((k) => c.diff[k] > 0).length, dn = keys.filter((k) => c.diff[k] < 0).length;
-                        const verdict = up > dn ? { t: "⬆️ ดีกว่าของที่ใส่อยู่", c: "#9ae86a" } : up < dn ? { t: "⬇️ แย่กว่าของที่ใส่อยู่", c: "#e88a8a" } : { t: "➖ พอ ๆ กัน", c: "#d8d0a8" };
-                        return (React.createElement("div", { style: { background: "rgba(0,0,0,0.30)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, padding: "9px 11px", marginTop: 9 } },
-                            React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#c9d8b8", marginBottom: 5 } },
-                                "\u2696\uFE0F \u0E40\u0E17\u0E35\u0E22\u0E1A\u0E01\u0E31\u0E1A\u0E17\u0E35\u0E48\u0E43\u0E2A\u0E48\u0E2D\u0E22\u0E39\u0E48 \u00B7 ",
-                                React.createElement("span", { style: { color: c.rarityColor } },
-                                    c.emoji,
-                                    " ",
-                                    c.name),
-                                c.plus > 0 && React.createElement("span", { style: { color: "#f5c542" } },
-                                    " +",
-                                    c.plus),
-                                c.awk > 0 && React.createElement("span", { style: { color: "#ffd76a" } },
-                                    " ",
-                                    awkStars(c.awk))),
-                            keys.map((k) => {
-                                const d = c.diff[k], u = SET_STAT_UNIT[k] || "";
-                                return (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11.5, padding: "1px 0" } },
-                                    React.createElement("span", { style: { color: "#b8c0a8", fontWeight: 700 } }, SET_STAT_LABEL[k]),
-                                    React.createElement("span", { style: { color: "#9aa89a", fontWeight: 700 } },
-                                        c.stats[k] || 0,
-                                        u,
-                                        " ",
-                                        React.createElement("span", { style: { color: "#6f7a6a" } }, "\u2192"),
-                                        " ",
-                                        React.createElement("span", { style: { color: "#e6f0d8", fontWeight: 900 } },
-                                            s[k] || 0,
-                                            u),
-                                        React.createElement("span", { style: { marginLeft: 6, fontWeight: 900, color: d > 0 ? "#9ae86a" : d < 0 ? "#e88a8a" : "#8a9080" } },
-                                            d > 0 ? `▲+${d}` : d < 0 ? `▼${d}` : "－",
-                                            d ? u : ""))));
-                            }),
-                            React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: verdict.c, marginTop: 5, textAlign: "right" } }, verdict.t)));
-                    })(),
-                    !info.cmp && !info.equipped && React.createElement("div", { style: { fontSize: 10, color: "#8a9080", marginTop: 8 } },
-                        "\u2696\uFE0F \u0E0A\u0E48\u0E2D\u0E07",
-                        info.slotName,
-                        "\u0E22\u0E31\u0E07\u0E27\u0E48\u0E32\u0E07\u0E2D\u0E22\u0E39\u0E48 \u2014 \u0E43\u0E2A\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E17\u0E35\u0E22\u0E1A"),
-                    React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 12 } },
-                        React.createElement("button", { onClick: () => { G.equipItem(id); }, disabled: info.equipped || info.locked, style: {
-                                flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
-                                cursor: (info.equipped || info.locked) ? "not-allowed" : "pointer", color: "#fff",
-                                background: (info.equipped || info.locked) ? "#5a6450" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
-                            } }, "\uD83C\uDFBD \u0E2A\u0E27\u0E21\u0E43\u0E2A\u0E48"),
-                        React.createElement("button", { onClick: () => { G.unequipSlot(info.slot); }, disabled: !info.equipped, style: {
-                                flex: 1, padding: "10px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 12.5, fontWeight: 900,
-                                cursor: info.equipped ? "pointer" : "not-allowed", color: "#fff",
-                                background: info.equipped ? "linear-gradient(90deg,#b06a4a,#c08a5a)" : "#5a6450",
-                            } }, "\uD83D\uDC55 \u0E16\u0E2D\u0E14")),
-                    React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
-                        React.createElement("button", { onClick: () => { G.enhance(id); }, disabled: !info.canEnhance, title: info.canEnhance ? "" : "ต้องมีของชิ้นเดียวกันซ้ำอีก 1 ชิ้น · เพดานตามเลเวล", style: {
-                                flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
-                                cursor: info.canEnhance ? "pointer" : "not-allowed", color: "#fff",
-                                background: info.canEnhance ? "linear-gradient(90deg,#59a0e8,#7ad0e8)" : "#5a6450",
-                            } },
-                            "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 +",
-                            info.plus + 1,
-                            " (",
-                            rate,
-                            "%)"),
-                        React.createElement("button", { onClick: () => { G.enhanceDust(id); }, disabled: info.plus >= 5 || info.plus >= info.cap, title: `ตีบวกการันตีด้วยผงเพชร ${info.dustCost}💠 (มี ${info.gemDust})`, style: {
-                                flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
-                                cursor: (info.plus >= 5 || info.plus >= info.cap) ? "not-allowed" : "pointer", color: "#fff",
-                                background: (info.plus >= 5 || info.plus >= info.cap) ? "#5a6450" : "linear-gradient(90deg,#c0392b,#f5a623)",
-                            } },
-                            "\uD83D\uDCA0 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35 (",
-                            info.dustCost,
-                            ")")),
-                    !info.starter && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
-                        React.createElement("button", { onClick: () => { G.sellItem(id); }, disabled: info.locked2, title: info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : "ขายชิ้นนี้ 1 ชิ้น", style: {
-                                flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
-                                cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
-                                background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#c0902a,#e0b850)",
-                            } },
-                            "\uD83D\uDCB0 \u0E02\u0E32\u0E22 +",
-                            (info.sell || 0).toLocaleString()),
-                        React.createElement("button", { onClick: () => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }, disabled: info.locked2, title: info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะแยกได้" : "ทุบของชิ้นนี้เป็นผงเพชร (ถ้าเป็นชิ้นสุดท้ายที่ใส่อยู่จะถอดออกให้)", style: {
-                                flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
-                                cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
-                                background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#7a6ad0,#4a86e0)",
-                            } },
-                            "\uD83D\uDCA0 \u0E22\u0E48\u0E2D\u0E22 +",
-                            info.salvage))),
-                    !info.starter && (React.createElement("button", { onClick: () => { G.toggleLock(id); }, title: "\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E27\u0E49\u0E01\u0E31\u0E19\u0E40\u0E1C\u0E25\u0E2D\u0E02\u0E32\u0E22/\u0E22\u0E48\u0E2D\u0E22 (\u0E23\u0E27\u0E21\u0E16\u0E36\u0E07\u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49\u0E41\u0E25\u0E30\u0E41\u0E22\u0E01\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33)", style: {
-                            width: "100%", marginTop: 6, padding: "9px 0", borderRadius: 10, border: info.locked2 ? "1px solid #f5c542" : "1px solid rgba(255,255,255,0.16)",
-                            cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
-                            color: info.locked2 ? "#2a2410" : "#d8e0c8",
-                            background: info.locked2 ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "rgba(255,255,255,0.10)",
-                        } }, info.locked2 ? "🔐 ล็อกอยู่ — แตะเพื่อปลดล็อก" : "🔓 ล็อกไอเทมนี้ (กันขาย/ย่อย)")),
-                    React.createElement("button", { onClick: close, style: { width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" } }, "\u0E1B\u0E34\u0E14"))));
+                    React.createElement("div", { style: popCols ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" } : undefined },
+                        React.createElement("div", { style: { minWidth: 0 } },
+                            "   ",
+                            info.elem && ELEM_META[info.elem] && (React.createElement("div", { style: { display: "inline-block", fontSize: 10.5, fontWeight: 800, color: "#f5a05a", background: "rgba(245,120,60,0.16)", borderRadius: 999, padding: "2px 9px", marginTop: 8 } },
+                                ELEM_META[info.elem].emoji,
+                                " \u0E18\u0E32\u0E15\u0E38",
+                                ELEM_META[info.elem].name)),
+                            React.createElement("div", { style: { background: "rgba(0,0,0,0.28)", borderRadius: 10, padding: "9px 11px", marginTop: 10 } },
+                                rows.length ? rows.map(([lb, val]) => (React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "2px 0" } },
+                                    React.createElement("span", { style: { color: "#b8c0a8", fontWeight: 700 } }, lb),
+                                    React.createElement("span", { style: { color: "#9ae86a", fontWeight: 900 } }, val)))) : React.createElement("div", { style: { fontSize: 11, color: "#8a9080" } }, "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E04\u0E48\u0E32\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29"),
+                                info.plus > 0 && React.createElement("div", { style: { fontSize: 9.5, color: "#c0a040", marginTop: 4, textAlign: "right" } },
+                                    "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 +",
+                                    info.plus,
+                                    (info.awk || 0) > 0 && ` · ✨ ${awkStars(info.awk)}`),
+                                (info.awk || 0) > 0 && (React.createElement("div", { style: { marginTop: 5, background: "rgba(245,197,66,0.12)", border: "1px solid #e8b93a55", borderRadius: 9, padding: "6px 8px" } },
+                                    React.createElement("div", { style: { fontSize: 10, fontWeight: 900, color: "#f5d88a", marginBottom: 3 } },
+                                        "\u2728 \u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29 ",
+                                        awkStars(info.awk)),
+                                    React.createElement("div", { style: { fontSize: 10, color: "#e6dcc0", lineHeight: 1.6 } }, AWK_PERK.slice(0, info.awk).map((k) => `${k.emoji} ${k.name} +${k.val}${k.unit}`).join(" · "))))),
+                            info.trial && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#ffc860", marginTop: 7 } },
+                                "\u23F3 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E17\u0E14\u0E25\u0E2D\u0E07 \u2014 \u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E27\u0E25\u0E32 ",
+                                info.trialLeft || "-",
+                                " \u00B7 \u0E41\u0E23\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E32\u0E21\u0E40\u0E25\u0E40\u0E27\u0E25 \u00B7 \u0E02\u0E32\u0E22/\u0E15\u0E35\u0E1A\u0E27\u0E01/\u0E25\u0E07\u0E15\u0E25\u0E32\u0E14\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49")),
+                            info.req > 0 && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: info.locked ? "#e08080" : "#8ae0a0", marginTop: 7 } }, info.locked ? `🔒 ต้องถึงเลเวล ${info.req} จึงจะสวมได้` : `✅ ใช้ได้ (Lv.${info.req})`)),
+                            info.cmp && (() => {
+                                const c = info.cmp;
+                                const keys = ["atk", "hp", "def", "spd", "eva", "crit"].filter((k) => (s[k] || 0) || (c.stats[k] || 0));
+                                const up = keys.filter((k) => c.diff[k] > 0).length, dn = keys.filter((k) => c.diff[k] < 0).length;
+                                const verdict = up > dn ? { t: "⬆️ ดีกว่าของที่ใส่อยู่", c: "#9ae86a" } : up < dn ? { t: "⬇️ แย่กว่าของที่ใส่อยู่", c: "#e88a8a" } : { t: "➖ พอ ๆ กัน", c: "#d8d0a8" };
+                                return (React.createElement("div", { style: { background: "rgba(0,0,0,0.30)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 10, padding: "9px 11px", marginTop: 9 } },
+                                    React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#c9d8b8", marginBottom: 5 } },
+                                        "\u2696\uFE0F \u0E40\u0E17\u0E35\u0E22\u0E1A\u0E01\u0E31\u0E1A\u0E17\u0E35\u0E48\u0E43\u0E2A\u0E48\u0E2D\u0E22\u0E39\u0E48 \u00B7 ",
+                                        React.createElement("span", { style: { color: c.rarityColor } },
+                                            c.emoji,
+                                            " ",
+                                            c.name),
+                                        c.plus > 0 && React.createElement("span", { style: { color: "#f5c542" } },
+                                            " +",
+                                            c.plus),
+                                        c.awk > 0 && React.createElement("span", { style: { color: "#ffd76a" } },
+                                            " ",
+                                            awkStars(c.awk))),
+                                    keys.map((k) => {
+                                        const d = c.diff[k], u = SET_STAT_UNIT[k] || "";
+                                        return (React.createElement("div", { key: k, style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11.5, padding: "1px 0" } },
+                                            React.createElement("span", { style: { color: "#b8c0a8", fontWeight: 700 } }, SET_STAT_LABEL[k]),
+                                            React.createElement("span", { style: { color: "#9aa89a", fontWeight: 700 } },
+                                                c.stats[k] || 0,
+                                                u,
+                                                " ",
+                                                React.createElement("span", { style: { color: "#6f7a6a" } }, "\u2192"),
+                                                " ",
+                                                React.createElement("span", { style: { color: "#e6f0d8", fontWeight: 900 } },
+                                                    s[k] || 0,
+                                                    u),
+                                                React.createElement("span", { style: { marginLeft: 6, fontWeight: 900, color: d > 0 ? "#9ae86a" : d < 0 ? "#e88a8a" : "#8a9080" } },
+                                                    d > 0 ? `▲+${d}` : d < 0 ? `▼${d}` : "－",
+                                                    d ? u : ""))));
+                                    }),
+                                    React.createElement("div", { style: { fontSize: 11, fontWeight: 900, color: verdict.c, marginTop: 5, textAlign: "right" } }, verdict.t)));
+                            })(),
+                            !info.cmp && !info.equipped && React.createElement("div", { style: { fontSize: 10, color: "#8a9080", marginTop: 8 } },
+                                "\u2696\uFE0F \u0E0A\u0E48\u0E2D\u0E07",
+                                info.slotName,
+                                "\u0E22\u0E31\u0E07\u0E27\u0E48\u0E32\u0E07\u0E2D\u0E22\u0E39\u0E48 \u2014 \u0E43\u0E2A\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22 \u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E17\u0E35\u0E22\u0E1A")),
+                        React.createElement("div", { style: { minWidth: 0 } },
+                            React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 12 } }, !info.equipped ? ( // 🎽 v767 ปุ่มเดียวตามสถานะ — ยังไม่สวม = สวมใส่ · สวมอยู่ = ถอด (เดิมมีสองปุ่มซึ่งปุ่มหนึ่งกดไม่ได้เสมอ)
+                            React.createElement("button", { onClick: () => { G.equipItem(id); }, disabled: info.locked, style: {
+                                    flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13.5, fontWeight: 900,
+                                    cursor: info.locked ? "not-allowed" : "pointer", color: "#fff",
+                                    background: info.locked ? "#5a6450" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
+                                } }, info.locked ? `🔒 ต้องเลเวล ${info.req}` : "🎽 สวมใส่")) : (React.createElement("button", { onClick: () => { G.unequipSlot(info.slot); }, style: {
+                                    flex: 1, padding: "11px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 13.5, fontWeight: 900,
+                                    cursor: "pointer", color: "#fff", background: "linear-gradient(90deg,#b06a4a,#c08a5a)",
+                                } }, "\uD83D\uDC55 \u0E16\u0E2D\u0E14\u0E2D\u0E2D\u0E01"))),
+                            React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
+                                React.createElement("button", { onClick: () => { G.enhance(id); }, disabled: !info.canEnhance, title: info.canEnhance ? "" : "ต้องมีของชิ้นเดียวกันซ้ำอีก 1 ชิ้น · เพดานตามเลเวล", style: {
+                                        flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                        cursor: info.canEnhance ? "pointer" : "not-allowed", color: "#fff",
+                                        background: info.canEnhance ? "linear-gradient(90deg,#59a0e8,#7ad0e8)" : "#5a6450",
+                                    } },
+                                    "\u2692\uFE0F \u0E15\u0E35\u0E1A\u0E27\u0E01 +",
+                                    info.plus + 1,
+                                    " (",
+                                    rate,
+                                    "%)"),
+                                React.createElement("button", { onClick: () => { G.enhanceDust(id); }, disabled: info.plus >= 5 || info.plus >= info.cap, title: `ตีบวกการันตีด้วยผงเพชร ${info.dustCost}💠 (มี ${info.gemDust})`, style: {
+                                        flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                        cursor: (info.plus >= 5 || info.plus >= info.cap) ? "not-allowed" : "pointer", color: "#fff",
+                                        background: (info.plus >= 5 || info.plus >= info.cap) ? "#5a6450" : "linear-gradient(90deg,#c0392b,#f5a623)",
+                                    } },
+                                    "\uD83D\uDCA0 \u0E01\u0E32\u0E23\u0E31\u0E19\u0E15\u0E35 (",
+                                    info.dustCost,
+                                    ")")),
+                            !info.starter && (React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
+                                React.createElement("button", { onClick: () => { G.sellItem(id); }, disabled: info.locked2, title: info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : "ขายชิ้นนี้ 1 ชิ้น", style: {
+                                        flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                        cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
+                                        background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#c0902a,#e0b850)",
+                                    } },
+                                    "\uD83D\uDCB0 \u0E02\u0E32\u0E22 +",
+                                    (info.sell || 0).toLocaleString()),
+                                React.createElement("button", { onClick: () => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }, disabled: info.locked2, title: info.locked2 ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะแยกได้" : "ทุบของชิ้นนี้เป็นผงเพชร (ถ้าเป็นชิ้นสุดท้ายที่ใส่อยู่จะถอดออกให้)", style: {
+                                        flex: 1, padding: "9px 0", borderRadius: 10, border: "none", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                        cursor: info.locked2 ? "not-allowed" : "pointer", color: "#fff",
+                                        background: info.locked2 ? "#5a6450" : "linear-gradient(90deg,#7a6ad0,#4a86e0)",
+                                    } },
+                                    "\uD83D\uDCA0 \u0E22\u0E48\u0E2D\u0E22 +",
+                                    info.salvage))),
+                            !info.starter && (React.createElement("button", { onClick: () => { G.toggleLock(id); }, title: "\u0E25\u0E47\u0E2D\u0E01\u0E44\u0E27\u0E49\u0E01\u0E31\u0E19\u0E40\u0E1C\u0E25\u0E2D\u0E02\u0E32\u0E22/\u0E22\u0E48\u0E2D\u0E22 (\u0E23\u0E27\u0E21\u0E16\u0E36\u0E07\u0E02\u0E32\u0E22\u0E2D\u0E2D\u0E42\u0E15\u0E49\u0E41\u0E25\u0E30\u0E41\u0E22\u0E01\u0E02\u0E2D\u0E07\u0E0B\u0E49\u0E33)", style: {
+                                    width: "100%", marginTop: 6, padding: "9px 0", borderRadius: 10, border: info.locked2 ? "1px solid #f5c542" : "1px solid rgba(255,255,255,0.16)",
+                                    cursor: "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 900,
+                                    color: info.locked2 ? "#2a2410" : "#d8e0c8",
+                                    background: info.locked2 ? "linear-gradient(90deg,#f5c542,#ffd76a)" : "rgba(255,255,255,0.10)",
+                                } }, info.locked2 ? "🔐 ล็อกอยู่ — แตะเพื่อปลดล็อก" : "🔓 ล็อกไอเทมนี้ (กันขาย/ย่อย)")),
+                            React.createElement("button", { onClick: close, style: { width: "100%", marginTop: 8, padding: "9px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: font, fontSize: 12.5, fontWeight: 800, color: "#d8e0c8", background: "rgba(255,255,255,0.12)" } }, "\u0E1B\u0E34\u0E14"))))));
         })(),
         ui.profileOpen && (() => {
             const p = G.profileInfo();
