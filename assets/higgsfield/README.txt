@@ -211,3 +211,15 @@ Taara remake (ธาราทิพย์ — supreme star deity of the floating
   Attack clip #132 mage_soell_cast_3 (two-handed push); Idle / Walk / Hit / Die borrowed from mon_mochi (hips rescaled),
   root motion stripped, ~9k triangles, 1024 JPEG, quantized. Replaces the dyed Blob_GreenSpikyBlob stand-in; the tilted
   gold ring around the body is kept as an in-game halo. Stage 2 "จักรวาลเทพ" = same model ×1.5 with a stronger glow
+
+Mythic tier (เทพนิยาย, tier 6) remake — 2026-11-07 · mon_erawan / mon_nakprok / mon_thewada / mon_winyan / mon_gummy
+- Concept GPT Image 2.5 (A-pose chibi, Quaternius/KayKit-like low-poly hand-painted style) → Meshy 7 image-to-3D (20k) →
+  Meshy rigging + one library attack clip; Idle / Walk / Hit / Die borrowed from mon_mochi (hips rescaled),
+  root motion stripped, 7-14k triangles, 1024 JPEG, quantized:
+  mon_erawan.glb (ช้างเอราวัณ — white three-headed elephant, gold Thai chada crown) — Attack #127 Charged_Ground_Slam
+  mon_nakprok.glb (นาคามรกต — emerald naga, gold kanok hood crest, long tail) — Attack #129 mage_soell_cast
+  mon_thewada.glb (เทวดาน้อย — little Thai angel, gold chada, white wings) — Attack #125 Charged_Spell_Cast
+  mon_winyan.glb (วิญญาณเร่ร่อน — plum/magenta spirit flame, torn scarf, soul crystal) — Attack #126 Charged_Spell_Cast_1
+  mon_gummy.glb (กัมมี่เยลลี่ — strawberry gummy bear, sprinkles, lollipop antenna) — Attack #397 360_Power_Spin_Jump
+- Replaces the Quaternius Elephant / Snake_angry / Flying_Ghost / Blob_PinkBlob stand-ins and the KayKit Skeleton_Minion
+  used for winyan. Evolved forms are the same models ×1.4-1.5; erawan and thewada get a gold aura ring behind the head

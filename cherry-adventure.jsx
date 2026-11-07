@@ -418,7 +418,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v765";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v766";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -9749,7 +9749,7 @@ export default function CherryAdventure() {
     // 💀 KayKit Skeletons (CC0 — Kay Lousberg) — มอนสเตอร์อันเดดใช้โมเดลมีโครงกระดูกจริง + อนิเมชัน
     //    ยืน · เดิน · วิ่งไล่ · สะดุ้งตอนโดนตี · เงื้อตี · ล้มตาย  (คลิปดึงมาจากชุด Rig_Medium ของ KayKit)
     //    ⏳ โหลดตอนเจอมอนพวกนี้ครั้งแรกเท่านั้น (ราว 1.2MB) — คนที่ยังไม่ถึงด่านนรกไม่ต้องโหลด
-    const KK_SKEL = { winyan: "Skeleton_Minion", pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", skelguard: "Skeleton_Warrior", pirskel: "Skeleton_Minion", pirgunner: "Skeleton_Minion" };   // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
+    const KK_SKEL = { pisaj: "Skeleton_Warrior", yommathut: "Skeleton_Rogue", skelguard: "Skeleton_Warrior", pirskel: "Skeleton_Minion", pirgunner: "Skeleton_Minion" };   // 🏚️ ทหารโครงกระดูกเมืองร้าง ใช้ร่างนักรบ   // 👻 ผีราตรี = โครงกระดูกจอมเวท (ตัวที่ 4 ของชุดเดียวกัน รีก/ไฟล์ท่าเดิม)
     const KK_SKEL_H = 1.5;
     // 🎨 ย้อมสีเฉพาะสายพันธุ์ (ใช้ร่างเดียวกันแต่คนละด่าน) — hue = ย้อม texture รักษาลายเดิม · glow = เรืองแสงอ่อน ๆ
     const KK_SKEL_TINT = { skelguard: { hue: [168, 0.55, 1.45, 0.92, 0, 0.25], glow: 0x10483a, gi: 0.7 } };   // 🏚️ ทหารโครงกระดูกเมืองร้าง — กระดูกเขียวหยกผีสิง
@@ -10028,8 +10028,8 @@ export default function CherryAdventure() {
                     tint: { Body: 0x5ab8dc, Eyes: 0x10262e } },                                              // 🌪️ สไลม์วายุ — ฟ้า ลอย
       alienpet:   { f: "Slime",           size: 1.7,          idle: "Slime_Idle", walk: "Slime_Walk", run: "Slime_Walk", atk: "Slime_Attack", die: "Slime_Death",
                     tint: { Body: 0x38ce26, Eyes: 0x080808 } },                                              // 🛸 สไลม์ต่างดาว — เขียว
-      nakprok:    { f: "Snake_angry",     size: 2.9,          idle: "Snake_Idle", walk: "Snake_Walk", run: "Snake_Walk", atk: "Snake_Attack", hit: "Snake_Jump",
-                    tint: { DarkGreen: 0x0a3a20, LightGreen: 0x1a7a45, Yellow: 0xe0a000 } },                 // 🐍 นาคามรกต — งูยักษ์เขียวมรกต
+      nakprok:    { f: "../higgsfield/mon_nakprok", by: "h", size: 2.2, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 1.9, atkT: 1.15, glow: 0.15,   // 🐍 นาคามรกต (Higgsfield) — พญานาคเกล็ดมรกต แผงหงอนกนกทอง หางยาว · ร่ายพลังนาคา
+                    evo: { size: 3.2, glow: 0.3 } },
       egggecko:   { f: "Velociraptor",    size: 2.1, lift: 0.6, idle: "Velociraptor_Idle", walk: "Velociraptor_Walk", run: "Velociraptor_Run", atk: "Velociraptor_Attack", die: "Velociraptor_Death",
                     tint: { Brown: 0x0da342, LightBrown: 0x54e38f, Black: 0x081410 } },                    // 🦖 แร็พเตอร์แก้ว — เขียวแก้ว
       // ===== Ultimate Monsters (50) + Ultimate Animals (12) — ชุด Patreon ของ Quaternius (CC0) =====
@@ -10059,7 +10059,8 @@ export default function CherryAdventure() {
       eggowl:     { f: "Blob_Birb",           c: "blob", by: "h", size: 1.5 },
       alien:      { f: "Big_Alien",           c: "big",  by: "h", size: 2.3 },
       ufoboss:    { f: "Blob_Alien",          c: "blob", by: "h", size: 2.4, y: 0.4, mul: 0xb080ff },
-      gummy:      { f: "Blob_PinkBlob",       c: "blob", by: "h", size: 1.6 },
+      gummy:      { f: "../higgsfield/mon_gummy", by: "h", size: 1.6, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.4, atkT: 1.05, glow: 0.15,   // 🍬 กัมมี่เยลลี่ (Higgsfield) — หมีกัมมี่สตรอว์เบอร์รี เม็ดสายรุ้ง อมยิ้มบนหัว · หมุนตัวกระโดดฟาด
+                    evo: { size: 2.4, glow: 0.25 } },
       cyclops:    { f: "Big_Orc_Skull",       c: "big",  by: "h", size: 2.7 },
       gobwarlord: { f: "Big_Orc",             c: "big",  by: "h", size: 2.2, hue: [105, 0.55, 1.0] },       // 👹 ออร์คย้อมเขียวก็อบลิน (ไม่ซ้ำไททัน)
       tribalking: { f: "Big_Tribal",          c: "big",  by: "h", size: 2.2, hue: [12, 0.7, 1.05] },        // 🗿 ชนเผ่าย้อมแดงเพลิง (ไม่ซ้ำโพธิสัตว์)
@@ -10074,7 +10075,8 @@ export default function CherryAdventure() {
       candyking:  { f: "Big_MushroomKing",    c: "big",  by: "h", size: 3.0, mul: 0xffa0e0 },
       egghog:     { f: "Blob_GreenSpikyBlob", c: "blob", by: "h", size: 1.5, mul: 0xc09060 },
       ngueak:     { f: "Big_Fish",            c: "big",  by: "h", size: 2.2 },
-      thewada:    { f: "Flying_Ghost",        c: "fly",           size: 2.4, y: 0.9, hue: [42, 0, 5.0, 0.94, 0, 0.16], halo: { bone: "Head", at: [0, 3.7, 0.1], r: 0.6, tube: 0.08, tilt: 0.22 } },   // 👼 เทวดาน้อย — ภูตมีปีกย้อมขาวทอง
+      thewada:    { f: "../higgsfield/mon_thewada", by: "h", size: 1.8, y: 0.35, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.2, atkT: 1.2, glow: 0.2,   // 👼 เทวดาน้อย (Higgsfield) — เทวดาชฎาทอง ปีกขาว ลอยเหนือพื้น · ระเบิดแสงสวรรค์
+                    evo: { size: 2.6, glow: 0.35, halo: { bone: "Head", at: [0, 0.95, -0.14], r: 0.3, tube: 0.02, tilt: 20 } } },   // ✨ ร่างวิวัฒน์ "เทพเทวินทร์" — วงประภามณฑลหลังศีรษะ
       kinnara:    { f: "Flying_Hywirl",       c: "fly",           size: 2.6, y: 0.7, hue: [332, 0.45, 2.4, 0.8, 0, 0.6], halo: { bone: "Head", at: [0, 3.15, 0.1], r: 0.55, tube: 0.075, tilt: 0.22 } },   // 🕊️ กินรี — วิญญาณบินมีแขน ย้อมชมพูทอง
       phothisat:  { f: "Big_Tribal",          c: "big", by: "h", size: 3.0, hue: [44, 0.85, 1.7, 0.62, 1], gloss: [0.4, 0.32, 0x3a2200], halo: { bone: "Head", at: [0, 4.05, 0.2], r: 0.72, tube: 0.09, tilt: 0.22 } },   // 🧘 โพธิสัตว์ — เทพชฎาทองมันวาว + รัศมี
       pooyak:     { f: "Crab",      size: 2.6, idle: "idle", walk: "walk", run: "walk", atk: "walk", hit: "idle", die: "idle" },   // 🦀 ปูยักษ์ทราย — OpenGameArt (methodical pixel, CC0) มีแค่ idle/walk
@@ -10086,11 +10088,11 @@ export default function CherryAdventure() {
       eggduck:    { f: "Duckling",  size: 1.4, by: "h", lift: 0.8, idle: "Peck", walk: "Waddle", run: "Waddle", atk: "Peck", hit: "Peck", die: "Peck" },   // 🐤 ลูกเป็ดน้อย — OpenGameArt (weirdybeardyman, CC0) ท่าจิก/เดิน
       eggturtle:  { f: "Turtle",    size: 2.0, idle: "GenIdle", walk: "Walking-loop",
                     gen: { GenIdle: { period: 2.6, tracks: [["Bone016", "x", 0.07, 0], ["Bone017", "x", 0.06, 0.6], ["Bone018", "x", 0.05, 1.2], ["Bone", "py", 0.015, 0], ["Bone006", "z", 0.1, 0.9]] } }, run: "Walking-loop", atk: "Walking-loop", hit: "Walking-loop", die: "Walking-loop" },   // 🐢 เต่ามงคล — OpenGameArt (Heathal, CC0) มีแค่ท่าเดิน
-      erawan:     { f: "Elephant",  by: "h", size: 2.6, idle: "Idle", walk: "GenWalk", run: "GenWalk", atk: "Angry", hit: "Idle", die: "Sitting",
-                    gen: { GenWalk: { period: 1.1, tracks: [["UpperLegFrontL", "x", 0.55, 0], ["UpperLegBackL001", "x", 0.55, 0], ["UpperLegFrontL001", "x", 0.55, Math.PI], ["UpperLegBackL", "x", 0.55, Math.PI],
-                      ["LowerLegFrontL", "x", 0.3, 1.6], ["LowerLegBackL001", "x", 0.3, 1.6], ["LowerLegFrontL001", "x", 0.3, 1.6 + Math.PI], ["LowerLegBackL", "x", 0.3, 1.6 + Math.PI],
-                      ["Bone003", "x", 0.05, 0.8], ["Bone012", "x", 0.14, 2.2], ["Bone013", "x", 0.12, 2.9], ["Tail", "x", 0.2, 0.4], ["Bone", "py", 0.08, 0.3]] } }, tint: { "Material.001": 0xc8c0e4 }, horn: { bone: "Bone003", base: [0, 6.05, 2.1], tip: [0, 7.25, 2.1], r: 0.42 } },   // 🐘 ช้างเอราวัณ — OpenGameArt (syncopika, CC0) ไม่มีท่าเดิน · ตัวขาวอมม่วง
+      erawan:     { f: "../higgsfield/mon_erawan", by: "h", size: 2.4, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.2, atkT: 1.3, glow: 0.15,   // 🐘 ช้างเอราวัณ (Higgsfield) — ช้างเผือกสามเศียร มงกุฎชฎาทอง · กระทืบพื้นสะเทือน
+                    evo: { size: 3.4, glow: 0.3, halo: { bone: "Head", at: [0, 1.05, -0.2], r: 0.36, tube: 0.025, tilt: 20 } } },   // 👑 ร่างวิวัฒน์ — ใหญ่ขึ้น + วงประภามณฑลทองหลังเศียร
       eggpeacock: { f: "Big_Birb",  c: "big", by: "h", size: 1.9, hue: [168, 0.75, 1.05], fan: { bone: "Hips", at: [0, 0.85, -0.5], w: 3.6, h: 2.3, tilt: -0.3 } },   // 🦚 นกยูงทิพย์ — นกใหญ่ย้อมมรกต + หางพัดเจ็ดสีเกาะสะโพก
+      winyan:     { f: "../higgsfield/mon_winyan", by: "h", size: 1.8, y: 0.25, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 3.0, atkT: 1.35, glow: 0.35,   // 👻 วิญญาณเร่ร่อน (Higgsfield) — ดวงวิญญาณเปลวไฟม่วงชมพู ผ้าพันคอขาด ผลึกวิญญาณกลางอก · ลอยเหนือพื้น
+                    evo: { size: 2.6, glow: 0.5 } },
       taara:      { f: "../higgsfield/mon_taara", by: "h", size: 1.75, y: 0.25, idle: "Idle", walk: "Walk", run: "Walk", atk: "Attack", hit: "Hit", die: "Die", atkTS: 2.6, atkT: 1.25, glow: 0.3,   // 💫 ธาราทิพย์ (Higgsfield) — เทพดาวสีม่วงลาเวนเดอร์ พุงเป็นกาแล็กซี มงกุฎดาวทอง ผ้าคลุมแสงดาว · ลอยเหนือพื้นนิด ๆ · ผลักสองมือปล่อยพลังดาว
                     halo: { bone: "Spine02", at: [0, 0.42, 0], r: 0.5, tube: 0.02, tilt: 0.45 },   // 🪐 วงแหวนทองเอียงรอบตัว (ซิกเนเจอร์เดิมของธาราทิพย์)
                     evo: { size: 2.6, glow: 0.45 } },   // 🌌 ร่างวิวัฒน์ "จักรวาลเทพ" — ตัวใหญ่ขึ้น เรืองแสงชัดขึ้น
