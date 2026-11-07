@@ -395,9 +395,9 @@ const AWK_MAX = 5; // ปลุกได้สูงสุด ★5
 const AWK_STEP = 0.5; // ตัวคูณค่าสถานะที่เพิ่มต่อ 1 ดาว
 const AWK_GOLD = 100000; // 💰 ค่าปลุกพลังต่อครั้ง
 const AWK_MIN_TIER = 3; // 🔒 ปลุกพลังได้เฉพาะ "ของขั้นสูง" = มหากาพย์ (epic) ขึ้นไปเท่านั้น
-const awkTierKeys = () => Object.keys(TIER).filter((k) => TIER[k] >= AWK_MIN_TIER); // ⚠️ ต้องเป็นฟังก์ชัน — TIER/RARITY ประกาศทีหลังบล็อกนี้
+const awkTierKeys = () => Object.keys(TIER).filter((k) => TIER[k] >= AWK_MIN_TIER && k !== "trial"); // ⚠️ ต้องเป็นฟังก์ชัน — TIER/RARITY ประกาศทีหลังบล็อกนี้
 const awkTierNames = () => awkTierKeys().map((k) => (RARITY[k] || {}).name || k).join(" / ");
-const awkEligible = (it) => !!it && !it.starter && (TIER[it.rarity] || 1) >= AWK_MIN_TIER;
+const awkEligible = (it) => !!it && !it.starter && !it.trial && (TIER[it.rarity] || 1) >= AWK_MIN_TIER;
 const awkStars = (n) => "★".repeat(Math.max(0, Math.min(AWK_MAX, n || 0)));
 // ✨ ปลุกพลังแต่ละดาว = ได้ "สถานะพิเศษ" ติดของชิ้นนั้นเพิ่มอีกอย่าง (สะสมทบกันไปเรื่อย ๆ)
 const AWK_PERK = [
@@ -477,7 +477,7 @@ const HERO_SWING = {
 const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v764"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v765"; // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
     common: { name: "ทั่วไป", color: "#8a9aa8" },
     rare: { name: "หายาก", color: "#59a0e8" },
@@ -485,9 +485,10 @@ const RARITY = {
     secret: { name: "SECRET", color: "#f5c542" },
     dragon: { name: "มังกร 🐉", color: "#e8552e" },
     legend: { name: "ตำนาน ⭐", color: "#f5a623" },
-    god: { name: "เทวศาสตรา 🌌", color: "#ff4de0" }, // 👑 ขั้นสูงสุด — ดรอปจากบอสบุกแมพเท่านั้น (1%)
+    god: { name: "เทวศาสตรา 🌌", color: "#ff4de0" },
+    trial: { name: "ทดลอง 7 วัน ⏳", color: "#ffb43a" }, // 🎁 v765 อาวุธทดลองจากกล่องผู้เล่นใหม่ (หน้าตาระดับตำนาน · หมดเวลาแล้วหายไปเอง)   // 👑 ขั้นสูงสุด — ดรอปจากบอสบุกแมพเท่านั้น (1%)
 };
-const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6, god: 7 };
+const TIER = { common: 1, rare: 2, epic: 3, secret: 4, dragon: 5, legend: 6, god: 7, trial: 6 }; // trial = อาวุธทดลอง (นับเป็นขั้นตำนานเพื่อแสง/การเรียง เท่านั้น)
 // ⚒️✨ ขั้นแสงตีบวก — +5 ขาว · +10 เขียว · +15 ม่วง · +20 ทอง (ออร่าบนอาวุธ + กรอบในกระเป๋า)
 const PLUS_TIERS = [
     { min: 5, name: "ขาว", color: 0xffffff, css: "#f2f6ff", a: 0.40, s: 0.95, li: 0.0 },
@@ -787,6 +788,23 @@ const LOOT = [
     { id: "lg_pnt", slot: "pants", name: "เกราะขาเทพโลกันตร์", emoji: "🦵", rarity: "legend", hp: 70, def: 14, atk: 8, elem: "light", set: "legend" },
     { id: "lg_sho", slot: "shoes", name: "รองเท้าเหินสวรรค์", emoji: "🪽", rarity: "legend", def: 8, spd: 28, eva: 10, crit: 8, elem: "light", set: "legend" },
 ].concat(genArmour()); // ⚔️🛡️💨 + 54 archetype pieces (3 flavours × 6 slots × 3 tiers)
+// 🎁⏳ v765 อาวุธทดลอง 7 วัน (กล่องผู้เล่นใหม่) — หน้าตา/ธาตุเหมือนอาวุธตำนานประจำอาชีพ · ไม่มีเลเวลขั้นต่ำ
+//    ค่าพลังโตตามเลเวลผู้เล่น (Lv.1 = 25% ของอาวุธตำนาน → Lv.200 = 100%) ให้ยังเป็น "ของระดับสูง" ตลอด 7 วัน
+//    ระดับ "trial" แยกจากระดับอื่น → ไม่หลุดเข้าดรอป/ร้าน/กาชา/กล่องสุ่ม · ขาย/แยกชิ้นส่วน/ตีบวก/ปลุกพลัง/ฝังอัญมณี/ลงตลาดไม่ได้
+const TRIAL_DAYS = 7;
+const TRIAL_WPN = {}; // อาชีพ → id อาวุธทดลอง
+["lg_ow", "lg_oa", "lg_os", "lg_ol", "lg_om", "lg_ok", "lg_oo", "lg_oc", "lg_ox", "lg_ob", "lg_ot"].forEach((lid) => {
+    const L = LOOT.find((x) => x.id === lid);
+    if (!L)
+        return;
+    const T = { id: "tr_" + L.cls, slot: "weapon", name: L.name + " (ทดลอง)", emoji: L.emoji, rarity: "trial", cls: L.cls, elem: L.elem, trial: true, look: L.id };
+    ["atk", "def", "hp", "mp", "crit", "spd", "eva"].forEach((k) => { if (L[k])
+        T[k] = L[k]; });
+    LOOT.push(T);
+    TRIAL_WPN[L.cls] = T.id;
+});
+const trialScale = (lv) => Math.min(1, 0.25 + 0.75 * Math.max(0, (lv || 1) - 1) / 199);
+const noTrade = (it) => !!(it && (it.starter || it.trial)); // 🔒 อาวุธฝึกหัด + อาวุธทดลอง — ขาย/แยก/สุ่มค่า/ลงตลาดไม่ได้
 // 🏷️ build stamp — shown on the title screen so you can tell at a glance whether a
 // browser is running a stale cached copy (GitHub Pages CDN caches index.html ~10 min).
 const BUILD_VER = "2026.07.16.0633";
@@ -11756,7 +11774,7 @@ function CherryAdventure() {
         const BLADE_HILT = 0.42; // ระยะจากจุดหมุนโมเดลถึงปลายด้ามล่าง (ใช้ชดเชยตอนขยาย ให้มือยังอยู่ที่ด้าม)
         // 📏 bladeScale ต่อโมเดล: ดาบ/คาตานะที่ปั้นเองสั้นกว่าโมเดล KayKit ราว 20-25% (วัดจริง 1.25-1.35 vs 1.6-1.7) → ขยายเพิ่มให้ยาวเท่ากันในมือ
         const BLADE_BIG = (k) => { const m = typeof k === "string" ? weaponModels[k] : null; const bs = m && m.userData && m.userData.bladeScale ? m.userData.bladeScale : 1; return (typeof k === "string" && (BLADE_KEYS[k] || /^(w|kk)_(sword|katana)_/.test(k) || (/^kki_/.test(k) && m && (m.userData.kkFam === "sword" || m.userData.kkFam === "katana"))) ? 2 : 1) * bs; };
-        const wpnTierOf = (r) => (r === "legend" || r === "dragon" || r === "god") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
+        const wpnTierOf = (r) => (r === "legend" || r === "dragon" || r === "god" || r === "trial") ? 2 : (r === "secret" || r === "epic") ? 1 : 0;
         {
             const steelOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf0f2f8 : t === 1 ? 0xdde2ea : 0xb9c0c8, metalness: 0.85, roughness: t === 2 ? 0.14 : t === 1 ? 0.22 : 0.38 });
             const goldOf = (t) => new THREE.MeshStandardMaterial({ color: t === 2 ? 0xf5cf6a : 0xd8ab4e, metalness: 0.9, roughness: 0.24, emissive: t === 2 ? 0x6a4a08 : 0x3a2a06, emissiveIntensity: t === 2 ? 0.5 : 0.25 });
@@ -15609,6 +15627,11 @@ function CherryAdventure() {
         }
         G.setWeaponVisual = (id) => {
             // 👗 fashion: if a costume weapon is set, SHOW that instead (stats stay from the real gear)
+            {
+                const tw = id && LOOT.find((x) => x.id === id);
+                if (tw && tw.look)
+                    id = tw.look;
+            } // 🎁 อาวุธทดลอง = โมเดลเดียวกับอาวุธตำนานของอาชีพ
             if (G.costume && G.costume.weapon)
                 id = G.costume.weapon;
             // 🦸 heroes carry their signature staff (signature look; stats still come from real gear)
@@ -51730,7 +51753,7 @@ function CherryAdventure() {
                 else if (gv.diamonds)
                     G.diamonds = (G.diamonds || 0) + gv.diamonds;
                 if (gv.balls)
-                    G.balls = (G.balls || 0) + gv.balls;
+                    G.player.balls = (G.player.balls || 0) + gv.balls; // 🐛 v765 เดิมเข้า G.balls ที่ไม่มีใครใช้ — ลูกบอลจากกงล้อหายไปเฉย ๆ
                 if (gv.warpScrolls)
                     G.warpScrolls = (G.warpScrolls || 0) + gv.warpScrolls;
                 if (gv.potion) {
@@ -51794,7 +51817,7 @@ function CherryAdventure() {
             G.gold += r.gold;
             G.achStats.goldEarned = (G.achStats.goldEarned || 0) + r.gold; // 🏅 เศรษฐีทอง
             if (r.ball)
-                G.balls = (G.balls || 0) + r.ball;
+                G.player.balls = (G.player.balls || 0) + r.ball; // 🐛 v765 เดิมเข้า G.balls ที่ไม่มีใครใช้
             if (r.potion) {
                 G.hpPots.s = (G.hpPots.s || 0) + r.potion;
                 if (G.syncPotions)
@@ -58018,7 +58041,7 @@ function CherryAdventure() {
             torso.rotation.y = 0; /* undo archer aim twist */ };
         // item stats scale +20% per enhancement level
         // 💎 how many gem slots an item has, and what's in them
-        const socketCount = (id) => { const it = LOOT.find((x) => x.id === id); return it && !it.starter ? (SOCKETS_BY_RARITY[it.rarity] || 0) : 0; };
+        const socketCount = (id) => { const it = LOOT.find((x) => x.id === id); return it && !noTrade(it) ? (SOCKETS_BY_RARITY[it.rarity] || 0) : 0; };
         const socketsOf = (id) => { const n = socketCount(id); const cur = (G.sockets && G.sockets[id]) || []; return Array.from({ length: n }, (_, i) => cur[i] || null); };
         const gemBonus = (id) => {
             const b = { atk: 0, hp: 0, def: 0, spd: 0, eva: 0, crit: 0 };
@@ -58059,9 +58082,9 @@ function CherryAdventure() {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
                 return { atk: 0, hp: 0, def: 0, spd: 0, eva: 0, crit: 0 };
-            const m = 1 + 0.2 * (G.plus[id] || 0) + AWK_STEP * ((G.awk || {})[id] || 0); // ⚒️ ตีบวก + ✨ ปลุกพลัง
+            const m = it.trial ? trialScale(G.player ? G.player.level : 1) : 1 + 0.2 * (G.plus[id] || 0) + AWK_STEP * ((G.awk || {})[id] || 0); // ⚒️ ตีบวก + ✨ ปลุกพลัง · 🎁 อาวุธทดลองโตตามเลเวล
             const r = rollOf(id);
-            const q = it.starter ? 1 : (r ? r.m : 1); // 🎲 quality roll (starters are always plain)
+            const q = noTrade(it) ? 1 : (r ? r.m : 1); // 🎲 quality roll (starters/trial are always plain)
             const gb = gemBonus(id); // 💎 socketed gems (flat, not scaled)
             const ab = awkBonus((G.awk || {})[id] || 0); // ✨ สถานะพิเศษจากดาวปลุกพลัง (flat)
             return {
@@ -58107,7 +58130,7 @@ function CherryAdventure() {
                         plus: (G.plus || {})[curId] || 0, awk: (G.awk || {})[curId] || 0, stats: c, diff };
                 })(),
                 prefix: px ? px.name : null, canEnhance: count >= 2 && plus < 5 && plus < cap, gemDust: G.gemDust || 0, dustCost: G.dustCostNow ? G.dustCostNow() : (G.WB_DUST_COST || 30),
-                starter: !!it.starter, salvage: G.salvageYield ? G.salvageYield(id) : 0, // 💠 แยกชิ้นส่วนได้กี่ผง
+                starter: noTrade(it), trial: !!it.trial, trialLeft: it.trial && G.trialLeftText ? G.trialLeftText(id) : null, salvage: G.salvageYield ? G.salvageYield(id) : 0, // 💠 แยกชิ้นส่วนได้กี่ผง
             };
         };
         // 🎁 THE one way items enter the bag — guarantees every drop gets a quality roll
@@ -58116,7 +58139,7 @@ function CherryAdventure() {
                 return;
             G.inv.push(id); // ⚠️ the actual push — must NOT call gainItem again (infinite recursion)
             const it = LOOT.find((x) => x.id === id);
-            if (it && !it.starter && G.rolls && !G.rolls[id])
+            if (it && !noTrade(it) && G.rolls && !G.rolls[id])
                 G.rolls[id] = rollQuality();
             return G.rolls ? G.rolls[id] : null;
         };
@@ -58757,6 +58780,10 @@ function CherryAdventure() {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
                 return;
+            if (it.trial) {
+                toast("⏳ อาวุธทดลองตีบวกไม่ได้ — ค่าพลังโตตามเลเวลให้เองอยู่แล้ว");
+                return;
+            }
             const copies = G.inv.filter((x) => x === id).length;
             const cur = G.plus[id] || 0;
             const cap = G.enhanceCap();
@@ -58803,6 +58830,13 @@ function CherryAdventure() {
         G.dustCostNow = () => Math.max(5, Math.round((G.WB_DUST_COST || 30) * (1 - (G.repForgeCut ? G.repForgeCut() : 0))));
         // 💠 guaranteed enhance — consumes 💠ผงเพชร + 🌟ผงดาว + ⛏️แร่ scaling with the enhance level (no duplicate needed)
         G.enhanceDust = (id) => {
+            {
+                const tIt = LOOT.find((x) => x.id === id);
+                if (tIt && tIt.trial) {
+                    toast("⏳ อาวุธทดลองตีบวกไม่ได้ — ค่าพลังโตตามเลเวลให้เองอยู่แล้ว");
+                    return;
+                }
+            }
             const it = LOOT.find((x) => x.id === id);
             if (!it)
                 return;
@@ -59038,6 +59072,13 @@ function CherryAdventure() {
             if (!wid) {
                 toast("⚔️ ต้องสวมอาวุธก่อนถึงจะเสริมธาตุได้");
                 return;
+            }
+            {
+                const tIt = LOOT.find((x) => x.id === wid);
+                if (tIt && tIt.trial) {
+                    toast("⏳ อาวุธทดลองเสริมธาตุไม่ได้");
+                    return;
+                }
             }
             const recipe = ELEM_INFUSE[elem];
             if (!recipe)
@@ -59391,7 +59432,7 @@ function CherryAdventure() {
                 // unique item ids owned in this slot, sorted STRONGEST first
                 const owned = [...new Set(G.inv)].filter((id) => {
                     const it = LOOT.find((x) => x.id === id);
-                    return it && it.slot === slot && !it.starter && !(G.itemLock && G.itemLock[id]) && !it.sew && !Object.values(G.costume || {}).includes(id); // 🔐 ไม่แตะของที่ล็อกไว้ · 👗 ของร้านตัดชุด/ตัวต่อ/ไฮเทค + ของที่สวมทับอยู่ไม่ขาย
+                    return it && it.slot === slot && !noTrade(it) && !(G.itemLock && G.itemLock[id]) && !it.sew && !Object.values(G.costume || {}).includes(id); // 🔐 ไม่แตะของที่ล็อกไว้ · 👗 ของร้านตัดชุด/ตัวต่อ/ไฮเทค + ของที่สวมทับอยู่ไม่ขาย
                 }).sort((a, b) => itemPower(b) - itemPower(a));
                 // keep #1 (the best); for the rest, keep 1 duplicate for enhancing, sell surplus
                 owned.forEach((id, rank) => {
@@ -59685,8 +59726,8 @@ function CherryAdventure() {
         G.REROLL_COST = { crystal: 2, ironOre: 5 };
         G.rerollItem = (id) => {
             const it = LOOT.find((x) => x.id === id);
-            if (!it || it.starter) {
-                toast("อาวุธฝึกหัดสุ่มค่าไม่ได้");
+            if (!it || noTrade(it)) {
+                toast(it && it.trial ? "⏳ อาวุธทดลองสุ่มค่าไม่ได้" : "อาวุธฝึกหัดสุ่มค่าไม่ได้");
                 return;
             }
             for (const m in G.REROLL_COST) {
@@ -59712,8 +59753,8 @@ function CherryAdventure() {
         G.REROLL_SAFE_COST = () => 60000;
         G.rerollItemSafe = (id) => {
             const it = LOOT.find((x) => x.id === id);
-            if (!it || it.starter) {
-                toast("อาวุธฝึกหัดสุ่มค่าไม่ได้");
+            if (!it || noTrade(it)) {
+                toast(it && it.trial ? "⏳ อาวุธทดลองสุ่มค่าไม่ได้" : "อาวุธฝึกหัดสุ่มค่าไม่ได้");
                 return;
             }
             const cost = G.REROLL_SAFE_COST();
@@ -60846,6 +60887,100 @@ function CherryAdventure() {
             if (G.saveGame)
                 G.saveGame();
         };
+        // 📜 v765 ใบ EXP x2 ที่เก็บไว้ (ได้จากกล่องผู้เล่นใหม่) — กดใช้เมื่อพร้อม เวลาต่อจากของเดิม
+        G.expScrolls = G.expScrolls || { h: 0, d: 0 };
+        G.useExpScroll = (kind) => {
+            const sc = G.EXP_SCROLLS[kind];
+            if (!sc)
+                return;
+            G.expScrolls = G.expScrolls || { h: 0, d: 0 };
+            if (!(G.expScrolls[kind] > 0)) {
+                toast("📜 ไม่มีใบ EXP x2 ชนิดนี้เหลือแล้ว");
+                return;
+            }
+            G.expScrolls[kind]--;
+            G.expBoostUntil = Math.max(Date.now(), G.expBoostUntil || 0) + sc.ms;
+            if (G.sfx && G.sfx.levelup)
+                G.sfx.levelup();
+            toast(`📜 ใช้ใบประสบการณ์ x2 (${sc.name}) แล้ว! EXP x2 เหลือเวลา ${G.expBoostLeftText()} · ใบที่เหลือ ${G.expScrolls[kind]}`);
+            setUi((u) => ({ ...u, expScrolls: { ...G.expScrolls } }));
+            syncPlayer();
+            if (G.saveGame)
+                G.saveGame();
+        };
+        // 🎁 v765 กล่องผู้เล่นใหม่ — ตัวละครใหม่ได้ 1 กล่อง เปิดได้ครั้งเดียวต่อตัวละคร
+        G.NEWBIE_BOX = { gold: 100000, food: { rid: "ambro", q: "legend", n: 3 }, hpL: 20, mpL: 20, expD: 3, warp: 10, balls: 30 };
+        G.newbieBoxList = () => {
+            const B = G.NEWBIE_BOX, W = LOOT.find((x) => x.id === TRIAL_WPN[G.cls]), R = RECIPE_BY[B.food.rid];
+            return [
+                W && { ico: W.emoji, name: W.name.replace(" (ทดลอง)", ""), sub: `อาวุธระดับตำนาน ใช้ได้ ${TRIAL_DAYS} วัน · แรงขึ้นตามเลเวล`, qty: 1, hot: 1 },
+                { ico: "💰", name: "ทอง", sub: "ใช้ซื้อของในร้านค้า", qty: B.gold },
+                R && { ico: R.emoji, name: R.name, sub: "อาหารระดับสูงสุด (ฝีมือระดับตำนาน) — บัฟทุกค่า + EXP", qty: B.food.n },
+                { ico: "🧪", name: "น้ำยาเลือดใหญ่", sub: `ฟื้นเลือด ${G.HP_POT.l.heal.toLocaleString()}`, qty: B.hpL },
+                { ico: "💧", name: "น้ำยามานาใหญ่", sub: `ฟื้นมานา ${G.MP_POT.l.rest.toLocaleString()}`, qty: B.mpL },
+                { ico: "📜", name: "ใบ EXP x2 (1 วัน)", sub: "กดใช้เมื่อพร้อม · ใช้ซ้อนต่อเวลาได้", qty: B.expD },
+                { ico: "🌀", name: "ใบวาร์ปข้ามแดน", sub: "วาร์ปไปแมพไหนก็ได้ทันที", qty: B.warp },
+                { ico: "🔴", name: "ลูกบอลจับมอนสเตอร์", sub: "จับมอนมาเป็นเพื่อนร่วมทีม", qty: B.balls },
+            ].filter(Boolean);
+        };
+        G.showNewbieBox = (force) => {
+            if (G.newbieBox !== 1 || G.mode !== "explore")
+                return;
+            if (!force && (G.tutStep != null || G._nbLater))
+                return; // ระหว่างสอนเล่น/กดไว้ทีหลัง → ไม่เด้งเอง (ยังกดปุ่ม 🎁 เปิดได้)
+            setUi((u) => ({ ...u, newbieBox: 1, nbOpen: true, nbDone: false, nbList: G.newbieBoxList() }));
+        };
+        G.openNewbieBox = () => {
+            if (G.newbieBox !== 1)
+                return;
+            if (G.mode !== "explore") {
+                toast("🎁 เปิดกล่องได้ตอนเดินสำรวจนะ");
+                return;
+            }
+            const B = G.NEWBIE_BOX;
+            G.newbieBox = 2;
+            const wid = G.grantTrialWeapon(G.cls); // ⚔️ อาวุธทดลอง 7 วัน — สวมให้ทันที
+            if (wid) {
+                G.equip.weapon = wid;
+                G.setWeaponVisual(wid);
+            }
+            G.gold = (G.gold || 0) + B.gold;
+            {
+                const R = RECIPE_BY[B.food.rid], Q = FOOD_Q_BY[B.food.q] || FOOD_Q_BY.normal; // 🍱 อาหารระดับสูง (ค่าบัฟไม่เกินเพดานอาหาร)
+                if (R)
+                    for (let i = 0; i < B.food.n; i++) {
+                        const buff = {}, base = {};
+                        Object.keys(R.buff).forEach((k) => { const v = Math.min(FOOD_CAP[k] || 999, Math.max(1, Math.round(R.buff[k] * Q.mul))); buff[k] = v; base[k] = v; });
+                        G.foodBag = G.foodBag || [];
+                        G.foodBag.push({ uid: foodUid(), rid: R.id, q: Q.id, qi: Q.i, buff, base, extra: {}, mins: Math.round(R.mins * (0.86 + Q.i * 0.08)), lv: COOK_LV_MAX });
+                    }
+            }
+            G.hpPots.l = (G.hpPots.l || 0) + B.hpL;
+            G.mpPots.l = (G.mpPots.l || 0) + B.mpL;
+            syncPotions();
+            G.expScrolls = G.expScrolls || { h: 0, d: 0 };
+            G.expScrolls.d = (G.expScrolls.d || 0) + B.expD;
+            G.warpScrolls = (G.warpScrolls || 0) + B.warp;
+            G.player.balls = (G.player.balls || 0) + B.balls;
+            applyGear();
+            G.player.hp = effMaxHp();
+            G.player.mp = effMaxMp();
+            if (G.sfx && G.sfx.levelup)
+                G.sfx.levelup();
+            if (G.juice)
+                G.juice("reward");
+            try {
+                if (window.confetti)
+                    window.confetti({ particleCount: 140, spread: 90, origin: { y: 0.55 }, colors: ["#ffd84a", "#ff8ac8", "#8ad8ff", "#c8a0ff"] });
+            }
+            catch (e) { }
+            toast(`🎁 เปิดกล่องผู้เล่นใหม่แล้ว! สวม ${wid ? (LOOT.find((x) => x.id === wid) || {}).name : "อาวุธ"} ให้แล้ว (เหลือเวลา ${G.trialLeftText(wid) || TRIAL_DAYS + " วัน"})`);
+            syncPlayer();
+            setUi((u) => ({ ...u, newbieBox: 2, nbOpen: true, nbDone: true, gold: G.gold, inv: [...G.inv], equip: { ...G.equip }, warpScrolls: G.warpScrolls, balls: G.player.balls,
+                expScrolls: { ...G.expScrolls }, foodBag: G.foodBagList ? G.foodBagList() : u.foodBag }));
+            if (G.saveGame)
+                G.saveGame();
+        };
         // ⚙️ pick which potion size the on-screen quick-use buttons (and auto-drink) consume
         G.setPotUse = (type, size) => {
             if (type === "hp")
@@ -61223,6 +61358,76 @@ function CherryAdventure() {
             if (changed && G.saveGame)
                 G.saveGame();
         };
+        // 🎁⏳ v765 อาวุธทดลอง 7 วัน — ให้ · นับถอยหลัง · เก็บคืนเองเมื่อหมดเวลา (แล้วสวมอาวุธที่ดีที่สุดที่เหลือแทน)
+        G.trialUntil = G.trialUntil || {};
+        G.trialLeftText = (id) => {
+            const t = G.trialUntil && G.trialUntil[id];
+            if (!t)
+                return null;
+            const ms = t - Date.now();
+            if (ms <= 0)
+                return "หมดเวลาแล้ว";
+            const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000), m = Math.max(1, Math.ceil((ms % 3600000) / 60000));
+            return d > 0 ? `${d} วัน ${h} ชม.` : h > 0 ? `${h} ชม. ${m} นาที` : `${m} นาที`;
+        };
+        G.grantTrialWeapon = (cls) => {
+            const id = TRIAL_WPN[cls || G.cls];
+            if (!id)
+                return null;
+            G.trialUntil = G.trialUntil || {};
+            G.trialUntil[id] = Math.max(Date.now(), G.trialUntil[id] || 0) + TRIAL_DAYS * 86400000;
+            G.inv = G.inv || [];
+            if (!G.inv.includes(id))
+                G.inv.push(id);
+            return id;
+        };
+        G.sweepTrial = () => {
+            if (!G.trialUntil)
+                return;
+            const now = Date.now(), gone = [];
+            for (const id of Object.keys(G.trialUntil)) {
+                if (G.trialUntil[id] > now)
+                    continue;
+                delete G.trialUntil[id];
+                const it = LOOT.find((x) => x.id === id);
+                G.inv = (G.inv || []).filter((x) => x !== id);
+                for (const tb of [G.plus, G.rolls, G.itemLock, G.weaponInfuse, G.sockets])
+                    if (tb)
+                        delete tb[id];
+                if (G.costume && G.costume.weapon === id)
+                    G.costume.weapon = null;
+                if (G.equip && G.equip.weapon === id) { // 🗡️ ถืออยู่ → เปลี่ยนเป็นอาวุธที่ดีที่สุดในกระเป๋า (ไม่มีเลยให้อาวุธฝึกหัดของอาชีพ)
+                    const own = [...new Set(G.inv)].filter((x) => { const w = LOOT.find((y) => y.id === x); return w && w.slot === "weapon" && (!w.cls || w.cls === G.cls) && (!w.req || G.player.level >= w.req); });
+                    own.sort((a, b) => itemPower(b) - itemPower(a));
+                    let nw = own[0] || null;
+                    if (!nw) {
+                        const st = LOOT.find((x) => x.starter && x.slot === "weapon" && x.cls === G.cls);
+                        if (st) {
+                            G.inv.push(st.id);
+                            nw = st.id;
+                        }
+                    }
+                    G.equip.weapon = nw;
+                }
+                if (it)
+                    gone.push(it);
+            }
+            if (!gone.length)
+                return;
+            applyGear();
+            G.setWeaponVisual(G.equip.weapon);
+            G.player.hp = Math.min(G.player.hp, effMaxHp());
+            syncPlayer();
+            setUi((u) => ({ ...u, inv: [...G.inv], equip: { ...G.equip } }));
+            toast(`⏳ ${gone.map((it) => it.emoji + " " + it.name).join(", ")} หมดเวลาทดลอง ${TRIAL_DAYS} วันแล้ว — ขอบคุณที่ลองใช้!`);
+            if (G.saveGame)
+                G.saveGame();
+        };
+        setInterval(() => { try {
+            if (G.mode === "explore" && G.sweepTrial)
+                G.sweepTrial();
+        }
+        catch (e) { } }, 30000); // ⏱️ เช็คทุก 30 วิ (เฉพาะตอนเดินสำรวจ ไม่ถอดอาวุธกลางศึก)
         // 🎰 GACHA — premium summon: heroes / weapon skins / items with diamonds
         G.gachaPickHero = () => {
             const un = HERO_GALLERY.filter((h) => !(G.heroesOwned && G.heroesOwned[h.id]));
@@ -61373,7 +61578,7 @@ function CherryAdventure() {
         const SALVAGE_DUST = { common: 1, rare: 3, epic: 8, secret: 20, dragon: 45, legend: 90, god: 999 };
         G.salvageYield = (id) => {
             const it = LOOT.find((x) => x.id === id);
-            if (!it || it.starter)
+            if (!it || noTrade(it))
                 return 0;
             return Math.max(1, Math.round((SALVAGE_DUST[it.rarity] || 1) * (1 + 0.35 * (G.plus[id] || 0))));
         };
@@ -61384,8 +61589,8 @@ function CherryAdventure() {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
                 return;
-            if (it.starter) {
-                toast("อาวุธฝึกหัดแยกชิ้นส่วนไม่ได้นะ!");
+            if (noTrade(it)) {
+                toast(it.trial ? "⏳ อาวุธทดลองแยกชิ้นส่วนไม่ได้นะ!" : "อาวุธฝึกหัดแยกชิ้นส่วนไม่ได้นะ!");
                 return;
             }
             if (G.itemLock && G.itemLock[id]) {
@@ -61424,7 +61629,7 @@ function CherryAdventure() {
             const seen = {}, kill = [];
             G.inv.forEach((id) => {
                 const it = LOOT.find((x) => x.id === id);
-                if (!it || it.starter)
+                if (!it || noTrade(it))
                     return;
                 if (G.itemLock && G.itemLock[id])
                     return; // 🔐 ข้ามของที่ล็อกไว้
@@ -61478,8 +61683,8 @@ function CherryAdventure() {
             if (idx < 0)
                 return;
             const it = LOOT.find((x) => x.id === id);
-            if (it.starter) {
-                toast("อาวุธฝึกหัดขายไม่ได้นะ!");
+            if (noTrade(it)) {
+                toast(it.trial ? "⏳ อาวุธทดลองขายไม่ได้นะ!" : "อาวุธฝึกหัดขายไม่ได้นะ!");
                 return;
             }
             if (G.itemLock && G.itemLock[id]) {
@@ -75210,13 +75415,14 @@ function CherryAdventure() {
             if (next >= TUTORIAL.length) {
                 G.tutStep = null;
                 setUi((u) => ({ ...u, tutStep: null }));
-            }
+                setTimeout(() => G.showNewbieBox && G.showNewbieBox(), 900);
+            } // 🎁 จบสอนเล่น → เด้งกล่องผู้เล่นใหม่
             else {
                 G.tutStep = next;
                 setUi((u) => ({ ...u, tutStep: next }));
             }
         };
-        G.tutSkip = () => { G.tutStep = null; setUi((u) => ({ ...u, tutStep: null })); };
+        G.tutSkip = () => { G.tutStep = null; setUi((u) => ({ ...u, tutStep: null })); setTimeout(() => G.showNewbieBox && G.showNewbieBox(), 900); }; // 🎁 ข้ามสอนเล่น → เด้งกล่องผู้เล่นใหม่
         G.showTutorial = () => { G.tutStep = 0; setUi((u) => ({ ...u, tutStep: 0 })); };
         // 👤 NPC story chapters — advance by meeting goals
         const STORY = [
@@ -75992,6 +76198,10 @@ function CherryAdventure() {
             G.guild = null;
             G.guildRows = []; // 🏰 ตัวละครใหม่ยังไม่มีกิลด์
             G.warpScrolls = 0; // 📜 ตัวละครใหม่ยังไม่มีใบวาร์ป
+            G.trialUntil = {};
+            G.expScrolls = { h: 0, d: 0 };
+            G.newbieBox = 1;
+            G._nbLater = false; // 🎁 v765 ตัวละครใหม่ได้กล่องผู้เล่นใหม่ 1 กล่อง
             G.qing = { learned: {}, taken: {}, prog: {} }; // 🍃 ยังไม่ได้ฝึกวิชาตัวเบาสักขั้น
             G.adv = { tier: 0, taken: {}, kills: {} }; // 🎓 ยังไม่ได้ทำภารกิจเปลี่ยนอาชีพขั้นสูง
             G._qRunX = null;
@@ -76108,7 +76318,7 @@ function CherryAdventure() {
                 catch (e) { }
             } // 📖 เตรียมสมุดภารกิจ (สุ่มชุดใหม่ถ้าข้ามวัน/สัปดาห์)
             setTimeout(() => G.saveGame && G.saveGame(), 100); // 💾 save the fresh start
-            setUi((u) => ({ ...u, mode: "explore", cls: G.cls, col: {}, pets: {}, inv: [], equip: EMPTY_EQUIP(), msg: "" }));
+            setUi((u) => ({ ...u, mode: "explore", cls: G.cls, col: {}, pets: {}, inv: [], equip: EMPTY_EQUIP(), msg: "", newbieBox: 1, nbOpen: false, nbDone: false, expScrolls: { h: 0, d: 0 } }));
             syncPlayer();
         };
         // ---------- 💾 Save system (works on the deployed website; safely skipped where storage is blocked) ----------
@@ -76133,7 +76343,7 @@ function CherryAdventure() {
                     col: G.col, pets: G.pets, inv: G.inv, equip: G.equip, accEquip: G.accEquip || null, accInv: G.accInv || [], plus: G.plus, enhPity: G.enhPity || {}, awk: G.awk || {}, itemLock: G.itemLock || {},
                     potions: G.potions, mpPotions: G.mpPotions, hpPots: { ...G.hpPots }, mpPots: { ...G.mpPots }, hpPotUse: G.hpPotUse || "s", mpPotUse: G.mpPotUse || "s", gold: G.gold, buddy: G.buddy,
                     team: G.team, petSp: G.petSp, petSkillLv: G.petSkillLv, ngPlus: G.ngPlus || 0, storyChapter: G.storyChapter || 0,
-                    petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
+                    petBox: (G.petBox || []).map((x) => ({ ...x })), petSeq: G._petSeq || 1, petSlotsBought: G.petSlotsBought || 0, ranch: G.ranch || null, home: G.home || null, restBuffUntil: G.restBuffUntil || 0, expBoostUntil: G.expBoostUntil || 0, trialUntil: G.trialUntil || {}, newbieBox: G.newbieBox || 0, expScrolls: { h: (G.expScrolls || {}).h || 0, d: (G.expScrolls || {}).d || 0 }, storyCh: G.storyCh || 0, storyProg: G.storyProg || 0, goldExch: G.goldExch || null, goldShop: G.goldShop || null, dexSeen: G.dexSeen || {}, mountsOwned: G.mountsOwned || {}, mountId: G.mountId || null, mountLast: G._lastMount || null, day2Gift: G.day2Gift ? 1 : 0, gift10k: G.gift10k ? 1 : 0, skillMode: G.skillMode || "basic",
                     mats: G.mats, weaponInfuse: G.weaponInfuse, treeNodes: G.treeNodes, talents: G.talents || {}, constNodes: G.constNodes, stardust: G.stardust || 0, diamonds: G.diamonds || 0, gemDust: G.gemDust || 0, worldBoss: G.worldBoss || null, lastRankClaim: G.lastRankClaim || null, diaSkins: G.diaSkins || {}, wingsOwned: G.wingsOwned || {}, activeWing: G.activeWing || "none", heroesOwned: G.heroesOwned || {}, heroPasses: G.heroPasses || {}, heroPick: G.heroPick || null, heroHide: G.heroHide ? 1 : 0, heroTemp: G.heroTemp || {}, gachaPity: G.gachaPity || 0, starterGems: G.starterGems ? 1 : 0, dressRotY: G.dressRotY != null ? G.dressRotY : null, dressHideGear: !!G.dressHideGear, equipSort: G.equipSort || "none", autoNoBoss: !!G.autoNoBoss, autoNoEvent: !!G.autoNoEvent, autoHpPot: !!G.autoHpPot, autoMpPot: !!G.autoMpPot, autoHerb: !!G.autoHerb, autoFish: !!G.autoFish, autoMine: !!G.autoMine, battleSpeed: G.battleSpeed || 1, wpMastery: G.wpMastery || {}, weaponSkin: G.weaponSkin || "none", activeSet: G.activeSet || null, heroId: G.heroId || null, activeAura: G.activeAura || "none", weaponEnchant: G.weaponEnchant || "none", ultAlt: !!G.ultAlt, mbook: G.mbook || null, guildId: G.guildId || null, warpScrolls: G.warpScrolls || 0, mineLv: G.mineLv || 1, mineExp: G.mineExp || 0, pickLv: G.pickLv || 1, mineTotal: G.mineTotal || 0, cookLv: G.cookLv || 1, cookExp: G.cookExp || 0, cookTotal: G.cookTotal || 0, herbLv: G.herbLv || 1, herbExp: G.herbExp || 0, herbTotal: G.herbTotal || 0, herbBag: { ...(G.herbBag || {}) }, potBag: (G.potBag || []).map((q) => ({ ...q })), brewBuff: G.brewBuff || null, fishBag: { ...(G.fishBag || {}) }, fishLv: G.fishLv || 1, fishExp: G.fishExp || 0, fishTotal: G.fishTotal || 0, fishCaught: { ...(G.fishCaught || {}) }, foodBuff: G.foodBuff || null, foodBag: (G.foodBag || []).map((f) => ({ ...f, buff: { ...f.buff }, extra: { ...(f.extra || {}) } })), exped: (G.exped || []).map((e) => (e ? { ...e } : null)), expedDone: G.expedDone || 0, rushBest: G.rushBest || null, rushAllTime: G.rushAllTime || null, rushClears: G.rushClears || 0, rep: G.rep || {}, repShopDay: G.repShopDay || null, repShopBought: G.repShopBought || {}, wheelDay: G.wheelDay || "", wheelSpins: G.wheelSpins || 0, wheelBuys: G.wheelBuys || 0, wheelPity: G.wheelPity || 0, wheelTotal: G.wheelTotal || 0, pvpRank: G.pvpRank || 1000, pid: G.pid || null, tfGauge: Math.round(G.tfGauge || 0), endlessBest: G.endlessBest || 0, qing: { learned: { ...((G.qing || {}).learned || {}) }, taken: { ...((G.qing || {}).taken || {}) }, prog: { ...((G.qing || {}).prog || {}) } }, adv: { tier: (G.adv || {}).tier || 0, taken: { ...((G.adv || {}).taken || {}) }, kills: { ...((G.adv || {}).kills || {}) } },
                     curBiome: G.curBiome || 0, // 🗺️ remember which map you were on
                     pathId: G.pathId || null, // 🌟 chosen class path
@@ -78659,7 +78869,7 @@ function CherryAdventure() {
                     return;
                 seen[id] = 1;
                 const it = LOOT.find((x) => x.id === id);
-                if (!it || it.starter)
+                if (!it || noTrade(it))
                     return;
                 if (G.itemLock && G.itemLock[id])
                     return; // 🔐 ของที่ล็อกไว้ไม่เอาไปขาย
@@ -78782,8 +78992,8 @@ function CherryAdventure() {
             const it = LOOT.find((x) => x.id === id);
             if (!it)
                 return;
-            if (it.starter) {
-                toast("อาวุธฝึกหัดขายไม่ได้นะ!");
+            if (noTrade(it)) {
+                toast(it.trial ? "⏳ อาวุธทดลองขายไม่ได้นะ!" : "อาวุธฝึกหัดขายไม่ได้นะ!");
                 return;
             }
             if (G.itemLock && G.itemLock[id]) {
@@ -80358,7 +80568,7 @@ function CherryAdventure() {
             G.wardrobePresets = d.wardrobePresets || [];
             G.dyePalette = d.dyePalette || [];
             // 🎲 back-fill rolls for gear owned before this system existed
-            G.inv.forEach((iid) => { const it = LOOT.find((x) => x.id === iid); if (it && !it.starter && !G.rolls[iid])
+            G.inv.forEach((iid) => { const it = LOOT.find((x) => x.id === iid); if (it && !noTrade(it) && !G.rolls[iid])
                 G.rolls[iid] = rollQuality(); });
             // 🧪💧 sized potions — use saved object, else migrate old flat counts into small potions
             G.hpPots = d.hpPots ? { s: d.hpPots.s || 0, m: d.hpPots.m || 0, l: d.hpPots.l || 0 } : { s: d.potions == null ? 1 : d.potions, m: 0, l: 0 };
@@ -80411,6 +80621,16 @@ function CherryAdventure() {
                 : { owned: {}, furni: [], floor: 0, wall: 0 };
             G.restBuffUntil = d.restBuffUntil || 0;
             G.expBoostUntil = d.expBoostUntil || 0;
+            G.trialUntil = d.trialUntil || {}; // 🎁⏳ อาวุธทดลอง 7 วัน
+            G.newbieBox = d.newbieBox || 0; // 🎁 กล่องผู้เล่นใหม่: 0 = ไม่มี (เซฟเก่า) · 1 = ยังไม่เปิด · 2 = เปิดแล้ว
+            G.expScrolls = { h: (d.expScrolls || {}).h || 0, d: (d.expScrolls || {}).d || 0 }; // 📜 ใบ EXP x2 ที่เก็บไว้ยังไม่ใช้
+            setTimeout(() => { try {
+                if (G.sweepTrial)
+                    G.sweepTrial();
+            }
+            catch (e) { } setUi((u) => ({ ...u, newbieBox: G.newbieBox || 0, nbOpen: false, expScrolls: { ...G.expScrolls } })); }, 1200);
+            if (G.newbieBox === 1)
+                setTimeout(() => G.showNewbieBox && G.showNewbieBox(), 2600); // 🎁 ยังไม่ได้เปิดกล่อง → เด้งให้เปิด
             G.storyCh = d.storyCh || 0;
             G.storyProg = d.storyProg || 0; // 📖 เนื้อเรื่องหลัก
             if (!G.petBox) {
@@ -103555,6 +103775,64 @@ function CherryAdventure() {
                     fontSize: 13, fontWeight: 800, fontFamily: font, color: "#fff",
                     background: "linear-gradient(90deg,#f5a623,#f5c542)", boxShadow: "0 3px 8px rgba(200,150,40,0.4)", ...KBTN("btnYellow"), color: "#5a3a10", textShadow: "0 1px 0 rgba(255,255,255,0.5)", animation: "heartBeat 1.8s ease-in-out infinite",
                 } }, "\uD83C\uDF81 \u0E23\u0E31\u0E1A\u0E23\u0E32\u0E07\u0E27\u0E31\u0E25"))),
+        ui.newbieBox === 1 && !ui.nbOpen && ui.mode === "explore" && !ui.equipScreen && !HUD_HIDE && (React.createElement("div", { style: { position: "absolute", left: 0, right: 0, zIndex: 22, display: "flex", justifyContent: "center", pointerEvents: "none",
+                top: HUD_CARD ? ST(_bannerDrop + (ui.dailyReady ? 198 : 132)) : ST(TOPBAR_H + 224) } },
+            React.createElement("button", { onClick: () => G.showNewbieBox && G.showNewbieBox(true), title: "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E2B\u0E21\u0E48 \u2014 \u0E41\u0E15\u0E30\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E40\u0E1B\u0E34\u0E14", style: {
+                    pointerEvents: "auto", marginLeft: HUD_CARD && _bannerSide ? 200 : 0, border: "2px solid #fff3c0", cursor: "pointer", fontFamily: font,
+                    padding: "5px 14px 5px 10px", borderRadius: 999, display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+                    background: "linear-gradient(90deg,#ff8ac8,#ffb43a)", color: "#fff", fontSize: 12.5, fontWeight: 900,
+                    textShadow: "0 1px 2px rgba(120,40,40,0.5)", boxShadow: "0 4px 14px rgba(255,120,80,0.45)", animation: "heartBeat 1.8s ease-in-out infinite",
+                } },
+                React.createElement("span", { style: { fontSize: 18 } }, "\uD83C\uDF81"),
+                "\u0E01\u0E25\u0E48\u0E2D\u0E07\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E43\u0E2B\u0E21\u0E48"))),
+        ui.nbOpen && ui.mode === "explore" && (React.createElement("div", { onClick: () => { if (ui.nbDone)
+                setUi((u) => ({ ...u, nbOpen: false })); }, style: {
+                position: "absolute", inset: 0, zIndex: 80, display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(30,14,48,0.62)", padding: "max(12px, var(--sa-t, 0px)) 14px 12px",
+            } },
+            React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+                    width: "min(360px, 100%)", maxHeight: "100%", display: "flex", flexDirection: "column", borderRadius: 22, padding: "12px 14px 12px", boxSizing: "border-box",
+                    background: "linear-gradient(170deg,#fff8e6 0%,#ffe9f4 55%,#efe6ff 100%)", border: "3px solid #ffd27a",
+                    boxShadow: "0 12px 40px rgba(120,60,20,0.45)", animation: "bounceInX 0.55s cubic-bezier(0.2,0.9,0.3,1.2)", fontFamily: font,
+                } },
+                React.createElement("div", { style: { textAlign: "center", fontSize: ui.nbDone ? 36 : 48, lineHeight: 1.05, flex: "none", filter: "drop-shadow(0 4px 8px rgba(255,160,60,0.6))",
+                        animation: ui.nbDone ? "none" : "heartBeat 1.6s ease-in-out infinite" } }, ui.nbDone ? "🎉" : "🎁"),
+                React.createElement("div", { style: { textAlign: "center", fontSize: 17, fontWeight: 900, color: "#b0402a", marginTop: 4 } }, ui.nbDone ? "ได้รับของแล้ว!" : "กล่องผู้เล่นใหม่"),
+                React.createElement("div", { style: { textAlign: "center", fontSize: 11, fontWeight: 700, color: "#8a6a50", margin: "2px 0 10px" } }, ui.nbDone ? "ของทั้งหมดเข้ากระเป๋าแล้ว · สวมอาวุธทดลองให้เรียบร้อย" : "ของขวัญต้อนรับนักผจญภัยหน้าใหม่ — เปิดได้ครั้งเดียว"),
+                React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 5, flex: "1 1 auto", minHeight: 0, overflowY: "auto" } },
+                    "   ",
+                    (ui.nbList || []).map((r, i) => (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 9, padding: "5px 9px", borderRadius: 13, flex: "none",
+                            background: r.hot ? "linear-gradient(90deg,#fff1c8,#ffe0a8)" : "rgba(255,255,255,0.78)",
+                            border: r.hot ? "2px solid #f5b83a" : "1.5px solid #f0dcc8" } },
+                        React.createElement("span", { style: { width: 34, height: 34, flex: "none", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21,
+                                background: r.hot ? "radial-gradient(circle,#fff6d0,#f5b83a)" : "radial-gradient(circle,#ffffff,#f4e6d8)" } }, r.ico),
+                        React.createElement("span", { style: { flex: 1, minWidth: 0 } },
+                            React.createElement("span", { style: { display: "block", fontSize: 12.5, fontWeight: 900, color: "#5a3420" } }, r.name),
+                            React.createElement("span", { style: { display: "block", fontSize: 9.5, fontWeight: 700, color: "#9a7a60" } }, r.sub)),
+                        React.createElement("span", { style: { fontSize: 13, fontWeight: 900, color: "#c0502a", whiteSpace: "nowrap" } },
+                            "\u00D7",
+                            Number(r.qty).toLocaleString()))))),
+                !ui.nbDone ? (React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 10, flex: "none" } },
+                    React.createElement("button", { onClick: () => { G._nbLater = true; setUi((u) => ({ ...u, nbOpen: false })); }, style: {
+                            flex: 1, padding: "10px 0", borderRadius: 13, border: "2px solid #e8cfb8", cursor: "pointer", fontFamily: font,
+                            fontSize: 12.5, fontWeight: 800, color: "#9a7a60", background: "#fff"
+                        } }, "\u0E44\u0E27\u0E49\u0E17\u0E35\u0E2B\u0E25\u0E31\u0E07"),
+                    React.createElement("button", { onClick: () => G.openNewbieBox && G.openNewbieBox(), style: {
+                            flex: 2, padding: "10px 0", borderRadius: 13, border: "none", cursor: "pointer", fontFamily: font,
+                            fontSize: 15, fontWeight: 900, color: "#5a3a10", background: "linear-gradient(90deg,#f5a623,#ffd84a)",
+                            boxShadow: "0 4px 0 #c07a1a", textShadow: "0 1px 0 rgba(255,255,255,0.5)", animation: "heartBeat 1.8s ease-in-out infinite"
+                        } }, "\uD83C\uDF81 \u0E40\u0E1B\u0E34\u0E14\u0E01\u0E25\u0E48\u0E2D\u0E07!"))) : (React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 10, flex: "none" } },
+                    ((ui.expScrolls || {}).d || 0) > 0 && (React.createElement("button", { onClick: () => G.useExpScroll && G.useExpScroll("d"), style: {
+                            flex: 1.4, padding: "10px 0", borderRadius: 13, border: "none", cursor: "pointer", fontFamily: font,
+                            fontSize: 12.5, fontWeight: 900, color: "#fff", background: "linear-gradient(90deg,#a060ff,#c07aff)", boxShadow: "0 4px 0 #6a3ab0"
+                        } },
+                        "\uD83D\uDCDC \u0E43\u0E0A\u0E49 EXP x2 \u0E40\u0E25\u0E22 (",
+                        (ui.expScrolls || {}).d,
+                        ")")),
+                    React.createElement("button", { onClick: () => setUi((u) => ({ ...u, nbOpen: false })), style: {
+                            flex: 1, padding: "10px 0", borderRadius: 13, border: "none", cursor: "pointer", fontFamily: font,
+                            fontSize: 13, fontWeight: 900, color: "#fff", background: "linear-gradient(90deg,#5aa06a,#7ba05b)", boxShadow: "0 4px 0 #3a7040"
+                        } }, "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1C\u0E08\u0E0D\u0E20\u0E31\u0E22!")))))),
         ui.mapOpen && (() => {
             const MI = ui.mapInfo;
             const two = _uiWideModal; // จอกว้าง = แผนที่ซ้าย / รายชื่อมอนขวา
@@ -106615,7 +106893,16 @@ function CherryAdventure() {
                                     React.createElement("div", { style: { fontSize: 10.5, fontWeight: 900, color: "#f0e0ff", marginTop: 4 } }, "x2 EXP"),
                                     React.createElement("div", { style: { fontSize: 9, fontWeight: 800, color: "#d8c0ff" } }, nm),
                                     PRICE(afford, `${pr.toLocaleString()}💰`)));
-                            }))));
+                            })),
+                            [["d", "1 วัน"], ["h", "1 ชั่วโมง"]].filter(([k]) => ((ui.expScrolls || {})[k] || 0) > 0).map(([k, nm]) => (React.createElement("button", { key: k, onClick: () => G.useExpScroll && G.useExpScroll(k), style: {
+                                    width: "100%", padding: "9px 0", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: font, marginTop: -2,
+                                    fontSize: 12, fontWeight: 900, color: "#fff", background: "linear-gradient(180deg,#c07aff,#8a4ad0)", boxShadow: "0 3px 0 #5a2a90", marginBottom: 8,
+                                } },
+                                "\uD83D\uDCDC \u0E43\u0E0A\u0E49\u0E43\u0E1A EXP x2 (",
+                                nm,
+                                ") \u0E17\u0E35\u0E48\u0E21\u0E35\u0E2D\u0E22\u0E39\u0E48 \u2014 \u0E40\u0E2B\u0E25\u0E37\u0E2D ",
+                                (ui.expScrolls || {})[k],
+                                " \u0E43\u0E1A")))));
                     })(),
                     SH("⚔️", "อุปกรณ์", "#ffc84a", `${ui.shop.length} ชิ้น`),
                     ui.shop.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "#c8a878", background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: "12px", textAlign: "center", marginBottom: 6 } }, "\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32\u0E2B\u0E21\u0E14\u0E41\u0E25\u0E49\u0E27 \u0E01\u0E14\u0E2A\u0E38\u0E48\u0E21\u0E43\u0E2B\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E25\u0E22")),
@@ -107646,7 +107933,7 @@ function CherryAdventure() {
                         Object.entries(G.REROLL_COST || {}).map(([m, n]) => `${MATERIALS[m].emoji}${n}`).join(" "),
                         " \u0E15\u0E48\u0E2D\u0E04\u0E23\u0E31\u0E49\u0E07"),
                     (() => {
-                        const own = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && !it.starter; })
+                        const own = [...new Set(ui.inv)].filter((id) => { const it = LOOT.find((x) => x.id === id); return it && !noTrade(it); })
                             .sort((a, b) => { const ia = LOOT.find((x) => x.id === a), ib = LOOT.find((x) => x.id === b); return TIER[ib.rarity] - TIER[ia.rarity]; });
                         if (!own.length)
                             return React.createElement("div", { style: { fontSize: 10.5, color: "#a3a396", textAlign: "center", padding: "6px 0" } }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E2D\u0E07\u0E43\u0E2B\u0E49\u0E2A\u0E38\u0E48\u0E21\u0E04\u0E48\u0E32");
@@ -108917,9 +109204,9 @@ function CherryAdventure() {
                                         const m = 1 + 0.2 * plus + AWK_STEP * awkN;
                                         // 🎲 roll + 💎 gems — mirror itemStats() so the panel shows the true numbers
                                         const roll = (ui.rolls || {})[id];
-                                        const q = it.starter ? 1 : (roll ? roll.m : 1);
+                                        const q = noTrade(it) ? 1 : (roll ? roll.m : 1);
                                         const px = roll ? prefixOf(roll.p) : null;
-                                        const nSock = it.starter ? 0 : (SOCKETS_BY_RARITY[it.rarity] || 0);
+                                        const nSock = noTrade(it) ? 0 : (SOCKETS_BY_RARITY[it.rarity] || 0);
                                         const socks = Array.from({ length: nSock }, (_, i) => ((ui.sockets || {})[id] || [])[i] || null);
                                         const gb = { atk: 0, hp: 0, def: 0, spd: 0, eva: 0, crit: 0 };
                                         socks.forEach((g) => { const gem = g && GEMS[g]; if (gem)
@@ -108973,6 +109260,9 @@ function CherryAdventure() {
                                                     " ",
                                                     AFFIXES[it.affix].name),
                                                 React.createElement("div", { style: { fontSize: 9.5, color: "#8a7a9a" } }, AFFIXES[it.affix].desc))),
+                                            it.trial && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#c07a1a", marginBottom: 6 } },
+                                                "\u23F3 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E17\u0E14\u0E25\u0E2D\u0E07 \u2014 \u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E27\u0E25\u0E32 ",
+                                                (G.trialLeftText && G.trialLeftText(it.id)) || "-")),
                                             it.req && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 700, color: ui.level < it.req ? "#c04a4a" : "#7ba05b", marginBottom: 6 } }, ui.level < it.req ? `🔒 ต้องเลเวล ${it.req}` : `✅ ใช้ได้ (Lv.${it.req})`)),
                                             React.createElement("div", { style: { background: "#f7f7f0", borderRadius: 10, padding: "8px 10px", marginBottom: 8 } },
                                                 statRows.length ? statRows.map(([lb, val]) => (React.createElement("div", { key: lb, style: { display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" } },
@@ -109096,13 +109386,13 @@ function CherryAdventure() {
                                                         cursor: (it.req && ui.level < it.req) ? "not-allowed" : "pointer",
                                                         color: "#fff", background: equipped ? "#a8b89a" : (it.req && ui.level < it.req) ? "#d8d8ce" : "linear-gradient(90deg,#7ba05b,#5aa06a)",
                                                     } }, equipped ? "สวมอยู่ ✓" : "🎽 สวมใส่"),
-                                                !it.starter && (React.createElement("button", { onClick: () => { G.sellItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }, disabled: itLocked, title: itLocked ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : "", style: {
+                                                !noTrade(it) && (React.createElement("button", { onClick: () => { G.sellItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }, disabled: itLocked, title: itLocked ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะขายได้" : "", style: {
                                                         padding: "8px 12px", borderRadius: 9, border: "none", cursor: itLocked ? "not-allowed" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
                                                         color: "#fff", background: itLocked ? "#c8c8bc" : "#c09020",
                                                     } },
                                                     "\uD83D\uDCB0 \u0E02\u0E32\u0E22 ",
                                                     G.sellPrice ? G.sellPrice(id) : 0))),
-                                            !it.starter && (React.createElement("div", { style: { display: "flex", gap: 5, marginTop: 5 } },
+                                            !noTrade(it) && (React.createElement("div", { style: { display: "flex", gap: 5, marginTop: 5 } },
                                                 React.createElement("button", { onClick: () => { G.salvageItem(id); setUi((u) => ({ ...u, invSel: G.inv.includes(id) ? id : null })); }, disabled: itLocked, title: itLocked ? "🔐 ล็อกอยู่ — ปลดล็อกก่อนถึงจะย่อยได้" : "ย่อยเป็นผงเพชร", style: {
                                                         flex: 1, padding: "8px 0", borderRadius: 9, border: "none", cursor: itLocked ? "not-allowed" : "pointer", fontFamily: font, fontSize: 11.5, fontWeight: 800,
                                                         color: "#fff", background: itLocked ? "#c8c8bc" : "linear-gradient(90deg,#7a6ad0,#4a86e0)",
@@ -110980,6 +111270,10 @@ function CherryAdventure() {
                                 "\u2728 \u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1E\u0E34\u0E40\u0E28\u0E29 ",
                                 awkStars(info.awk)),
                             React.createElement("div", { style: { fontSize: 10, color: "#e6dcc0", lineHeight: 1.6 } }, AWK_PERK.slice(0, info.awk).map((k) => `${k.emoji} ${k.name} +${k.val}${k.unit}`).join(" · "))))),
+                    info.trial && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: "#ffc860", marginTop: 7 } },
+                        "\u23F3 \u0E2D\u0E32\u0E27\u0E38\u0E18\u0E17\u0E14\u0E25\u0E2D\u0E07 \u2014 \u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E40\u0E27\u0E25\u0E32 ",
+                        info.trialLeft || "-",
+                        " \u00B7 \u0E41\u0E23\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E32\u0E21\u0E40\u0E25\u0E40\u0E27\u0E25 \u00B7 \u0E02\u0E32\u0E22/\u0E15\u0E35\u0E1A\u0E27\u0E01/\u0E25\u0E07\u0E15\u0E25\u0E32\u0E14\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49")),
                     info.req > 0 && (React.createElement("div", { style: { fontSize: 10.5, fontWeight: 800, color: info.locked ? "#e08080" : "#8ae0a0", marginTop: 7 } }, info.locked ? `🔒 ต้องถึงเลเวล ${info.req} จึงจะสวมได้` : `✅ ใช้ได้ (Lv.${info.req})`)),
                     info.cmp && (() => {
                         const c = info.cmp;
