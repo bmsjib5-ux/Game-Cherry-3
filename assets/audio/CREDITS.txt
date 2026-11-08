@@ -10,6 +10,8 @@ Sound effects (assets/audio/sfx)
     hit0-3, crit*, boom1    "100 CC0 SFX" — rubberduck
     hit4, skill*            "80 CC0 RPG SFX" — rubberduck
     boom0                   "Chunky Explosion" — opengameart.org/content/chunky-explosion
+  Class & scene set (v769) — generated for this game with Higgsfield (Mirelo text-to-audio), trimmed + normalized
+    atk_* (per-class attack), imp_* (impacts), mon_* (monster attacks), anvil, upgrade, upfail, heal, pick
 
 Music (assets/audio/bgm) — OpenGameArt.org, CC0 1.0
   town.mp3   "Town1 - Home Town"            — Juhani Junkala, JRPG Music Pack #2 [Towns]

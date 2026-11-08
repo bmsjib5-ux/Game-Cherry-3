@@ -418,7 +418,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v768";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v769";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -4291,7 +4291,12 @@ export default function CherryAdventure() {
     // 🔊 ชุดเสียงเอฟเฟกต์ (assets/audio/sfx) — ตัวเลข = จำนวนแบบให้สุ่มสลับ ไม่ซ้ำซาก
     //    แนวแอ็กชัน (CC0 · OpenGameArt): ฟันดาบ/ดาบกระทบ StarNinjas · ตี/กระแทก 100 CC0 SFX · ร่ายเวท 80 CC0 RPG SFX · ระเบิด Chunky Explosion
     const SFX_BASE = "assets/audio/sfx/";
-    const SFX_FILES = { slash: 6, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, skill: 3, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, portal: 0, open: 0, close: 0 };
+    const SFX_FILES = { slash: 6, hit: 5, crit: 3, clang: 3, guard: 3, boom: 2, skill: 3, coin: 2, button: 2, catch: 0, win: 0, levelup: 0, fish: 0, portal: 0, open: 0, close: 0,
+      // 🎯 v769 เสียงประจำอาชีพ (Higgsfield · ตัด/ปรับระดับแล้ว) — ท่าโจมตี (atk_) · เสียงปะทะ (imp_) · มอนสเตอร์ตีเรา (mon_) · ตีบวก/คราฟต์/ยา/เก็บของ
+      atk_aegis: 0, atk_archer: 0, atk_assassin: 0, atk_boxer: 0, atk_coder: 0, atk_mage: 0, atk_tamer: 0,
+      imp_arrow: 0, imp_laser: 0, imp_magic: 0, imp_punch: 0,
+      mon_bite: 0, mon_ghost: 0, mon_heavy: 0, mon_magic: 0, mon_slime: 0,
+      anvil: 0, upgrade: 0, upfail: 0, heal: 0, pick: 0 };
     const sfxBuf = {};
     let sfxLoading = false;
     const loadSfx = () => {
@@ -4385,14 +4390,88 @@ export default function CherryAdventure() {
     };
     // named sound effects — layered (tone + noise + sub) so hits actually land
     const bsx = () => G.battleSfxOn !== false; // ⚔️ เปิด/ปิดเสียงต่อสู้แยกจากเสียงอื่น
+    // 🎯 v769 เสียงโจมตีตามอาชีพ — เดิมทุกอาชีพใช้เสียง "ฟันดาบ + ต่อย" ชุดเดียวกัน (นักเวท/นักธนู/โค้ดเดอร์ก็เป็นเสียงดาบ)
+    //    a = เสียงท่าโจมตี (ag ดัง · ar ความเร็ว/โทน) · i = เสียงปะทะเป้า · ring/wind/paper = ชั้นเสียงเสริม
+    const CLS_SFX = {
+      warrior:  { a: "slash" },                                          // ⚔️ ดาบใหญ่
+      samurai:  { a: "slash", ar: 1.18, ag: 0.55, ring: 1 },             // 🗡️ คาตานะ — ฟันไวเสียงแหลม + เหล็กใบดาบสั่น "ชิ้ง"
+      lancer:   { a: "slash", ar: 0.74, wind: 1 },                       // 🔱 หอก — แทงหนักทุ้ม + ลมพุ่ง
+      assassin: { a: "atk_assassin", ag: 0.42, ar: 1.12 },               // 🗡️ มีดคู่ — ลมฉับไว
+      archer:   { a: "atk_archer", ag: 0.5, i: "imp_arrow", ig: 0.62 },   // 🏹 สายธนูดีด + ลูกธนูปัก
+      mage:     { a: "atk_mage", ag: 0.4, i: "imp_magic", ig: 0.5 },      // 🔮 ร่ายเวทประกาย + ระเบิดเวท
+      coder:    { a: "atk_coder", ag: 0.34, i: "imp_laser", ig: 0.42 },   // 💻 สัญญาณดิจิทัล + ช็อตเลเซอร์
+      office:   { a: "slash", ar: 1.4, ag: 0.38, paper: 1, i: "imp_punch", ig: 0.72 },   // 💼 ฟาดแฟ้มเอกสารพึ่บ + ตุบ
+      aegis:    { a: "atk_aegis", ag: 0.4, i: "imp_laser", ig: 0.42 },    // 🤖 ยิงพลาสมา + ช็อต
+      boxer:    { a: "atk_boxer", ag: 0.55, i: "imp_punch", ig: 0.8 },    // 🥊 หมัดตัดลม + ต่อยเข้าเป้า
+      tamer:    { a: "atk_tamer", ag: 0.5, i: "mon_bite", ig: 0.46 },     // 🐾 แส้ฟาด + สัตว์คู่ใจขย้ำ
+    };
+    const CLS_GUN = { a: "atk_aegis", ag: 0.38, ar: 1.25, i: "imp_arrow", ig: 0.6 };   // 🔫 นักธนูขั้น 4 ถือปืน
+    const clsSfx = (c) => { const k = (typeof c === "string" && c) || G.cls; if (k === "archer" && G.gunMode && G.gunMode()) return CLS_GUN; return CLS_SFX[k] || CLS_SFX.warrior; };
+    // 👹 v769 มอนสเตอร์ตีเรา — เดิมใช้เสียงเดียวกับตอนเราตีมัน (ฟังไม่ออกว่าใครโดน) · ตอนนี้ตามทรงของมอนสเตอร์
+    const HURT_K = {};
+    ["slime", "gummy", "cupcake", "candyking"].forEach((s) => { HURT_K[s] = "mon_slime"; });
+    ["wisp", "ghost", "reaper", "cloud", "wind", "tornado", "flame"].forEach((s) => { HURT_K[s] = "mon_ghost"; });
+    ["star", "crystal", "angel", "kinnari", "buddha", "ufo", "alien", "alienpet", "unicorn"].forEach((s) => { HURT_K[s] = "mon_magic"; });
+    ["titan", "cyclops", "stone", "elephant", "turtle", "crab", "dino", "demon", "croc"].forEach((s) => { HURT_K[s] = "mon_heavy"; });
+    const hurtKey = (who) => {
+      if (!who) return "mon_bite";
+      const sp = who.spId || (who.userData && who.userData.spId) || who.sp;
+      const sh = typeof sp === "string" && G._monShape ? G._monShape(sp) : "";
+      return HURT_K[sh] || "mon_bite";
+    };
+    let healAt = 0;
     G.sfx = {
-      // ⚔️ sword: เสียงฟันจริง (Kenney) + ลมตัดอากาศบาง ๆ · ยังไม่โหลด = เสียงสังเคราะห์เดิม
-      slash: () => { if (!bsx()) return; if (smp("slash", 0.6)) return; sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); },
-      // 👊 hit: หมัด/ตีโดนจริง + ซับเบสให้หนัก
-      hit: () => { if (!bsx()) return; if (smp("hit", 0.7)) { thump(110, 0.12, 0.14); return; } noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70); },
+      // ⚔️ ท่าโจมตีตามอาชีพ (ส่งชื่ออาชีพได้ · ไม่ส่ง = อาชีพที่เล่นอยู่) · ไฟล์ยังโหลดไม่เสร็จ = เสียงฟันเดิม → เสียงสังเคราะห์
+      slash: (c) => {
+        if (!bsx()) return; const C = clsSfx(c);
+        if (!smp(C.a, C.ag || 0.6, C.ar || 1) && !smp("slash", 0.6)) { sfx([880, 480], "sawtooth", 0.11, 0.1, -320); noise(0.13, 0.13, 4200, 1.2, 900); return; }
+        if (C.ring) smp("clang", 0.13, 1.75);
+        if (C.wind) noise(0.2, 0.07, 700, 0.7, 260);
+        if (C.paper) noise(0.11, 0.07, 5200, 1.4, 2400);
+      },
+      // 👊 ปะทะเป้า — สายดาบ/หมัดใช้เสียงตีโดนเดิม · สายยิง/เวท/เทคโนใช้เสียงปะทะของตัวเอง
+      hit: (c) => {
+        if (!bsx()) return; const C = clsSfx(c);
+        if (C.i && smp(C.i, C.ig || 0.6)) { thump(110, 0.1, 0.08); return; }
+        if (smp("hit", 0.7)) { thump(110, 0.12, 0.14); return; }
+        noise(0.09, 0.16, 1500, 0.8, 300); thump(110, 0.14, 0.22); sfx([200, 130], "square", 0.07, 0.08, -70);
+      },
       guard: () => { if (!bsx()) return; if (smp("guard", 0.6)) return; sfx([1200, 1800, 900], "square", 0.09, 0.13, 140); noise(0.09, 0.12, 5000, 2); }, // 🛡️ metallic clang
-      // 💥 crit: กระแทกหนัก + เหล็กกระทบ + ซับ
-      crit: () => { if (!bsx()) return; if (smp("crit", 0.75)) { smp("clang", 0.32); thump(80, 0.22, 0.22); return; } sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28); },
+      // 💥 crit: กระแทกหนัก + ชั้นเสียงตามอาชีพ (สายดาบ = เหล็กกระทบ · สายยิง/เวท = เสียงปะทะของตัวเองดังขึ้น)
+      crit: (c) => {
+        if (!bsx()) return; const C = clsSfx(c);
+        if (smp("crit", C.i ? 0.5 : 0.75)) { if (C.i) smp(C.i, Math.min(0.95, (C.ig || 0.6) * 1.25), 0.9); else smp("clang", 0.32, C.ring ? 1.3 : 1); thump(80, 0.22, 0.22); return; }
+        sfx([700, 1000, 1500], "sawtooth", 0.12, 0.14, 260); noise(0.14, 0.18, 3000, 0.9, 700); thump(80, 0.24, 0.28);
+      },
+      // 💢 มอนสเตอร์ตีโดนเรา — เสียงท่าของมอนสเตอร์ (กัด/ทุบหนัก/เวท/ผี/เมือก) + ตุบโดนตัว · บอส = เสียงทุ้มหนักขึ้น
+      hurt: (who) => {
+        if (!bsx()) return;
+        const big = !!(who && (who.boss || who.worldBoss || (who.userData && (who.userData.boss || who.userData.caveBoss))));
+        const k = hurtKey(who);
+        if (smp(k, k === "mon_slime" ? 0.62 : 0.5, big ? 0.8 : 1)) { smp("hit", 0.3, 0.8); thump(big ? 70 : 95, 0.14, big ? 0.2 : 0.12); return; }
+        if (smp("hit", 0.6, 0.85)) { thump(90, 0.14, 0.16); return; }
+        noise(0.1, 0.15, 900, 0.8, 250); thump(90, 0.16, 0.22);
+      },
+      // 🐾 สัตว์คู่ใจโจมตีในสนามรบ (เดิมเงียบ) — เสียงตามทรงของสัตว์ เบากว่าเสียงเราเล็กน้อย
+      pet: (sp) => { if (!bsx()) return; if (smp(hurtKey({ spId: sp }), 0.42, 1.1)) { smp("hit", 0.3, 1.1); return; } smp("hit", 0.5, 1.1); },
+      // ⛏️ ขุดแร่ — จอบกระทบหิน (เดิมใช้เสียงต่อยเหมือนตีมอนสเตอร์)
+      mine: (perfect) => { if (smp("clang", perfect ? 0.42 : 0.3, perfect ? 1.15 : 1.35)) { smp("hit", perfect ? 0.45 : 0.32, 0.8); return; } noise(0.08, 0.14, 3200, 1.2, 1200); thump(120, 0.08, 0.14); },
+      // ⚒️ ตีบวก/คราฟต์ — ค้อนตีทั่ง + ประกายสำเร็จ / ระเบิดแตกตอนล้มเหลว (เดิมไม่มีเสียง หรือใช้เพลงเลเวลอัพ)
+      anvil: () => { if (smp("anvil", 0.6)) return; sfx([1500, 2240], "triangle", 0.18, 0.09); noise(0.06, 0.14, 4000, 1.5); },
+      upgrade: () => { smp("anvil", 0.48); setTimeout(() => { if (smp("upgrade", 0.55)) return; sfx([784, 988, 1175, 1568], "triangle", 0.14, 0.12); }, 140); },
+      upfail: () => { smp("anvil", 0.48); setTimeout(() => { if (smp("upfail", 0.6)) return; noise(0.35, 0.16, 900, 0.6, 160); sfx([330, 220], "sawtooth", 0.25, 0.07, -120); }, 140); },
+      // 🎁 รับรางวัล/ภารกิจสำเร็จ — กระดิ่งไล่โน้ต + เหรียญ (เดิมใช้เพลงเลเวลอัพ ทำให้ดูเหมือนเลเวลขึ้นทุกครั้ง)
+      reward: () => { smp("coin", 0.4, 1.05); sfx([784, 1047, 1319, 1568], "triangle", 0.16, 0.1); setTimeout(() => sfx([2093], "sine", 0.3, 0.06), 220); },
+      // 💚 ดื่มยา/กินอาหาร/พักฟื้น — ประกายฟื้นพลัง (เดิมยาไม่มีเสียง · อาหารเป็นเสียงเหรียญ)
+      heal: () => { const t = Date.now(); if (t - healAt < 250) return; healAt = t; if (smp("heal", 0.5)) return; sfx([523, 659, 784, 1047], "sine", 0.18, 0.08); },
+      // ⚗️ ปรุงยา — น้ำเดือดปุด ๆ + ประกาย (เดิมเป็นเสียงเหรียญ)
+      brew: () => { sfx([300, 450, 600], "sine", 0.09, 0.08, 250); setTimeout(() => { if (!smp("heal", 0.35, 1.2)) sfx([1047, 1319], "sine", 0.12, 0.06); }, 160); },
+      buy: () => { if (smp("coin", 0.5)) return; sfx([880, 1320], "square", 0.07, 0.1); },
+      pick: () => { if (smp("pick", 0.55)) return; sfx([620, 930], "sine", 0.07, 0.1, 200); noise(0.06, 0.05, 3000, 1.2); },
+      click: () => { if (smp("button", 0.35)) return; sfx([700], "sine", 0.04, 0.06); },
+      tick: () => { if (!bsx()) return; sfx([1760], "square", 0.03, 0.035); },
+      // ⛈️ ฟ้าร้องในโลกกว้าง — เดิมใช้เสียงระเบิดสกิล (และเงียบเมื่อปิดเสียงต่อสู้) · ตอนนี้เป็นเสียงครืนต่ำ ๆ ไกล ๆ
+      thunder: () => { if (smp("boom", 0.32, 0.55)) { noise(1.6, 0.08, 220, 0.5, 70); return; } noise(1.6, 0.14, 300, 0.5, 70); thump(40, 0.9, 0.2); },
       // 💣 big explosion (ults / heavy skills) — ระเบิดสังเคราะห์ + แรงกระแทกจริงเสียงต่ำ
       boom: () => { if (!bsx()) return; if (smp("boom", 0.75)) { thump(60, 0.45, 0.25); return; } noise(0.5, 0.26, 700, 0.5, 90); thump(60, 0.55, 0.38); sfx([160, 90], "sawtooth", 0.35, 0.1, -70); },
       // ✨ ร่ายสกิล — เสียงเวทจริง (ก่อนหน้านี้สกิลไม่มีเสียงเลย)
@@ -6180,7 +6259,7 @@ export default function CherryAdventure() {
       G.diamonds -= w.price;
       G.wingsOwned = G.wingsOwned || {}; G.wingsOwned[id] = 1;
       G.activeWing = id; G.buildWings(id);
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.reward();
       toast(`🪽✨ ได้ ${w.emoji} ${w.name}! สวมใส่แล้ว`);
       if (G.saveGame) G.saveGame();
       setUi((u) => ({ ...u, diamonds: G.diamonds, wingsOwned: { ...(G.wingsOwned || {}) }, activeWing: id }));
@@ -20843,6 +20922,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       phi: "wisp", nam: "fish", khiao: "beast", ngu: "serpent", paksi: "bird",
       garuda: "garuda", taara: "star",   // 🦊🐯🌪️ plerng/saming/wayu ย้ายไปใช้ทรงเฉพาะตัวใน MON_SHAPE_EXTRA
     };
+    G._monShape = (id) => MON_SHAPE[id] || MON_SHAPE_EXTRA[id] || "";   // 🔊 v769 ใช้เลือกเสียงตอนมอนสเตอร์ตีเรา (ทรงตัว → กัด/ทุบ/เวท/ผี/เมือก)
     // spin a 2D outline into a 3D body — the trick used for the character's limbs
     // spin a 2D outline into a 3D body — the trick used for the character's limbs.
     // ⚠️ LatheGeometry only smooths AROUND the axis; the profile itself stays a polyline,
@@ -27351,7 +27431,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       try { dropLoot(true, lv, true); dropLoot(true, lv, false); if (R > 1) dropLoot(true, lv, true); } catch (_) {}
       toast(`🏆 พิชิต${C.name}! 💰 หีบสมบัติ +${gold.toLocaleString()}💰 +${dia}💎 +${gd}💠 +${sd}🌟${first ? " (โบนัสครั้งแรกของวัน!)" : ""}`);
       if (G.showAnnounce) G.showAnnounce(`🏆 ${G.playerName || "ผู้กล้า"} พิชิต${C.name}แล้ว!`);
-      if (G.questFx) G.questFx(); if (G.juice) G.juice("reward"); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.questFx) G.questFx(); if (G.juice) G.juice("reward"); if (G.sfx && G.sfx.reward) G.sfx.reward();
       questProgress("boss", 1);
     };
     // 🎁 หีบสมบัติตอนพิชิตถ้ำ — KayKit chest_gold (ฝาแยกชิ้น บานพับด้านหลัง) · เดินเข้าใกล้ = คุกเข่าเปิด ฝาเปิด แสงทอง เหรียญพุ่ง
@@ -29357,7 +29437,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const mm = { i, pos: 0, dir: 1, speed: MINE_SPEED0, zone: P.zone, zc: 0.34 + Math.random() * 0.32, hits: 0, perfect: 0, miss: 0 };
       G.mining = mm;
       if (n.mesh) { char.rotation.y = Math.atan2(n.mesh.position.x - char.position.x, n.mesh.position.z - char.position.z); yaw = char.rotation.y; G.moveTarget = null; }   // ⛏️ หันหน้าเข้าหาสายแร่ก่อนเหวี่ยงจอบ
-      if (G.sfx) G.sfx.hit && G.sfx.hit();
+      if (G.sfx) G.sfx.mine && G.sfx.mine();   // ⛏️ v769 จอบกระทบหิน
       // ⚠️ อ่านค่าจาก mm ที่จับไว้ ไม่ใช่ G.mining — ถ้าเดินหลุดระยะก่อน React เรนเดอร์ G.mining จะเป็น null แล้วเกมจะพัง
       setUi((u) => (G.mining !== mm ? u : { ...u, mining: { pos: 0, zone: mm.zone, zc: mm.zc, hits: 0, need: MINE_SWINGS, perfect: 0, miss: 0, ore: n.ore || null }, mineOre: n.ore || null, menuOpen: false }));
       toast(`${P.emoji} ขุดด้วย${P.name} — แตะตอนตัววิ่งอยู่ในช่องเป้า!`);
@@ -29377,7 +29457,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (perfect) m.perfect++;
         if (n && n.mesh) { burst(n.mesh.position, perfect ? 0xffe06a : 0xd8d8c8, 0.9); }
         G._camShake = Math.max(G._camShake || 0, perfect ? 0.3 : 0.16);
-        if (G.sfx) { if (perfect) G.sfx.crit && G.sfx.crit(); else G.sfx.hit && G.sfx.hit(); }
+        if (G.sfx && G.sfx.mine) G.sfx.mine(perfect);   // ⛏️ v769 จอบกระทบหิน (เดิมใช้เสียงต่อย/คริติคอลของการต่อสู้)
         if (m.hits >= MINE_SWINGS) { G.finishMining(); return; }
         m.speed += MINE_SPEED_UP; m.zone = Math.max(0.2, m.zone * MINE_ZONE_K); m.zc = 0.3 + Math.random() * 0.4;
       } else {
@@ -29719,7 +29799,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.herbExp = (G.herbExp || 0) + B.exp;
       while ((G.herbLv || 1) < HERB_LV_MAX && G.herbExp >= HERB_LV_EXP(G.herbLv || 1)) { G.herbExp -= HERB_LV_EXP(G.herbLv || 1); G.herbLv = (G.herbLv || 1) + 1; lvUp++; }
       if ((G.herbLv || 1) >= HERB_LV_MAX) G.herbExp = Math.min(G.herbExp, HERB_LV_EXP(HERB_LV_MAX));
-      if (G.sfx && G.sfx.buy) G.sfx.buy();
+      if (G.sfx && G.sfx.brew) G.sfx.brew();
       hToast(`${B.emoji} ปรุง${B.name}สำเร็จ! (+${B.exp} EXP)`);
       if (lvUp) hToast(`🌿 ปรุงยาเลเวล ${G.herbLv} แล้ว!`);
       G.syncHerbUi();
@@ -30508,7 +30588,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         if (gv.warpScrolls) G.warpScrolls = (G.warpScrolls || 0) + gv.warpScrolls;
         if (gv.potion) { G.hpPots.s = (G.hpPots.s || 0) + gv.potion; if (G.syncPotions) G.syncPotions(); }
         if (gv.mats) { G.mats = G.mats || {}; Object.keys(gv.mats).forEach((k) => (G.mats[k] = (G.mats[k] || 0) + gv.mats[k])); }
-        if (G.sfx) { if (prize.big) G.sfx.levelup && G.sfx.levelup(); else G.sfx.coin && G.sfx.coin(); }
+        if (G.sfx) { if (prize.big) G.sfx.reward && G.sfx.reward(); else G.sfx.coin && G.sfx.coin(); }
         toast(`🎡 ${prize.emoji} ได้ ${prize.name}!${prize.big ? " 🎉" : ""}`);
         G.wheelTotal = (G.wheelTotal || 0) + 1;
         G.syncWheelUi();
@@ -30551,7 +30631,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.lastDaily = today;
       G.dailyStreak = (G.dailyStreak || 0) + 1;
       if (G.gainDiamonds) G.gainDiamonds(day === 6 ? 8 : 3, "ล็อกอินประจำวัน");
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.reward();
       if (G.juice) G.juice("reward");
       toast(`📅✨ รางวัลล็อกอินวันที่ ${day + 1}! ได้ ${r.label} (ต่อเนื่อง ${G.dailyStreak} วัน)`);
       setUi((u) => ({ ...u, dailyReady: false, dailyStreak: G.dailyStreak, gold: G.gold }));
@@ -30992,7 +31072,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       let hit = false;
       const bump = (row) => { const M = mbMeta(row.id); if (!M || M.t !== type || row.p >= M.n) return;
         row.p = Math.min(M.n, row.p + n); hit = true;
-        if (row.p >= M.n) { toast(`📖 ภารกิจสำเร็จ! ${M.emoji} ${M.name} — เปิดสมุดภารกิจกดรับรางวัล`); if (G.sfx && G.sfx.levelup) G.sfx.levelup(); if (G.questFx) G.questFx(); } };
+        if (row.p >= M.n) { toast(`📖 ภารกิจสำเร็จ! ${M.emoji} ${M.name} — เปิดสมุดภารกิจกดรับรางวัล`); if (G.sfx && G.sfx.reward) G.sfx.reward(); if (G.questFx) G.questFx(); } };
       (Q.daily || []).forEach(bump); (Q.weekly || []).forEach(bump);
       if (hit) G.mbSync();
     };
@@ -31049,7 +31129,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.diamonds = (G.diamonds || 0) + dia;
       if (exp && typeof gainExp === "function") gainExp(exp);
       toast(`🎁 รับรางวัลรวดเดียว ${n} ช่อง — 💰${gold.toLocaleString()} · 💎${dia} · ⭐${exp.toLocaleString()} EXP`);
-      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.sfx && G.sfx.reward) G.sfx.reward();
       G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
       return { n, gold, dia, exp };
     };
@@ -31070,7 +31150,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if ((G.diamonds || 0) < PASS_PREMIUM_COST) { toast(`💎 เพชรไม่พอ — ต้องมี ${PASS_PREMIUM_COST}`); return; }
       G.diamonds -= PASS_PREMIUM_COST; Q.prem = true;
       toast("🎫 ปลดแทร็กพรีเมียมแล้ว! ย้อนกดรับรางวัลขั้นที่ผ่านมาได้ทั้งหมด");
-      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.sfx && G.sfx.reward) G.sfx.reward();
       G.mbSync(); syncPlayer(); if (G.saveGame) G.saveGame();
     };
     G.toggleMbook = () => { G.mbRefresh(); setUi((u) => ({ ...u, mbookOpen: !u.mbookOpen })); };
@@ -31300,7 +31380,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!fodder) { toast("ต้องมีตัวซ้ำชนิดเดียวกัน (ที่ไม่อยู่ในทีม) ไว้เป็นวัตถุดิบ ⚒️"); return; }
       G.petBox = G.petBox.filter((x) => x.i !== fodder.i);
       p.plus = (p.plus || 0) + 1;
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       burst(char.position, 0xf5c542, 1.2);
       if (G.mbEvent) G.mbEvent("forge");   // 📖 นับภารกิจ "ตีบวก/หลอมของ"
       toast(`⚒️ ตีบวกสำเร็จ! ${SPECIES[p.sp].emoji} ${SPECIES[p.sp].name} → +${p.plus} (ใช้ตัวซ้ำ Lv.${fodder.lv})`);
@@ -31318,7 +31398,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if ((G.gold || 0) < cost) { toast(`💰 ต้องใช้ทอง ${cost.toLocaleString()} (มี ${(G.gold || 0).toLocaleString()})`); return; }
       G.gold -= cost;
       p.mut = cur + 1;
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       burst(char.position, p.mut >= 3 ? 0xffd24a : p.mut === 2 ? 0xba5af5 : 0x5adcf5, 2.0);
       toast(`🧬✨ ${SPECIES[p.sp].name} กลายพันธุ์ระดับ ${p.mut}! บัฟ +${Math.round((G.mutMul(p.mut) - 1) * 100)}% (−${cost.toLocaleString()}💰)`);
       if (G.showAnnounce) G.showAnnounce(`🧬 ${SPECIES[p.sp].name} ของ ${G.playerName || "เชอร์รี่"} กลายพันธุ์ระดับ ${p.mut}!`);
@@ -31351,7 +31431,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (cur >= 10) { toast("สกิลสัตว์เลี้ยงเต็ม Lv.10 แล้ว! ⭐"); return; }
       G.petSp--;
       G.petSkillLv[spId] = cur + 1;
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       toast(`⬆️ สกิล${SPECIES[spId].name} → Lv.${cur + 1}!`);
       setUi((u) => ({ ...u, petSkillLv: { ...G.petSkillLv }, petSp: G.petSp }));
       syncPlayer();
@@ -31761,7 +31841,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       return m;
     });
     const fireSlash = (pos, color) => {
-      if (G.sfx) G.sfx.slash();
+      if (G.sfx && !(G._swSfxT && performance.now() - G._swSfxT < 450)) G.sfx.slash();   // 🔊 v769 ตีธรรมดาในโลกกว้างเล่นเสียงเหวี่ยงไปแล้ว — ไม่ซ้อนอีกรอบตอนรอยฟันขึ้น
       try { kSlash(pos.x, 1.0, pos.z, color); return; } catch (_) {}   // 🎇 รอยฟันภาพวาด Kenney — วงเสี้ยวปั้นเองใช้เฉพาะตอนภาพพัง
       slashFx.material.color.setHex(color);
       slashFx.position.set(pos.x, 1.0, pos.z + 0.2);
@@ -34168,7 +34248,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       });
     };
     G._disposeObj3D = disposeObj3D;
-    G.healFx = () => { try { spawnSkillFx("healpop", char.position, 0xffffff); } catch (_) {} };        // 💚 เรียกตอนดื่มยา/กินอาหาร
+    G.healFx = () => { try { spawnSkillFx("healpop", char.position, 0xffffff); } catch (_) {} if (G.sfx && G.sfx.heal) G.sfx.heal(); };   // 🔊 v769 + เสียงฟื้นพลัง (ยาเดิมเงียบ · อาหารเดิมเป็นเสียงเหรียญ)        // 💚 เรียกตอนดื่มยา/กินอาหาร
     G.questFx = () => { try { spawnSkillFx("questdone", char.position, 0xffffff); } catch (_) {} };    // ✅ เรียกตอนภารกิจ/บทเนื้อเรื่องสำเร็จ
     // 🧹 v751 เอฟเฟกต์สกิลชุดเก่า (ทรงเรขาคณิตเรืองแสง: เสาไฟ/หนามน้ำแข็ง/คลื่นเสี้ยว/พายุใบมีด/วงแหวนศักดิ์สิทธิ์/ออร่า/โดม ฯลฯ) — ซ่อนทั้งหมด
     //    ตัวเดิมยังทำงานเหมือนเดิม (จังหวะดาเมจ · คอลแบ็กโดนเป้า · ดึงศัตรู · ดาเมจต่อเนื่อง) แค่มองไม่เห็น แล้ววางภาพวาด Higgsfield แทนตรงตำแหน่ง/เวลาเดิม
@@ -35052,11 +35132,13 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         burst(char.position, T ? T.color : 0x7ad0e8, T ? 1.5 + T.s * 0.6 : 1.5);
         if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);   // 🔨 คุกเข่าตีเหล็ก
         toast(`⚒️ ตีบวกสำเร็จ! ${it.emoji} ${it.name} +${cur + 1} ✨${(T && cur + 1 === T.min) ? ` — ออร่าสี${T.name}!` : ""}`);
+        if (G.sfx && G.sfx.upgrade) G.sfx.upgrade();   // 🔊 v769 ค้อนตีทั่ง + ประกายสำเร็จ (เดิมไม่มีเสียง)
         updateAura(); // glow grows with every +
       } else {
         const nb = Math.min(1 - base, pity + ENH_PITY_STEP(cur));
         G.enhPity[id] = { lv: cur, b: nb };
         if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);
+        if (G.sfx && G.sfx.upfail) G.sfx.upfail();     // 🔊 v769 ค้อนตีทั่ง + แตกสลาย
         toast(`💥 ตีบวกล้มเหลว... วัตถุดิบสลาย (ยังคง +${cur}) · สะสมโอกาสครั้งหน้า ${Math.round(Math.min(1, base + nb) * 100)}% 💢`);
       }
       G.player.hp = Math.min(G.player.hp, effMaxHp());
@@ -35151,7 +35233,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.awk[id] = awkOf(id) + 1;
       const n = G.awk[id];
       burst(char.position, 0xf5c542, 2.0);
-      if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade && G.sfx.upgrade();
       if (G.mbEvent) G.mbEvent("forge");   // 📖 นับภารกิจ "ตีบวก/หลอมของ"
       toast(`✨ ปลุกพลังสำเร็จ! ${it.emoji} ${it.name} +${G.plus[id] || 0} ${awkStars(n)} · ได้สถานะพิเศษ ${awkPerkTxt(n - 1)} (−💰${AWK_GOLD.toLocaleString()})`);
       updateAura();
@@ -35192,7 +35274,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const r = G.rolls && G.rolls[itemId];
       const px = r ? prefixOf(r.p) : null;
       burst(char.position, 0xd94a4a, 2.2);
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       const dup = G.inv.filter((x) => x === itemId).length;
       if (G.heroEmote) G.heroEmote("Fixing_Kneeling", 2.0);   // 🔨 คราฟต์ = ตีขึ้นรูปบนทั่ง
       toast(`🔨🐉 คราฟต์ ${it.emoji} ${it.name} สำเร็จ!${px ? ` ${px.emoji}${px.name}` : ""}${dup > 1 ? ` (ชิ้นที่ ${dup} — ใช้ตีบวกได้)` : ""}`);
@@ -35230,7 +35312,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       for (const m in recipe.cost) G.mats[m] -= recipe.cost[m];
       G.weaponInfuse[wid] = elem;
       burst(char.position, ELEM_INFUSE[elem].emoji === "🔥" ? 0xf5652e : 0x6ac0f0, 1.6);
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       const it = LOOT.find((x) => x.id === wid);
       toast(`⛏️✨ เสริม${recipe.emoji} ${recipe.name} ให้ ${it ? it.name : "อาวุธ"} สำเร็จ!`);
       if (G.setWeaponVisual) G.setWeaponVisual(wid); // recolor to the element
@@ -35243,7 +35325,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.mats.dragonScale -= 1;
       G.baseStats.atk = (G.baseStats.atk || 0) + 2;
       burst(char.position, 0xd94a4a, 1.8);
-      if (G.sfx) G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade();
       toast("🐉⚔️ หลอมเกล็ดมังกร! พลังโจมตีถาวร +2");
       syncPlayer();
     };
@@ -35697,7 +35779,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.player.hp = Math.min(G.player.hp, effMaxHp());
       G.player.mp = Math.min(G.player.mp, effMaxMp());
       applyGear();
-      if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+      if (G.sfx) G.sfx.warp && G.sfx.warp();
       burst(char.position, 0x9a4ad0, 2);
       toast(`⚖️ รีเซ็ตแล้ว! คืน ${refundStat ? refundStat + " แต้มสถานะ " : ""}${refundSp ? refundSp + " แต้มสกิล" : ""} (−${cost}💰)`);
       syncPlayer();
@@ -35717,7 +35799,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.rolls[id] = next;
       const bp = before ? prefixOf(before.p) : null, np = prefixOf(next.p);
       const better = before ? next.m > before.m : true;
-      if (G.sfx) (better ? G.sfx.levelup : G.sfx.button)();
+      if (G.sfx) (better ? G.sfx.upgrade : G.sfx.anvil)();
       toast(`🎲 ${it.emoji} ${it.name}: ${bp ? bp.emoji + bp.name + " → " : ""}${np.emoji} ${np.name} (×${next.m.toFixed(2)}) ${better ? "⬆️ ดีขึ้น!" : "⬇️ แย่ลง..."}`);
       setUi((u) => ({ ...u, mats: { ...G.mats }, rolls: { ...G.rolls } }));
       syncPlayer();
@@ -35736,7 +35818,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.rolls[id] = keep;
       const improved = !before || keep.m > (before ? before.m : 0);
       const kp = prefixOf(keep.p);
-      if (G.sfx) (improved ? G.sfx.levelup : G.sfx.button)();
+      if (G.sfx) (improved ? G.sfx.upgrade : G.sfx.anvil)();
       toast(`🎲💰 การันตี! ${it.emoji} ${it.name}: ${kp.emoji} ${kp.name} (×${keep.m.toFixed(2)}) ${improved ? "⬆️ ดีขึ้น!" : "คงเดิม (ไม่ลด)"}`);
       setUi((u) => ({ ...u, gold: G.gold, rolls: { ...G.rolls } }));
       syncPlayer(); if (G.saveGame) G.saveGame();
@@ -35751,7 +35833,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (old) G.gems[old] = (G.gems[old] || 0) + 1; // 💎 pop the old gem back out — never destroy it
       G.gems[gemId]--;
       G.sockets[id][slotIdx] = gemId;
-      if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+      if (G.sfx) G.sfx.upgrade && G.sfx.upgrade();
       toast(`${GEMS[gemId].emoji} ฝัง ${GEMS[gemId].name} สำเร็จ!`);
       syncPlayer();
     };
@@ -35958,7 +36040,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (lv < st.lv) { toast(`🔒 ต้องถึงเลเวล ${st.lv} ก่อน (ตอนนี้ Lv.${lv})`); return false; }
       G.adv.taken[st.tier] = 1;
       toast(`📜✨ รับภารกิจ "${st.emoji} เปลี่ยนอาชีพ${st.name}" แล้ว! ล่าสัตว์ร้าย 5 ชนิด ชนิดละ ${st.kill} ตัว`);
-      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.sfx && G.sfx.reward) G.sfx.reward();
       G.advSync(); if (G.saveGame) G.saveGame();
       return true;
     };
@@ -35976,7 +36058,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G._advDirty = true;
       if (!wasDone && advDone(st)) {
         toast(`🎓✅ ล่าครบแล้ว! กลับไปหาอาจารย์ประจำอาชีพเพื่อเปลี่ยน${st.name}`);
-        if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+        if (G.sfx && G.sfx.reward) G.sfx.reward();
       }
     };
     // 🎓 จบภารกิจ — ปลดล็อกขั้นนั้น
@@ -36389,7 +36471,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         spent++;
       }
       if (spent) {
-        if (G.sfx) G.sfx.levelup();
+        if (G.sfx) G.sfx.reward();
         G.player.hp = Math.min(G.player.hp, effMaxHp());
         toast(`🎯 อัพตามแนะนำ ${spent} ระดับ! (${reco.desc})`);
       } else toast("ไม่มีแต้มพอสำหรับอัพ — เลเวลอัพรับ +2 แต้ม");
@@ -36495,7 +36577,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (!(G.expScrolls[kind] > 0)) { toast("📜 ไม่มีใบ EXP x2 ชนิดนี้เหลือแล้ว"); return; }
       G.expScrolls[kind]--;
       G.expBoostUntil = Math.max(Date.now(), G.expBoostUntil || 0) + sc.ms;
-      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.sfx && G.sfx.reward) G.sfx.reward();
       toast(`📜 ใช้ใบประสบการณ์ x2 (${sc.name}) แล้ว! EXP x2 เหลือเวลา ${G.expBoostLeftText()} · ใบที่เหลือ ${G.expScrolls[kind]}`);
       setUi((u) => ({ ...u, expScrolls: { ...G.expScrolls } }));
       syncPlayer();
@@ -36541,7 +36623,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       G.player.balls = (G.player.balls || 0) + B.balls;
       applyGear();
       G.player.hp = effMaxHp(); G.player.mp = effMaxMp();
-      if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      if (G.sfx && G.sfx.reward) G.sfx.reward();
       if (G.juice) G.juice("reward");
       try { if (window.confetti) window.confetti({ particleCount: 140, spread: 90, origin: { y: 0.55 }, colors: ["#ffd84a", "#ff8ac8", "#8ad8ff", "#c8a0ff"] }); } catch (e) {}
       toast(`🎁 เปิดกล่องผู้เล่นใหม่แล้ว! สวม ${wid ? (LOOT.find((x) => x.id === wid) || {}).name : "อาวุธ"} ให้แล้ว (เหลือเวลา ${G.trialLeftText(wid) || TRIAL_DAYS + " วัน"})`);
@@ -36870,7 +36952,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       results.forEach((r) => gachaApply(r));
       if (typeof syncPlayer === "function") syncPlayer();
       const gotHero = results.some((r) => r.type === "hero");
-      if (G.sfx) { if (gotHero && G.sfx.levelup) G.sfx.levelup(); else if (G.sfx.coin) G.sfx.coin(); }
+      if (G.sfx) { if (gotHero && G.sfx.reward) G.sfx.reward(); else if (G.sfx.coin) G.sfx.coin(); }
       if (gotHero) toast("🎰🦸 อัญเชิญได้ฮีโร่ในตำนาน!");
       { const nh = results.filter((r) => r.type === "hero" && r.isNew); if (nh.length && G.announce) G.announce(`🎰 ${G.playerName || "ผู้เล่น"} อัญเชิญได้ฮีโร่ในตำนาน ${nh.map((r) => r.emoji + r.name).join(" ")}!`); }
       setUi((u) => ({ ...u, diamonds: G.diamonds, gold: G.gold, heroesOwned: { ...(G.heroesOwned || {}) }, diaSkins: { ...(G.diaSkins || {}) }, heroPasses: { ...(G.heroPasses || {}) }, gachaResult: results, gachaPity: G.gachaPity || 0 }));
@@ -37544,7 +37626,6 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       const prev = G.foodBuffInfo();
       bag.splice(i, 1);
       G.foodBuff = { id: dish.rid, q: dish.q, buff: { ...dish.buff }, extra: { ...(dish.extra || {}) }, mins: dish.mins, until: Date.now() + dish.mins * 60000 };
-      if (G.sfx && G.sfx.coin) G.sfx.coin();
       const bt = Object.keys(dish.buff).map((k) => { const L = BUFF_LABEL[k] || [k, ""]; return `${L[0]} +${dish.buff[k]}${L[1]}`; }).join(" · ");
       if (G.heroEmote) G.heroEmote("Consume", 1.1); if (G.healFx) G.healFx();
       toast(`${R.emoji} กิน${R.name} (${Q.emoji}${Q.name}) — ${bt} นาน ${dish.mins} นาที${prev ? " · แทนที่บัฟเดิม" : ""}`);
@@ -39410,7 +39491,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         changed = true;
         if (!wasDone && qingGoalDone(q)) {
           toast(`📜✅ เควสพิเศษ "${q.quest.name}" สำเร็จ! เปิดเมนู 🍃 วิชาตัวเบา เพื่อฝึก`);
-          if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+          if (G.sfx && G.sfx.reward) G.sfx.reward();
         }
       }
       if (changed) { G._qingDirty = true; }
@@ -43330,6 +43411,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           G._hopT = 0; G._hopDur = 0.36; G._hopCd = 0.8; G._hopGh = 0;
         }
       }
+      if (G.sfx && G.sfx.slash) G.sfx.slash();   // 🔊 v769 เสียงท่าโจมตีประจำอาชีพ (ดาบ/หอก/ธนู/เวท/หมัด/แส้ …)
+      G._swSfxT = performance.now();
       worldSwing();
       { const ld = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z) - 0.9 - (m.scale ? m.scale.x : 1) * 0.35;
         G._swLunge = G._swStrikeT > 0 ? Math.max(0, Math.min(0.85, ld)) : 0; }   // 🦶 v763 ก้าวเข้าหาเป้าแบบตีเดี่ยว (ไม่ทะลุตัวมอน)
@@ -43339,6 +43422,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       if (m.userData.boss && talB("bossDmg")) dmg *= 1 + talB("bossDmg") / 100;   // 📜 ล่าบอส (โลกกว้าง)
       // 🎬 basic-attack tell — arrows/orbs fly for ranged, a slash/thrust lands for melee (like the arena)
       let gestCol = null;
+      let sfxImpD = 0.09;   // 🔊 v769 เสียงปะทะดังตอนอาวุธ/กระสุนถึงตัวจริง (เดิมเสียงต่อยดังทันทีที่กด ทุกอาชีพเสียงเดียวกัน)
       if (worldRange() > 4 && G.cls !== "tamer") {   // 🐾 ผู้ฝึกสัตว์ระยะ 5.2 แต่ใช้ท่าประชิด (เพื่อนซี้พุ่งไปกัด)
         if (G.cls === "archer") {
           // 🏹 ยิงธรรมดา — เห็นลูกธนูพุ่งจากคันธนูไปถึงตัวมอน แล้วค่อยแตกตอนปัก
@@ -43346,6 +43430,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const ahy = 0.85 + (m.scale ? m.scale.y : 1) * 0.3;
           const adist = Math.hypot(m.position.x - char.position.x, m.position.z - char.position.z);
           const adur = Math.max(0.16, Math.min(0.34, adist / 26));   // ยิ่งไกลยิ่งใช้เวลาบินนาน — เห็นลูกธนูชัดทุกระยะ
+          sfxImpD = adur;
           try { spawnArrow(bowMuzzle(), new THREE.Vector3(m.position.x, ahy, m.position.z), acol, adur, () => {
             spawnSkillFx("arrowpierce", m.position, acol); burst(m.position, acol, 0.7);
           }); } catch (_) { spawnSkillFx("arrowpierce", m.position, acol); }
@@ -43354,6 +43439,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           const kind = we === "fire" || we === "dragon" || we === "light" ? "firespell" : we ? "waterspell" : (G.cls === "mage" ? "waterspell" : G.cls === "coder" ? "waterspell" : "firespell");
           const tint = (we === "fire" || we === "dragon" || we === "light" || G.cls === "office") ? 0xffffff : (G.cls === "coder" ? 0x9af0ff : (we === "ice" || we === "water") ? 0xffffff : 0xc8a0ff);
           const fxN = G.cls === "coder" ? "pixel" : "orb", fxC = crit ? 0xffd24a : mcol;
+          sfxImpD = 0.3;
           try { spawnMagicShot(castOrigin(), m, kind, tint, 0.3, (hx, hz) => spawnSkillFx(fxN, { x: hx, z: hz }, fxC)); } catch (_) { spawnSkillFx(fxN, m.position, fxC); }
         } else spawnSkillFx("orb", m.position, 0xf5d24a);
       } else if (G._swStrikeT > 0) {
@@ -43370,7 +43456,10 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       }
       hurtWild(m, dmg, { crit, color: crit ? 0xffd24a : 0xffe08a, basic: true });
       { const ls = talB("lifesteal"); if (ls) { const hl = Math.round(dmg * ls / 100); if (hl > 0) G.player.hp = Math.min(effMaxHp(), G.player.hp + hl); } }   // 📜 ดูดเลือด (โลกกว้าง)
-      if (G.sfx) G.sfx.hit && G.sfx.hit();
+      if (G.sfx) {   // 🔊 v769 เสียงปะทะตอนอาวุธ/กระสุนถึงเป้า (คริติคอล = เสียงหนักกว่า) · เสียงเหวี่ยงเล่นไปแล้วตอนเริ่มท่า
+        if (G._swStrikeT > 0) sfxImpD = G._swStrikeT;
+        setTimeout(() => { if (G.sfx && G.mode === "explore") { if (crit && G.sfx.crit) G.sfx.crit(); else if (G.sfx.hit) G.sfx.hit(); } }, Math.round(sfxImpD * 1000));
+      }
     };
     // ✨ วงเวทย์ใต้เท้า + ประกายพลังที่หดเข้าหาตัว — ใช้ตอน "สะสมพลัง" ก่อนปล่อยสกิล
     const ensureCastFx = () => {
@@ -46164,7 +46253,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         G.col[lp] = (G.col[lp] || 0) + 1;
         if (G.addPetInstance) G.addPetInstance(lp);
         burst(char.position, 0xff4a8a, 1.8);
-        if (G.sfx) G.sfx.levelup();
+        if (G.sfx) G.sfx.reward();
         toast(`🌟✨ สัตว์เลี้ยง${petRarity(lp).name}หลุดจากบอส! ได้ ${SPECIES[lp].emoji} ${SPECIES[lp].name}!`);
       }
       // ⛏️ material drops — every fight drops some ore; tougher/special foes drop essences & scales
@@ -46370,7 +46459,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         em.add(aura);
         G.enemy.rageAura = aura;
         burst(em.position, 0xff2a2a, 1.5);
-        if (G.sfx) G.sfx.crit();
+        if (G.sfx) { G.sfx.roar ? G.sfx.roar() : G.sfx.crit(); }   // 👹 v769 บอสคลั่ง = คำราม (เดิมเสียงคริติคอลของเรา)
         setUi((u) => ({ ...u, enemy: { ...u.enemy, enraged: true }, msg: `🐲🔥 ${(G.enemy || u.enemy || {}).name} โกรธจัด! เข้าสู่เฟส 2 — พลังโจมตีเพิ่มขึ้น!` }));
       }
       // ⚡ ธาตุที่เกาะอยู่จางลงทุกเทิร์น · 🌋 เกราะแตกก็หมดอายุ
@@ -49081,7 +49170,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
       scene.add(m); wilds.push(m); if (typeof wildBar === "function") { wildBar(m); updateWildBar(m); }
       G.mapBoss = { m, stamp: st, name: b.name, emoji: b.emoji, hp: MB.hp, prev: MB.hp, dealt: 0, acc: 0, syncT: 0, row: null, done: false, uiT: 0 };
       const msg = `👑 ${b.emoji} ${b.name} บุกกลางแมพ! ร่วมกันปราบใน 5 นาที — โอกาส 1% ได้ 🌌 เทวศาสตราปฐมกาล`;
-      toast(msg); if (G.showAnnounce) G.showAnnounce(msg); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+      toast(msg); if (G.showAnnounce) G.showAnnounce(msg); if (G.sfx && G.sfx.reward) G.sfx.reward();
       if (G.markMoveTo) try { G.markMoveTo(sp.x, sp.z); } catch (_) {}
       mbUi(G.mapBoss); G.mbCloudJoin(st);
     };
@@ -49126,7 +49215,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         let msg = `👑 ปราบ ${S.emoji} ${S.name} สำเร็จ! +${gold.toLocaleString()}💰 +${dia}💎`;
         if (Math.random() < MB.drop) { gainItem("god_wpn"); msg += " · 🌌✨ ได้ เทวศาสตราปฐมกาล!!"; if (G.juice) G.juice("level"); if (G.showAnnounce) G.showAnnounce(`🌌✨ ${G.playerName || "ผู้กล้า"} ได้รับ เทวศาสตราปฐมกาล จากบอสบุกแมพ!!`); }
         else msg += " · ครั้งนี้ยังไม่ได้ 🌌 (โอกาส 1%)";
-        toast(msg); if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+        toast(msg); if (G.sfx && G.sfx.reward) G.sfx.reward();
         questProgress("win", 1); if (G.storyEvent) G.storyEvent("win", 1, { biome: (BIOMES[G.curBiome] || {}).id });
         syncPlayer(); if (G.saveGame) G.saveGame();
         };
@@ -49530,7 +49619,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           setTimeout(() => {
             toast("🎁🎉 อีเวนต์ผู้เล่นวันที่ 2! รับเพชรโบนัส +10,000 💎");
             if (G.showAnnounce) G.showAnnounce("🎉 อีเวนต์ 2 ทุ่ม–เที่ยงคืน: ผู้เล่นวันที่ 2 รับเพชรโบนัส 10,000 💎!");
-            if (G.sfx) G.sfx.levelup();
+            if (G.sfx) G.sfx.reward();
           }, 1600);
         }
       }
@@ -49542,7 +49631,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
         setTimeout(() => {
           toast("🎁🎉 ของขวัญพิเศษ! รับเพชร +10,000 💎");
           if (G.showAnnounce) G.showAnnounce("🎉 แจกเพชรให้ทุกคน! รับเพชรฟรี 10,000 💎");
-          if (G.sfx && G.sfx.levelup) G.sfx.levelup();
+          if (G.sfx && G.sfx.reward) G.sfx.reward();
         }, 1400);
       }
       G.lastRankClaim = d.lastRankClaim || null;
@@ -50132,7 +50221,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
           if (G._wxBolt <= 0) {
             G._wxBolt = 3 + Math.random() * 7;
             G._wxFlash = 1;
-            if (G.sfx && G.sfx.boom) G.sfx.boom();
+            if (G.sfx && G.sfx.thunder) G.sfx.thunder();   // ⛈️ v769 ฟ้าร้องครืน (เดิมเป็นเสียงระเบิดสกิล)
             const bx2 = char.position.x + (Math.random() - 0.5) * 22, bz2 = char.position.z + (Math.random() - 0.5) * 22;
             try { spawnSkillFx("thunderstorm", new THREE.Vector3(bx2, 0.4, bz2), 0xdfe8ff); } catch (e) {}
           }
@@ -50871,12 +50960,12 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 if (raw > 0) {
                   if (guard && guard.hp > 0) {
                     G.summonHurt(guard, raw);                 // 🐾 เพื่อนซี้กินดาเมจแทน เจ้าของไม่เจ็บ
-                    if (G.sfx) G.sfx.hit && G.sfx.hit();
+                    if (G.sfx) G.sfx.hurt && G.sfx.hurt(m);   // 🔊 v769 เสียงท่าของมอนสเตอร์ (เดิมเป็นเสียงเดียวกับตอนเราตี)
                   } else {
                     G.player.hp = Math.max(0, G.player.hp - raw);
                     popDamage(char.position, raw, "hit"); burst(char.position, 0xff5a5a, 0.5);
                     wstInflict(m, raw);   // 💫😵☠️ บางเผ่าตีแล้วติดสถานะ
-                    if (G.sfx) G.sfx.hit && G.sfx.hit();
+                    if (G.sfx) G.sfx.hurt && G.sfx.hurt(m);   // 🔊 v769 เสียงท่าของมอนสเตอร์ (เดิมเป็นเสียงเดียวกับตอนเราตี)
                   }
                 }
                 if (G.wThornsT > 0 && G.wThorns > 0) {                              // ⛰️ เกราะภูผาสะท้อนแรงกลับใส่ผู้ตี
@@ -55061,6 +55150,8 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
             if (G.cls === "aegis" && !A._omega) { A._omega = true; const _op = char.position; spawnSkillFx("omega", _op, 0x3ad0ff); } // 👑 Omega Judgment Protocol cinematic overlay
             const skFx = A.skill ? A.skill.fx : null;
             const hitP = (G.heroId === "kitsune" && A.basic) ? 0.66 : (G.heroId === "phoenix" && A.basic) ? 0.72 : (G.heroId === "mermaid" && A.basic) ? 0.68 : (G.heroId === "lich" && A.basic) ? 0.62 : (G.heroId === "naki" && A.basic) ? 0.55 : (G.heroId === "kinnaree" && A.basic) ? 0.6 : (G.heroId === "hanuman" && A.basic) ? 0.66 : (G.heroId === "garuda" && A.basic) ? 0.6 : (G.heroId === "asura" && A.basic) ? 0.58 : (G.heroId === "apsara" && A.basic) ? 0.52 : (G.heroId === "luminia" && A.basic) ? 0.62 : (G.heroId === "ryujin" && A.basic) ? 0.5 : (G.heroId === "usagi" && A.basic) ? 0.76 : A.chargeSkill ? 0.755 : A.mageSpell ? 0.72 : A.twinRush ? 0.6 : A.poisonBarrage ? 0.72 : A.shadowKill ? 0.56 : A.shadowDance ? 0.78 : A.pierceThrust ? 0.55 : A.cycloneSweep ? 0.8 : A.earthBreak ? 0.62 : A.dragonCharge ? 0.48 : A.swiftSlash ? 0.52 : A.twinSky ? 0.68 : A.thunderDraw ? 0.58 : A.moonDance ? 0.82 : A.paperStorm ? 0.86 : A.laptopSmash ? 0.68 : A.coffeeBoost ? 0.6 : A.deadlineRush ? 0.78 : A.ceoCommand ? 0.9 : A.coderSkill ? 0.8 : A.boxDur ? 0.62 : A.warDur ? ({ w_cleave: 0.56, w_bash: 0.5, w_rage: 0.62, w_quake: 0.6 }[(A.skill || {}).id] || 0.55) : cls === "warrior" ? 0.58 : cls === "assassin" ? 0.45 : 0.6;
+            // 🔊 v769 สายยิง/เวท/เทคโน ตีธรรมดาในสนามรบ — เสียงยิง/ร่ายตอนปล่อย (เดิมเงียบจนกระสุนถึงตัว)
+            if (A.basic && !A._castSfx && A.t > 0.04 && (G.cls === "archer" || G.cls === "mage" || G.cls === "coder" || G.cls === "aegis")) { A._castSfx = 1; if (G.sfx && G.sfx.slash) G.sfx.slash(); }
             if (G.heroId === "kitsune" && A.basic) {
               // 🦊 KITSUNE — ท่าโจมตีพิเศษ: สะบัดเก้าหางจุดไฟจิ้งจอกเก้าดวง → ดวงไฟโคจรรอบตัว → พุ่งเข้าใส่พร้อมกัน → ระเบิดวงไฟ
               const EP = em.position;
@@ -57896,7 +57987,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   char.rotation.z = 0;
                   if (!A.coffeeBurst) {
                     A.coffeeBurst = true;
-                    if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+                    if (G.sfx) G.sfx.heal && G.sfx.heal();
                     for (let k = 0; k < 14; k++) setTimeout(() => burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2, 0.3 + Math.random() * 2.2, battleCenter.z + (Math.random() - 0.5) * 1.5), k % 2 ? gold : warm, 0.6 + Math.random() * 0.4), k * 18);
                   }
                   // ☕ golden coffee beans orbiting the worker
@@ -58249,7 +58340,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   char.rotation.z = Math.sin(p * Math.PI * 20) * 0.04;
                   if (!A.otMode) {
                     A.otMode = true;
-                    if (G.sfx) G.sfx.levelup && G.sfx.levelup();
+                    if (G.sfx) G.sfx.skill && G.sfx.skill();
                     G._camShake = 0.4;
                     for (let k = 0; k < 14; k++) setTimeout(() => burst(new THREE.Vector3(char.position.x + (Math.random() - 0.5) * 2, 0.3 + Math.random() * 2.4, battleCenter.z + (Math.random() - 0.5) * 1.5), k % 2 ? blue : cyan, 0.7 + Math.random() * 0.4), k * 16);
                   }
@@ -59691,6 +59782,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
               }
               // 💢 floating number over the monster's head
               popDamage(em.position, dmg, didCrit ? "crit" : weakHit ? "weak" : "hit");
+              if (A.basic && !didCrit && dmg > 0 && G.sfx && G.sfx.hit) G.sfx.hit();   // 🔊 v769 ตีธรรมดาโดนเป้า = เสียงปะทะตามอาชีพ (เดิมมีแค่เสียงเหวี่ยง ตีโดนแล้วเงียบ)
               // ⚡ affix: ตีสองครั้ง — roll an immediate bonus strike
               { const AF0 = equipAffixes();
                 if (AF0.double && !A._dbl && Math.random() < 0.12 * AF0.double) {
@@ -62413,6 +62505,7 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                 if (G.chargeTf) G.chargeTf(6);
               }
               popDamage(em.position, dmg, tCrit ? "crit" : weak ? "weak" : "hit"); // 💢 pet damage number
+              if (G.sfx && G.sfx.pet) G.sfx.pet(pet.sp);   // 🔊 v769 สัตว์คู่ใจโจมตี — เดิมเงียบ
               burst(em.position, (ELEMENTS[elem] || { color: 0xc0a0f5 }).color, 0.6);
               setUi((u) => ({
                 ...u, enemy: { ...u.enemy, hp: (G.enemy || u.enemy || {}).hp },
@@ -62515,12 +62608,14 @@ const KK_HAIR = { hair_mage: { w: 1.58, h: 1.72, y: -0.62 }, hair_rogue: { w: 1.
                   if (G.sfx && G.sfx.guard) G.sfx.guard(); else if (G.sfx) G.sfx.hit && G.sfx.hit();
                 } else {
                   burst(char.position, 0xf5c542);
+                  if (G.sfx && G.sfx.hurt) G.sfx.hurt(G.enemy);   // 🔊 v769 ศัตรูตีโดนเรา — เดิมเงียบ
                 }
                 // 🐲 enraged boss extra strike
                 if (G.enemy.enraged && G.player.hp > 0 && Math.random() < 0.4) {
                   const dmg2 = Math.max(1, Math.round((G.enemy.atk * 0.7 + Math.random() * 2) * (1 - defCut(effDef(), G.enemy.lv)) - (G.battleDef || 0)));
                   G.player.hp = Math.max(0, G.player.hp - dmg2);
                   burst(char.position, 0xff2a2a, 1.2);
+                  { const eW = G.enemy; setTimeout(() => { if (G.sfx && G.sfx.hurt && G.mode === "battle") G.sfx.hurt(eW); }, 170); }
                   setUi((u) => ({ ...u, msg: `🐲 โจมตีรัวเฟส 2! -${dmg} -${dmg2} HP` }));
                 } else {
                   setUi((u) => ({ ...u, msg: blocked ? `🛡️ กันด้วยโล่! -${dmg} HP (ลดดาเมจ 65%)` : `โดนโจมตี! -${dmg} HP` }));
