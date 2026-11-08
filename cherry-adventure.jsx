@@ -418,7 +418,7 @@ const smK = (x) => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); 
 const EVOLVED = { mochi: "โมจิคิง", baibua: "บัวหลวง", mekha: "พายุเมฆ", plerng: "อัคคีวัต", kirara: "โนวา", phi: "ภูตราชัน", nam: "วารีนาคี", khiao: "หมาป่าจันทรา", ngu: "พญานาคา", paksi: "สุบรรณราช", saming: "เสือสมิงราชันย์", garuda: "มหาครุฑเทพ", wayu: "สไลม์พายุเทพ", taara: "จักรวาลเทพ" };
 
 // ---------- Loot: weapons & outfits ----------
-const GAME_BUILD = "v767";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
+const GAME_BUILD = "v768";   // 🏷️ ป้ายเวอร์ชัน (โชว์ในหน้ากระเป๋า) — ขยับพร้อม CACHE ใน sw.js
 const RARITY = {
   common: { name: "ทั่วไป", color: "#8a9aa8" },
   rare: { name: "หายาก", color: "#59a0e8" },
@@ -4315,9 +4315,16 @@ export default function CherryAdventure() {
         const src = actx.createBufferSource(); src.buffer = L[(Math.random() * L.length) | 0];
         src.playbackRate.value = rate * (0.94 + Math.random() * 0.12);
         const g = actx.createGain(); g.gain.value = gain;
-        src.connect(g); g.connect(actx.destination); src.start();
+        src.connect(g); g.connect(bus()); src.start();
         return true;
       } catch (e) { return false; }
+    };
+    // 🔊 v768 บัสรวมเสียงเอฟเฟกต์ — ปิดเสียง = ตัดทันทีรวมเสียงที่กำลังดังค้างอยู่ (เดิมต่อลงลำโพงตรง ปิดแล้วเสียงที่ดังอยู่ยังเล่นต่อจนจบ)
+    let sfxBus = null;
+    const bus = () => {
+      if (!actx) return null;
+      if (!sfxBus) { try { sfxBus = actx.createGain(); sfxBus.gain.value = G.soundOn ? 1 : 0; sfxBus.connect(actx.destination); } catch (e) { sfxBus = null; } }
+      return sfxBus || actx.destination;
     };
     const initAudio = () => {
       if (actx) return;
@@ -4341,7 +4348,7 @@ export default function CherryAdventure() {
         if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), now + i * 0.05 + dur);
         g.gain.setValueAtTime(gain, now + i * 0.05);
         g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + dur);
-        o.connect(g); g.connect(actx.destination);
+        o.connect(g); g.connect(bus());
         o.start(now + i * 0.05); o.stop(now + i * 0.05 + dur + 0.02);
       });
     };
@@ -4360,7 +4367,7 @@ export default function CherryAdventure() {
       const g = actx.createGain();
       g.gain.setValueAtTime(gain, now);
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      src.connect(bp); bp.connect(g); g.connect(actx.destination);
+      src.connect(bp); bp.connect(g); g.connect(bus());
       src.start(now); src.stop(now + dur + 0.02);
     };
     // 🔊 deep sub-thump for weight (explosions, big hits)
@@ -4373,7 +4380,7 @@ export default function CherryAdventure() {
       o.frequency.exponentialRampToValueAtTime(Math.max(30, f * 0.5), now + dur);
       g.gain.setValueAtTime(gain, now);
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      o.connect(g); g.connect(actx.destination);
+      o.connect(g); g.connect(bus());
       o.start(now); o.stop(now + dur + 0.02);
     };
     // named sound effects — layered (tone + noise + sub) so hits actually land
@@ -4394,7 +4401,7 @@ export default function CherryAdventure() {
       charge: () => { if (!actx || !G.soundOn || !bsx()) return; const now = actx.currentTime; const o = actx.createOscillator(), g = actx.createGain();
         o.type = "sawtooth"; o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(900, now + 0.9);
         g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.14, now + 0.75); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-        o.connect(g); g.connect(actx.destination); o.start(now); o.stop(now + 1.05); },
+        o.connect(g); g.connect(bus()); o.start(now); o.stop(now + 1.05); },
       catch: () => { if (smp("catch", 0.6)) return; sfx([440, 660, 880, 1100], "sine", 0.11, 0.16); },
       win: () => { if (smp("win", 0.62)) return; sfx([523, 659, 784, 1047], "triangle", 0.15, 0.16); setTimeout(() => sfx([1047, 1319], "triangle", 0.22, 0.14), 240); },
       lose: () => {},   // 🔇 เอาเสียงตอนตายออก (ตามที่ผู้เล่นขอ)
@@ -4426,6 +4433,9 @@ export default function CherryAdventure() {
     const BGM_VOL = 0.38;
     let musicTimer = null;
     const bgmEls = [0, 1].map(() => { try { const el = new Audio(); el.loop = true; el.preload = "none"; el.volume = 0; return el; } catch (e) { return null; } });
+    // 📱 v768 iPhone/iPad (ทุกเบราว์เซอร์บน iOS) ตั้ง volume ของ <audio> จากสคริปต์ไม่ได้ (ค้างที่ 1 เสมอ)
+    //    เดิมรอให้เสียงเบาลงจนเหลือ 0 ก่อนค่อยหยุด → บน iOS ปิดเพลงแล้วไม่หยุด และเปลี่ยนเพลงแล้วเพลงเก่าเล่นซ้อนต่อ
+    const volOK = (() => { try { const t = bgmEls[0]; if (!t) return false; t.volume = 0.5; const ok = Math.abs(t.volume - 0.5) < 0.01; t.volume = 0; return ok; } catch (e) { return false; } })();
     let bgmCur = 0, bgmTrack = null;
     const bgmWant = () => {
       if (G.mode === "battle" || G.mode === "fainted") return G.enemy && G.enemy.boss ? "boss" : "battle";
@@ -4438,8 +4448,8 @@ export default function CherryAdventure() {
     const bgmPlay = (el) => { try { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} };
     const bgmTick = () => {
       if (!bgmEls[0] || document.hidden) return;
-      if (!G.musicOn) {   // 🔇 ปิดเพลง: ค่อย ๆ เบาลงแล้วหยุด
-        bgmEls.forEach((el) => { el.volume = Math.max(0, el.volume - 0.06); if (el.volume <= 0.001 && !el.paused) el.pause(); });
+      if (!G.musicOn) {   // 🔇 v768 ปิดเพลง = หยุดทันที + ปิดเสียงตัวเล่น (ไม่พึ่ง volume ซึ่ง iOS ปรับไม่ได้ และเครื่องช้าจะค่อย ๆ เบาเป็นสิบวิ)
+        bgmEls.forEach((el) => { try { el.muted = true; if (!el.paused) el.pause(); } catch (e) {} });
         return;
       }
       const want = bgmWant();
@@ -4450,7 +4460,8 @@ export default function CherryAdventure() {
         bgmPlay(el);
       }
       bgmEls.forEach((el, i) => {
-        if (i === bgmCur) { if (el.paused) bgmPlay(el); const tv = G.dancing ? 0.03 : BGM_VOL; el.volume = el.volume > tv ? Math.max(tv, el.volume - 0.06) : Math.min(tv, el.volume + 0.04); }   // 🪩 เต้นอยู่ = ลดเพลงพื้นหลังให้ได้ยินจังหวะ
+        if (i === bgmCur) { el.muted = false; if (el.paused) bgmPlay(el); const tv = G.dancing ? 0.03 : BGM_VOL; el.volume = el.volume > tv ? Math.max(tv, el.volume - 0.06) : Math.min(tv, el.volume + 0.04); }   // 🪩 เต้นอยู่ = ลดเพลงพื้นหลังให้ได้ยินจังหวะ
+        else if (!volOK) { if (!el.paused) el.pause(); }   // 📱 iOS ครอสเฟดไม่ได้ → หยุดเพลงเก่าทันที ไม่ให้เล่นซ้อนสองเพลง
         else { el.volume = Math.max(0, el.volume - 0.06); if (el.volume <= 0.001 && !el.paused) el.pause(); }
       });
     };
@@ -4462,11 +4473,13 @@ export default function CherryAdventure() {
       bgmTick();
       // 📱 iOS: เสียงจาก <audio> ต้องเริ่มจากการแตะของผู้เล่นครั้งแรก — ปลุกตัวเล่นตัวที่สองไว้ด้วย จะได้ครอสเฟดได้ภายหลัง
       const other = bgmEls[1 - bgmCur];
-      if (other && !other.src && bgmTrack) { other.src = BGM_BASE + bgmTrack + ".mp3"; other.volume = 0; bgmPlay(other); setTimeout(() => { try { if (bgmEls.indexOf(other) !== bgmCur) other.pause(); } catch (e) {} }, 60); }
+      if (other && !other.src && bgmTrack) { other.src = BGM_BASE + bgmTrack + ".mp3"; other.volume = 0; other.muted = true; bgmPlay(other); setTimeout(() => { try { if (bgmEls.indexOf(other) !== bgmCur) other.pause(); } catch (e) {} }, 60); }
     };
     const savePref = (k, v) => { try { window.localStorage.setItem(k, v ? "1" : "0"); } catch (e) {} };
-    G.toggleSound = () => { G.soundOn = !G.soundOn; savePref("cherry-sound", G.soundOn); setUi((u) => ({ ...u, soundOn: G.soundOn })); if (G.soundOn) { initAudio(); G.sfx.button(); } };
-    G.toggleMusic = () => { G.musicOn = !G.musicOn; savePref("cherry-music", G.musicOn); setUi((u) => ({ ...u, musicOn: G.musicOn })); if (G.musicOn) { initAudio(); startMusic(); } };
+    G.toggleSound = () => { G.soundOn = !G.soundOn; savePref("cherry-sound", G.soundOn); setUi((u) => ({ ...u, soundOn: G.soundOn }));
+      if (sfxBus) { try { sfxBus.gain.cancelScheduledValues(actx.currentTime); sfxBus.gain.setValueAtTime(G.soundOn ? 1 : 0, actx.currentTime); } catch (e) { sfxBus.gain.value = G.soundOn ? 1 : 0; } }   // 🔇 v768 ตัดเสียงที่กำลังดังทันที
+      if (G.soundOn) { initAudio(); G.sfx.button(); } };
+    G.toggleMusic = () => { G.musicOn = !G.musicOn; savePref("cherry-music", G.musicOn); setUi((u) => ({ ...u, musicOn: G.musicOn })); if (G.musicOn) { initAudio(); startMusic(); } else bgmTick(); };   // 🔇 v768 ปิดเพลง = เงียบทันที ไม่ต้องรอรอบตัวจับเวลา
     // ⚔️🔇 ปิดเฉพาะเสียงต่อสู้ (ฟัน/กระแทก/คริ/ระเบิด) — เสียงปุ่ม เหรียญ ชนะ ยังดังตามปกติ
     G.toggleBattleSfx = () => { G.battleSfxOn = !G.battleSfxOn; savePref("cherry-battlesfx", G.battleSfxOn); setUi((u) => ({ ...u, battleSfxOn: G.battleSfxOn })); if (G.battleSfxOn) { initAudio(); G.sfx.slash(); } };
     setUi((u) => ({ ...u, soundOn: G.soundOn, musicOn: G.musicOn, battleSfxOn: G.battleSfxOn }));
